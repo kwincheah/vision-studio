@@ -1,0 +1,7 @@
+# Core Runtime Dependencies for Apex Industrial Vision Studio
+PyQt6>=6.5.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+
+# Optional Neural Detection (Install for YOLOv11 module)
+# ultralytics>=8.0.0

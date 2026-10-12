@@ -1,0 +1,67 @@
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# C / C++ extensions
+*.so
+*.dylib
+*.dll
+
+# Packaging & PyInstaller build outputs
+build/
+dist/
+installer_output/
+*.egg-info/
+*.egg
+*.spec.bak
+
+# Testing & Coverage
+.pytest_cache/
+.pytest_tmp/
+.coverage
+htmlcov/
+testreport.txt
+*.coverage.*
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Local User Settings & Runtime Caches (stored separately in ~/.apex_vision for production)
+.vm_config/
+saved_images/
+*.log
+
+# Large Binary Weights & Models (Distributed via GitHub Releases or Model Hub)
+*.pt
+*.pth
+*.onnx
+
+# Proprietary External Vendor Documentation (Not redistributable)
+*.pdf
+docs/references/external/*.pdf
+docs/references/*.pdf
+
+# IDEs & Editor Configuration
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# Environment / Secrets
+.env
+.env.*
+!.env.example

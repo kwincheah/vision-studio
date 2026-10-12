@@ -1,0 +1,105 @@
+{
+  "name": "Precision_Measurement_Demo",
+  "active_flow": "Precision_Measurement_Solution",
+  "trigger_flow": "Precision_Measurement_Solution",
+  "global_variables": {
+    "g_CountOK": 0,
+    "g_CountNG": 0,
+    "g_LotNumber": "LOT-2026-A1",
+    "g_TriggerEnable": true
+  },
+  "flows": [
+    {
+      "name": "Precision_Measurement_Solution",
+      "enabled": true,
+      "run_interval_ms": 50.0,
+      "stop_on_ng": false,
+      "flow_timeout_ms": 5000.0,
+      "execution_count": 0,
+      "nodes": [
+        {
+          "instance_id": "node_source",
+          "tool_name": "Image Source",
+          "category": "Acquisition",
+          "name": "01_Acquisition",
+          "enabled": true,
+          "parameters": {
+            "source_type": "Synthetic",
+            "file_path": "C:\\Users\\winch\\Downloads\\VMClone\\vm_clone\\samples\\pcb_sample.png",
+            "pattern_type": "Circles & Holes",
+            "color_mode": "BGR",
+            "camera_index": 0
+          }
+        },
+        {
+          "instance_id": "node_circle1",
+          "tool_name": "Circle Search",
+          "category": "Location",
+          "name": "02_InnerHoleFit",
+          "enabled": true,
+          "parameters": {
+            "center_x": 680,
+            "center_y": 480,
+            "min_radius": 15,
+            "max_radius": 80,
+            "caliper_rays": 32,
+            "edge_polarity": "Any",
+            "edge_type": "Strongest Edge",
+            "edge_threshold": 25.0
+          }
+        },
+        {
+          "instance_id": "node_p2p",
+          "tool_name": "P2P Measure",
+          "category": "Measurement",
+          "name": "03_HoleDistance",
+          "enabled": true,
+          "parameters": {
+            "scale_factor": 1.0,
+            "default_p1": [
+              150,
+              150
+            ],
+            "default_p2": [
+              350,
+              150
+            ],
+            "min_distance": 0.0,
+            "max_distance": 1000.0
+          }
+        },
+        {
+          "instance_id": "node_intensity",
+          "tool_name": "Intensity Measure",
+          "category": "Measurement",
+          "name": "04_IlluminationCheck",
+          "enabled": true,
+          "parameters": {
+            "roi": [
+              200,
+              200,
+              200,
+              150
+            ],
+            "min_mean": 20.0,
+            "max_mean": 240.0
+          }
+        }
+      ],
+      "connections": [
+        {
+          "from_node": "node_source",
+          "from_port": "Image",
+          "to_node": "node_circle1",
+          "to_port": "Image"
+        },
+        {
+          "from_node": "node_source",
+          "from_port": "Image",
+          "to_node": "node_intensity",
+          "to_port": "Image"
+        }
+      ]
+    }
+  ]
+}

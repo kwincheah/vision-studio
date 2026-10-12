@@ -1,0 +1,60 @@
+{
+  "name": "YOLO_ObjectDetection_Demo",
+  "active_flow": "YOLO_Detection_Solution",
+  "trigger_flow": "YOLO_Detection_Solution",
+  "global_variables": {
+    "g_CountOK": 0,
+    "g_CountNG": 0,
+    "g_LotNumber": "LOT-2026-A1",
+    "g_TriggerEnable": true
+  },
+  "flows": [
+    {
+      "name": "YOLO_Detection_Solution",
+      "enabled": true,
+      "run_interval_ms": 50.0,
+      "stop_on_ng": false,
+      "flow_timeout_ms": 5000.0,
+      "execution_count": 0,
+      "nodes": [
+        {
+          "instance_id": "node_source",
+          "tool_name": "Image Source",
+          "category": "Acquisition",
+          "name": "01_Acquisition",
+          "enabled": true,
+          "parameters": {
+            "source_type": "Synthetic",
+            "file_path": "C:\\Users\\winch\\Downloads\\VMClone\\vm_clone\\samples\\pcb_sample.png",
+            "pattern_type": "PCB Inspection",
+            "color_mode": "BGR",
+            "camera_index": 0
+          }
+        },
+        {
+          "instance_id": "node_yolo",
+          "tool_name": "Object Detection",
+          "category": "Recognition",
+          "name": "02_YOLOv11_Detector",
+          "enabled": true,
+          "parameters": {
+            "model_path": "yolo11n.pt",
+            "confidence": 0.25,
+            "iou": 0.45,
+            "classes": "all",
+            "device": "cpu",
+            "max_detections": 100
+          }
+        }
+      ],
+      "connections": [
+        {
+          "from_node": "node_source",
+          "from_port": "Image",
+          "to_node": "node_yolo",
+          "to_port": "Image"
+        }
+      ]
+    }
+  ]
+}

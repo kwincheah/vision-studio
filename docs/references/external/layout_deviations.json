@@ -1,0 +1,62 @@
+{
+ "metrics": {
+  "window": [
+   925,
+   765
+  ],
+  "content_w": 919,
+  "content_h": 785,
+  "right_column_h": 618,
+  "rail_w": 45,
+  "canvas_w": 504,
+  "right_w": 370,
+  "rail_ratio": 0.049,
+  "canvas_ratio": 0.5484,
+  "right_ratio": 0.4026,
+  "chrome_h": 117,
+  "chrome_ratio": 0.149,
+  "image_block_h": 373,
+  "image_block_ratio": 0.6036,
+  "result_block_h": 245,
+  "result_block_ratio": 0.3964
+ },
+ "deviations": [
+  {
+   "measure": "rail width",
+   "reference": 0.0513,
+   "applied": 0.049,
+   "delta": -0.0023
+  },
+  {
+   "measure": "canvas width",
+   "reference": 0.5452,
+   "applied": 0.5484,
+   "delta": 0.0032
+  },
+  {
+   "measure": "right column width",
+   "reference": 0.4034,
+   "applied": 0.4026,
+   "delta": -0.0008
+  },
+  {
+   "measure": "chrome height",
+   "reference": 0.1496,
+   "applied": 0.149,
+   "delta": -0.0006
+  },
+  {
+   "measure": "image block height",
+   "reference": 0.604,
+   "applied": 0.6036,
+   "delta": -0.0004
+  },
+  {
+   "measure": "result block height",
+   "reference": 0.396,
+   "applied": 0.3964,
+   "delta": 0.0004
+  }
+ ],
+ "worst_deviation": 0.0032
+}

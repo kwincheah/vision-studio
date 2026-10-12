@@ -1,0 +1,11 @@
+{
+  "id": "sample_sobel_edge_plugin",
+  "name": "Sobel Edge Detector",
+  "version": "1.0.0",
+  "author": "ThirdParty Vision Lab",
+  "description": "High-performance edge detection using directional Sobel operators.",
+  "category": "Custom Filters",
+  "min_sdk_version": "1.0.0",
+  "entrypoint": "__init__.py",
+  "tags": ["edge", "filter", "gradient", "opencv"]
+}

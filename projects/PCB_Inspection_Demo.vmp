@@ -1,0 +1,178 @@
+{
+  "name": "PCB_Inspection_Demo",
+  "active_flow": "PCB_AOI_Solution",
+  "trigger_flow": "PCB_AOI_Solution",
+  "global_variables": {
+    "g_CountOK": 0,
+    "g_CountNG": 0,
+    "g_LotNumber": "LOT-2026-A1",
+    "g_TriggerEnable": true
+  },
+  "flows": [
+    {
+      "name": "PCB_AOI_Solution",
+      "enabled": true,
+      "run_interval_ms": 50.0,
+      "stop_on_ng": false,
+      "flow_timeout_ms": 5000.0,
+      "execution_count": 0,
+      "nodes": [
+        {
+          "instance_id": "node_source",
+          "tool_name": "Image Source",
+          "category": "Acquisition",
+          "name": "01_ImageAcquisition",
+          "enabled": true,
+          "parameters": {
+            "source_type": "Synthetic",
+            "file_path": "C:\\Users\\winch\\Downloads\\VMClone\\vm_clone\\samples\\pcb_sample.png",
+            "pattern_type": "PCB Inspection",
+            "color_mode": "BGR",
+            "camera_index": 0
+          }
+        },
+        {
+          "instance_id": "node_template",
+          "tool_name": "Template Match",
+          "category": "Location",
+          "name": "02_IC_Alignment",
+          "enabled": true,
+          "parameters": {
+            "min_score": 0.7,
+            "template_roi": [
+              260,
+              240,
+              180,
+              120
+            ],
+            "start_angle": -15.0,
+            "end_angle": 15.0,
+            "angle_step": 2.0,
+            "max_matches": 1
+          }
+        },
+        {
+          "instance_id": "node_circle",
+          "tool_name": "Circle Search",
+          "category": "Location",
+          "name": "03_MountingHole",
+          "enabled": true,
+          "parameters": {
+            "center_x": 680,
+            "center_y": 480,
+            "min_radius": 25,
+            "max_radius": 60,
+            "caliper_rays": 32,
+            "edge_polarity": "Any",
+            "edge_type": "Strongest Edge",
+            "edge_threshold": 25.0
+          }
+        },
+        {
+          "instance_id": "node_caliper",
+          "tool_name": "Caliper",
+          "category": "Location",
+          "name": "04_TraceWidthCaliper",
+          "enabled": true,
+          "parameters": {
+            "line_p1": [
+              50,
+              150
+            ],
+            "line_p2": [
+              450,
+              150
+            ],
+            "edge_threshold": 25.0,
+            "polarity": "Any",
+            "caliper_mode": "Edge Pair"
+          }
+        },
+        {
+          "instance_id": "node_defect",
+          "tool_name": "Defect Detection",
+          "category": "Defect Detection",
+          "name": "05_SurfaceScratchCheck",
+          "enabled": true,
+          "parameters": {
+            "roi": [
+              260,
+              240,
+              180,
+              120
+            ],
+            "defect_type": "Dark / Scratch",
+            "sensitivity": 30,
+            "min_defect_area": 10,
+            "max_defect_area": 500
+          }
+        },
+        {
+          "instance_id": "node_branch",
+          "tool_name": "Condition Branch",
+          "category": "Logic Tools",
+          "name": "06_QualityJudge",
+          "enabled": true,
+          "parameters": {
+            "operator": "<=",
+            "threshold_low": 0.0,
+            "threshold_high": 150.0
+          }
+        },
+        {
+          "instance_id": "node_tcp",
+          "tool_name": "TCP Send",
+          "category": "Communication",
+          "name": "07_SendToPLC",
+          "enabled": true,
+          "parameters": {
+            "mode": "Simulation (Loopback Log)",
+            "server_ip": "127.0.0.1",
+            "server_port": 8080,
+            "prefix": "VM_RES,",
+            "suffix": "\\r\\n",
+            "format": "CSV"
+          }
+        }
+      ],
+      "connections": [
+        {
+          "from_node": "node_source",
+          "from_port": "Image",
+          "to_node": "node_template",
+          "to_port": "Image"
+        },
+        {
+          "from_node": "node_source",
+          "from_port": "Image",
+          "to_node": "node_circle",
+          "to_port": "Image"
+        },
+        {
+          "from_node": "node_source",
+          "from_port": "Image",
+          "to_node": "node_caliper",
+          "to_port": "Image"
+        },
+        {
+          "from_node": "node_source",
+          "from_port": "Image",
+          "to_node": "node_defect",
+          "to_port": "Image"
+        },
+        {
+          "from_node": "node_defect",
+          "from_port": "Defect_Count",
+          "to_node": "node_branch",
+          "to_port": "Val_In"
+        },
+        {
+          "from_node": "node_branch",
+          "from_port": "Status",
+          "to_node": "node_tcp",
+          "to_port": "Data"
+        }
+      ]
+    }
+  ]
+}
