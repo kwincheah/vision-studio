@@ -26,7 +26,7 @@ from PyQt6.QtCore import Qt, QSize, QRectF, QPointF, pyqtSignal
 from PyQt6.QtGui import QIcon, QPixmap, QPainter, QColor, QPen, QFont
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QToolButton, QListWidget,
-    QListWidgetItem, QSizePolicy, QFrame, QComboBox
+    QListWidgetItem, QSizePolicy, QFrame, QComboBox, QPushButton
 )
 
 from vm_clone.ui.styles import THEME
@@ -123,7 +123,7 @@ class ToggleSwitch(QToolButton):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setCheckable(True)
-        self.setFixedSize(28, 15)
+        self.setFixedSize(32, 18)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
     def paintEvent(self, event):
@@ -133,17 +133,17 @@ class ToggleSwitch(QToolButton):
         rect = QRectF(0.0, 0.0, w, h)
         if self.isChecked():
             track_color = QColor("#e8792b")
-            knob_x = w - h + 1.5
+            knob_x = w - h + 2.0
         else:
             track_color = QColor("#464a50")
-            knob_x = 1.5
+            knob_x = 2.0
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(track_color)
         p.drawRoundedRect(rect, h / 2.0, h / 2.0)
 
-        knob_dia = h - 3.0
+        knob_dia = h - 4.0
         p.setBrush(QColor("#ffffff") if self.isChecked() else QColor("#d0d3d8"))
-        p.drawEllipse(QRectF(knob_x, 1.5, knob_dia, knob_dia))
+        p.drawEllipse(QRectF(knob_x, 2.0, knob_dia, knob_dia))
         p.end()
 
 
@@ -154,6 +154,7 @@ class ImageDisplayArea(QWidget):
     image_selected = pyqtSignal(int)       # index into the image strip
     add_image_requested = pyqtSignal()     # request to add images to the flow
     clear_images_requested = pyqtSignal()   # request to clear the flow images
+    run_requested = pyqtSignal()           # request to execute the flow
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -241,10 +242,10 @@ class ImageDisplayArea(QWidget):
         # ---- image strip header ----------------------------------------------
         strip_header = QWidget()
         strip_header.setObjectName("imageStripHeader")
-        strip_header.setFixedHeight(26)
+        strip_header.setFixedHeight(34)
         sl = QHBoxLayout(strip_header)
-        sl.setContentsMargins(8, 2, 6, 2)
-        sl.setSpacing(6)
+        sl.setContentsMargins(10, 4, 8, 4)
+        sl.setSpacing(8)
 
         self.lbl_strip = QLabel("Image Source (0/0)")
         self.lbl_strip.setObjectName("imageStripLabel")
@@ -252,13 +253,13 @@ class ImageDisplayArea(QWidget):
 
         self.btn_add_image = _icon_button("add", "Add / Load Image Files to Flow...")
         self.btn_add_image.setObjectName("stripAddImage")
-        self.btn_add_image.setFixedSize(20, 20)
+        self.btn_add_image.setFixedSize(24, 24)
         self.btn_add_image.clicked.connect(self.add_image_requested)
         sl.addWidget(self.btn_add_image)
 
         self.btn_clear_strip = _icon_button("clear", "Clear image flow list")
         self.btn_clear_strip.setObjectName("stripClearImages")
-        self.btn_clear_strip.setFixedSize(20, 20)
+        self.btn_clear_strip.setFixedSize(24, 24)
         self.btn_clear_strip.clicked.connect(self.clear_images_requested)
         sl.addWidget(self.btn_clear_strip)
 
@@ -275,12 +276,25 @@ class ImageDisplayArea(QWidget):
         self.cbo_run_scope.setObjectName("runScopeCombo")
         self.cbo_run_scope.addItems(["Run all", "Run selected", "Single step"])
         self.cbo_run_scope.setToolTip("Flow execution scope")
+        self.cbo_run_scope.setFixedHeight(26)
         self.lbl_run_scope = self.cbo_run_scope
         setattr(self.cbo_run_scope, "text", lambda: self.cbo_run_scope.currentText())
         sl.addWidget(self.cbo_run_scope)
 
+        self.btn_play = QPushButton(" Run")
+        self.btn_play.setObjectName("stripPlayButton")
+        self.btn_play.setIcon(get_action_icon("run_once", 16))
+        self.btn_play.setIconSize(QSize(16, 16))
+        self.btn_play.setFixedHeight(26)
+        self.btn_play.setToolTip("Execute flow according to selected scope (Run all / selected / step)")
+        self.btn_play.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_play.clicked.connect(self.run_requested.emit)
+        self.btn_run_scope = self.btn_play
+        self.btn_run = self.btn_play
+        sl.addWidget(self.btn_play)
+
         self.btn_collapse = _icon_button("collapse_down", "Toggle thumbnail strip")
-        self.btn_collapse.setFixedSize(18, 18)
+        self.btn_collapse.setFixedSize(24, 24)
         self.btn_collapse.clicked.connect(self._toggle_strip_visibility)
         sl.addWidget(self.btn_collapse)
 

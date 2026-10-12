@@ -464,25 +464,26 @@ QLabel#imageStatusCoords {{
 }}
 #imageStripHeader {{
     background-color: {T['vm_panel_header']};
+    border-top: 1px solid #202735;
     border-bottom: 1px solid #202735;
 }}
 QLabel#imageStripLabel {{
     color: #e2e8f0;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
 }}
 QLabel#imageStripCaption {{
     color: #94a3b8;
-    font-size: 11px;
+    font-size: 12px;
 }}
 QComboBox#runScopeCombo {{
     background-color: #1e2533;
     color: #e2e8f0;
     border: 1px solid #334155;
-    border-radius: 2px;
-    padding: 0px 4px;
-    font-size: 11px;
-    min-height: 18px;
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 12px;
+    min-height: 22px;
 }}
 QComboBox#runScopeCombo:hover {{
     background-color: #263143;
@@ -490,7 +491,7 @@ QComboBox#runScopeCombo:hover {{
 }}
 QComboBox#runScopeCombo::drop-down {{
     border: none;
-    width: 14px;
+    width: 16px;
 }}
 QComboBox#runScopeCombo QAbstractItemView {{
     background-color: #181e28;
@@ -498,6 +499,25 @@ QComboBox#runScopeCombo QAbstractItemView {{
     border: 1px solid #334155;
     selection-background-color: {T['vm_accent']};
     selection-color: #ffffff;
+    font-size: 12px;
+}}
+QPushButton#stripPlayButton, QToolButton#stripPlayButton {{
+    background-color: #15803d;
+    color: #ffffff;
+    border: 1px solid #16a34a;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 10px;
+    min-height: 22px;
+}}
+QPushButton#stripPlayButton:hover, QToolButton#stripPlayButton:hover {{
+    background-color: #16a34a;
+    border-color: #22c55e;
+}}
+QPushButton#stripPlayButton:pressed, QToolButton#stripPlayButton:pressed {{
+    background-color: #14532d;
+    border-color: #15803d;
 }}
 #imageStripRow {{
     background-color: #141822;
@@ -689,21 +709,23 @@ QPushButton:checked {{
     border-color: {T['vm_accent']};
     color: #ffffff;
 }}
-QPushButton#btnRunOnce {{
+QToolButton#btnRunOnce, QPushButton#btnRunOnce {{
     background-color: #12331f;
     border: 1px solid #1b5330;
     color: #86efac;
 }}
-QPushButton#btnRunOnce:hover {{
+QToolButton#btnRunOnce:hover, QPushButton#btnRunOnce:hover {{
     background-color: #184428;
+    border-color: #22c55e;
 }}
-QPushButton#btnStop {{
+QToolButton#btnStop, QPushButton#btnStop {{
     background-color: #3b181c;
     border: 1px solid #5a242a;
     color: #fca5a5;
 }}
-QPushButton#btnStop:hover {{
+QToolButton#btnStop:hover, QPushButton#btnStop:hover {{
     background-color: #4c1f24;
+    border-color: #ef4444;
 }}
 
 /* Compact trailing action button in inspector parameter rows (Browse / Draw).

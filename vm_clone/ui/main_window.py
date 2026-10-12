@@ -900,6 +900,7 @@ class VisionMasterMainWindow(QMainWindow):
         self.image_display.image_selected.connect(self.on_image_strip_selected)
         self.image_display.add_image_requested.connect(self.on_load_image_file)
         self.image_display.clear_images_requested.connect(self.on_clear_image_flow)
+        self.image_display.run_requested.connect(self.on_strip_run_requested)
         self.image_canvas.image_file_dropped.connect(self.load_image_from_path)
         self.data_tabs.addTab(self.image_display, "Image")
 
@@ -1767,6 +1768,14 @@ class VisionMasterMainWindow(QMainWindow):
     def on_run_once(self):
         self.run_pipeline_step()
         self._set_hint("Flow executed once", 2000)
+
+    @pyqtSlot()
+    def on_strip_run_requested(self):
+        """Execute flow according to the scope chosen in the image strip ('Run all', 'Run selected', 'Single step')."""
+        self.run_pipeline_step()
+        scope = getattr(self.image_display, "cbo_run_scope", None)
+        scope_text = scope.currentText() if scope else "Run all"
+        self._set_hint(f"Flow executed ({scope_text})", 2000)
 
     @pyqtSlot(bool)
     def on_toggle_continuous(self, checked: bool):
