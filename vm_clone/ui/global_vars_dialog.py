@@ -27,7 +27,7 @@ class GlobalVariablesDialog(QDialog):
 
         # Header Info
         lbl_info = QLabel("Solution Global Variables (Shared across Multi-Flows, Communication, & Logic Modules):")
-        lbl_info.setStyleSheet(f"color: {THEME['text_primary']}; font-weight: 600; font-size: 11px;")
+        lbl_info.setStyleSheet(f"color: {THEME['text_primary']}; font-weight: 600; font-size: 12px;")
         layout.addWidget(lbl_info)
 
         # Table

@@ -29,7 +29,7 @@ QMainWindow, QWidget {{
     background-color: {T['vm_chrome']};
     color: {T['text_primary']};
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", "Ubuntu", Arial, sans-serif;
-    font-size: 12px;
+    font-size: 13px;
     outline: none;
 }}
 QMainWindow::separator {{
@@ -46,7 +46,7 @@ QMenuBar {{
     color: #d8dade;
     border: none;
     padding: 1px 4px 1px 96px;   /* left inset leaves room for the brand mark */
-    font-size: 12px;
+    font-size: 13px;
 }}
 QMenuBar::item {{
     background: transparent;
@@ -146,7 +146,7 @@ QTabBar#flowTabBar::tab {{
     border: 1px solid #283447;
     border-bottom: none;
     min-height: 20px;
-    font-size: 11px;
+    font-size: 12px;
 }}
 QTabBar#flowTabBar::scroller {{
     width: 18px;
@@ -210,7 +210,7 @@ QTabBar::tab {{
     border: none;
     border-right: 1px solid #232b3a;
     min-height: 16px;
-    font-size: 12px;
+    font-size: 13px;
 }}
 QTabBar::tab:selected {{
     background-color: {T['vm_panel']};
@@ -251,7 +251,7 @@ QToolButton#railCategory:checked {{
 }}
 QLabel#flyoutCategoryHeader {{
     color: #f1f5f9;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     padding: 7px 10px 6px 10px;
     background-color: {T['vm_flyout_header']};
@@ -259,7 +259,7 @@ QLabel#flyoutCategoryHeader {{
 }}
 QLabel#flyoutHint {{
     color: #64748b;
-    font-size: 11px;
+    font-size: 12px;
     padding: 3px 10px 6px 10px;
 }}
 QListWidget#toolGrid {{
@@ -289,7 +289,7 @@ QLineEdit#toolSearch {{
     border-radius: 2px;
     padding: 3px 6px;
     color: #e2e8f0;
-    font-size: 11px;
+    font-size: 12px;
 }}
 QLineEdit#toolSearch:focus {{
     border-color: {T['vm_accent']};
@@ -302,7 +302,7 @@ QTreeWidget {{
     background-color: {T['vm_flyout']};
     border: none;
     color: #dcdde1;
-    font-size: 12px;
+    font-size: 13px;
     outline: none;
 }}
 QTreeWidget::item {{
@@ -328,7 +328,7 @@ QTableWidget, QTableView {{
     border: none;
     gridline-color: #232c3b;
     color: #e2e8f0;
-    font-size: 12px;
+    font-size: 13px;
     selection-background-color: {T['vm_accent_dim']};
     selection-color: #ffffff;
 }}
@@ -351,7 +351,7 @@ QHeaderView::section {{
     border-right: 1px solid #283344;
     border-bottom: 1px solid #283344;
     font-weight: 500;
-    font-size: 12px;
+    font-size: 13px;
 }}
 QHeaderView::section:hover {{
     background-color: #242d3d;
@@ -368,7 +368,7 @@ QTreeWidget#resultTree {{
     background-color: {T['vm_panel']};
     border: none;
     color: #e2e8f0;
-    font-size: 12px;
+    font-size: 13px;
     alternate-background-color: #191f2a;
 }}
 QTreeWidget#resultTree::item {{
@@ -394,14 +394,14 @@ QTreeWidget#resultTree::item:selected {{
 }}
 QLabel#flowZoomLabel {{
     color: #e2e8f0;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
 }}
 QToolButton#flowZoomButton {{
     background: transparent;
     border: none;
     color: #cbd5e1;
-    font-size: 13px;
+    font-size: 14px;
     padding: 0;
 }}
 QToolButton#flowZoomButton:hover {{
@@ -421,7 +421,7 @@ QToolButton#flowZoomButton:hover {{
 }}
 QLabel#imageSourceLabel {{
     color: #e2e8f0;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
 }}
 QToolButton#viewToolButton {{
@@ -454,12 +454,12 @@ QFrame#viewToolSeparator {{
 }}
 QLabel#imageStatusId {{
     color: #94a3b8;
-    font-size: 11px;
+    font-size: 12px;
     font-family: 'Segoe UI', sans-serif;
 }}
 QLabel#imageStatusCoords {{
     color: #cbd5e1;
-    font-size: 11px;
+    font-size: 12px;
     font-family: 'Consolas', 'Segoe UI', monospace;
 }}
 #imageStripHeader {{
@@ -468,12 +468,12 @@ QLabel#imageStatusCoords {{
 }}
 QLabel#imageStripLabel {{
     color: #e2e8f0;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
 }}
 QLabel#imageStripCaption {{
     color: #94a3b8;
-    font-size: 10px;
+    font-size: 11px;
 }}
 QComboBox#runScopeCombo {{
     background-color: #1e2533;
@@ -481,7 +481,7 @@ QComboBox#runScopeCombo {{
     border: 1px solid #334155;
     border-radius: 2px;
     padding: 0px 4px;
-    font-size: 10px;
+    font-size: 11px;
     min-height: 18px;
 }}
 QComboBox#runScopeCombo:hover {{
@@ -541,7 +541,7 @@ QListWidget#imageStrip::item:selected {{
 QLabel#resultCaption {{
     background-color: {T['vm_panel_header']};
     color: #e2e8f0;
-    font-size: 11px;
+    font-size: 12px;
     border-bottom: 1px solid #202735;
 }}
 QTableWidget#resultGrid, QTableWidget#historyGrid, QTableWidget#moduleLogGrid {{
@@ -550,7 +550,7 @@ QTableWidget#resultGrid, QTableWidget#historyGrid, QTableWidget#moduleLogGrid {{
     border: none;
     gridline-color: #232c3b;
     color: #e2e8f0;
-    font-size: 12px;
+    font-size: 13px;
     selection-background-color: {T['vm_accent_dim']};
     selection-color: #ffffff;
 }}
@@ -611,7 +611,7 @@ QScrollBar::add-page, QScrollBar::sub-page {{
 
 QDockWidget {{
     color: #e2e8f0;
-    font-size: 12px;
+    font-size: 13px;
     titlebar-close-icon: none;
     titlebar-normal-icon: none;
 }}
@@ -622,7 +622,7 @@ QDockWidget::title {{
     text-align: left;
     color: #cbd5e1;
     font-weight: 600;
-    font-size: 11px;
+    font-size: 12px;
 }}
 QDockWidget::close-button, QDockWidget::float-button {{
     background: transparent;
@@ -640,7 +640,7 @@ QStatusBar {{
     background-color: {T['vm_chrome']};
     color: #94a3b8;
     border-top: 1px solid #10141b;
-    font-size: 11px;
+    font-size: 12px;
 }}
 QStatusBar::item {{
     border: none;
@@ -649,17 +649,17 @@ QLabel#statusSegment {{
     color: #94a3b8;
     padding: 2px 10px;
     border-left: 1px solid #202735;
-    font-size: 11px;
+    font-size: 12px;
 }}
 QLabel#statusLeading {{
     color: #cbd5e1;
     padding: 2px 10px;
-    font-size: 11px;
+    font-size: 12px;
 }}
 QLabel#statusMessage {{
     color: #94a3b8;
     padding: 2px 12px;
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 /* =====================================================================
@@ -671,7 +671,7 @@ QPushButton {{
     border: 1px solid #334155;
     border-radius: 2px;
     padding: 3px 9px;
-    font-size: 12px;
+    font-size: 13px;
 }}
 QPushButton:hover {{
     background-color: #2a3447;
@@ -710,7 +710,7 @@ QPushButton#btnStop:hover {{
    Fixed width so the input fields of every row end on the same vertical line. */
 QPushButton#fieldAction {{
     padding: 1px 6px;
-    font-size: 11px;
+    font-size: 12px;
     min-width: 0px;
     min-height: 0px;
 }}
@@ -726,7 +726,7 @@ QLineEdit, QPlainTextEdit, QTextEdit {{
     border-radius: 2px;
     padding: 3px 6px;
     color: #f1f5f9;
-    font-size: 12px;
+    font-size: 13px;
     selection-background-color: {T['accent_primary']};
 }}
 QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus {{
@@ -742,7 +742,7 @@ QSpinBox, QDoubleSpinBox, QComboBox {{
     border-radius: 2px;
     padding: 2px 5px;
     color: #f1f5f9;
-    font-size: 12px;
+    font-size: 13px;
 }}
 QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{
     border-color: {T['accent_primary']};
@@ -761,7 +761,7 @@ QComboBox QAbstractItemView {{
 QCheckBox {{
     color: #e2e8f0;
     spacing: 6px;
-    font-size: 12px;
+    font-size: 13px;
 }}
 QCheckBox::indicator {{
     width: 13px;
@@ -781,7 +781,7 @@ QGroupBox {{
     margin-top: 10px;
     padding-top: 8px;
     color: #cbd5e1;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
 }}
 QGroupBox::title {{
@@ -800,7 +800,7 @@ QToolTip {{
     color: #f1f5f9;
     border: 1px solid #2d384a;
     padding: 4px 6px;
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 QProgressBar {{
@@ -809,7 +809,7 @@ QProgressBar {{
     border-radius: 2px;
     text-align: center;
     color: #f1f5f9;
-    font-size: 11px;
+    font-size: 12px;
 }}
 QProgressBar::chunk {{
     background-color: {T['vm_accent']};

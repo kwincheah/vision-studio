@@ -475,7 +475,7 @@ class ImageCanvasWidget(QWidget):
 
             title_color = QColor(248, 113, 113) if self._is_error_state else QColor(226, 232, 240)
             painter.setPen(title_color)
-            painter.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
+            painter.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
             painter.drawText(
                 QRectF(box_rect.x(), box_rect.y() + 16, box_rect.width(), 24),
                 Qt.AlignmentFlag.AlignCenter,
@@ -484,7 +484,7 @@ class ImageCanvasWidget(QWidget):
 
             sub_color = QColor(203, 213, 225) if self._is_error_state else QColor(148, 163, 184)
             painter.setPen(sub_color)
-            painter.setFont(QFont("Segoe UI", 8))
+            painter.setFont(QFont("Segoe UI", 9))
             painter.drawText(
                 QRectF(box_rect.x() + 10, box_rect.y() + 45, box_rect.width() - 20, 44),
                 Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap,
@@ -554,14 +554,14 @@ class ImageCanvasWidget(QWidget):
                 # ROI Dimension badge
                 rx, ry, rw, rh = self._active_roi
                 dim_str = f"ROI: {rw}x{rh} @ ({rx}, {ry})"
-                painter.setFont(QFont("Consolas", 8, QFont.Weight.Bold))
-                badge_w = len(dim_str) * 6.5 + 8
-                badge_y = max(8.0, srect.y() - 16.0)
+                painter.setFont(QFont("Consolas", 9, QFont.Weight.Bold))
+                badge_w = len(dim_str) * 7.2 + 8
+                badge_y = max(8.0, srect.y() - 18.0)
                 painter.setPen(QPen(QColor(42, 48, 62), 1.0))
                 painter.setBrush(QColor(24, 27, 36, 235))
-                painter.drawRect(QRectF(srect.x(), badge_y, badge_w, 14.0))
+                painter.drawRect(QRectF(srect.x(), badge_y, badge_w, 16.0))
                 painter.setPen(QColor(96, 165, 250))
-                painter.drawText(QPointF(srect.x() + 4, badge_y + 11), dim_str)
+                painter.drawText(QPointF(srect.x() + 4, badge_y + 12), dim_str)
 
         # Measurement Crosshair Reticle (Discrete)
         if self._show_crosshair and self._cursor_img_pos and self._scale > 0:
@@ -601,11 +601,11 @@ class ImageCanvasWidget(QWidget):
 
                 label = item.get("label")
                 if label:
-                    painter.setFont(QFont("Segoe UI", max(8, int(9 / self._scale)), QFont.Weight.Bold))
+                    painter.setFont(QFont("Segoe UI", max(9, int(10 / self._scale)), QFont.Weight.Bold))
                     painter.setPen(Qt.PenStyle.NoPen)
                     painter.setBrush(QColor(20, 24, 32, 220))
-                    text_w = len(label) * int(6.8 / self._scale) + 8
-                    text_h = int(14 / self._scale)
+                    text_w = len(label) * int(7.2 / self._scale) + 8
+                    text_h = int(16 / self._scale)
                     painter.drawRect(rx, max(0, ry - text_h - 2), text_w, text_h)
                     painter.setPen(qcol)
                     painter.drawText(rx + 4, max(9, ry - 4), label)
@@ -617,7 +617,7 @@ class ImageCanvasWidget(QWidget):
                 painter.drawEllipse(QRectF(cx - r, cy - r, r * 2, r * 2))
                 label = item.get("label")
                 if label:
-                    painter.setFont(QFont("Consolas", max(8, int(9 / self._scale)), QFont.Weight.Bold))
+                    painter.setFont(QFont("Consolas", max(9, int(10 / self._scale)), QFont.Weight.Bold))
                     painter.drawText(cx + r + 4, cy + 4, label)
 
             elif itype == "line":
@@ -637,11 +637,11 @@ class ImageCanvasWidget(QWidget):
             elif itype == "text":
                 txt = item.get("text", "")
                 pt = item.get("pt", (10, 20))
-                painter.setFont(QFont("Segoe UI", max(8, int(9.5 / self._scale)), QFont.Weight.Bold))
+                painter.setFont(QFont("Segoe UI", max(9, int(10.5 / self._scale)), QFont.Weight.Bold))
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.setBrush(QColor(20, 24, 32, 220))
-                tw = len(txt) * int(6.8 / self._scale) + 8
-                th = int(14 / self._scale)
+                tw = len(txt) * int(7.2 / self._scale) + 8
+                th = int(16 / self._scale)
                 painter.drawRect(pt[0] - 2, pt[1] - th + 2, tw, th)
                 painter.setPen(qcol)
                 painter.drawText(pt[0] + 2, pt[1], txt)
@@ -660,8 +660,8 @@ class ImageCanvasWidget(QWidget):
         painter.drawRect(QRectF(hx, hy, hw, hh))
 
         painter.setPen(QColor(160, 172, 188))
-        painter.setFont(QFont("Segoe UI", 8, QFont.Weight.Bold))
-        painter.drawText(hx + 8, hy + 13, "Histogram (0-255)")
+        painter.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
+        painter.drawText(hx + 8, hy + 14, "Histogram (0-255)")
 
         bar_w = (hw - 16) / 128.0
         plot_h = hh - 22

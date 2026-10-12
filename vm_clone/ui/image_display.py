@@ -38,21 +38,23 @@ from vm_clone.ui import layout_metrics as LM
 def _icon_button(glyph: str, tooltip: str, checkable: bool = False) -> QToolButton:
     btn = QToolButton()
     btn.setObjectName("viewToolButton")
-    btn.setIcon(_view_icon(glyph))
-    btn.setIconSize(QSize(16, 16))
+    btn.setIcon(_view_icon(glyph, 18))
+    btn.setIconSize(QSize(18, 18))
     btn.setToolTip(tooltip)
     btn.setCheckable(checkable)
     btn.setAutoRaise(True)
-    btn.setFixedSize(24, 22)
+    btn.setFixedSize(26, 24)
     return btn
 
 
-def _view_icon(glyph: str) -> QIcon:
+def _view_icon(glyph: str, size: int = 18) -> QIcon:
     """Small original glyphs for the image-display toolbar."""
-    pix = QPixmap(16, 16)
+    pix = QPixmap(size, size)
     pix.fill(Qt.GlobalColor.transparent)
     p = QPainter(pix)
     p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+    if size != 16:
+        p.scale(size / 16.0, size / 16.0)
     pen = QPen(QColor("#d5d8dd"), 1.3)
     pen.setCapStyle(Qt.PenCapStyle.RoundCap)
     pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)

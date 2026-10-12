@@ -100,7 +100,7 @@ class FlowCardItem(QGraphicsItem):
         painter.setPen(QPen(QColor("#2b3547"), 1.0))
         painter.drawLine(QPointF(0, self.HEADER_H), QPointF(self.WIDTH, self.HEADER_H))
 
-        painter.setFont(QFont("Segoe UI", 9, QFont.Weight.DemiBold))
+        painter.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold))
         painter.setPen(QColor(THEME["vm_node_text"]))
         painter.drawText(QRectF(9, 0, self.WIDTH - 46, self.HEADER_H),
                          Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, self.flow.name)
@@ -157,12 +157,12 @@ class FlowCardItem(QGraphicsItem):
 
         # Statistics block
         runs = getattr(self.flow, "execution_count", 0)
-        painter.setFont(QFont("Segoe UI", 9))
+        painter.setFont(QFont("Segoe UI", 10))
         painter.setPen(QColor(THEME["vm_node_text_dim"]))
         painter.drawText(QRectF(12, self.HEADER_H + 40, 90, 16),
                          Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, f"{runs}Times")
 
-        painter.setFont(QFont("Consolas", 9, QFont.Weight.Bold))
+        painter.setFont(QFont("Consolas", 10, QFont.Weight.Bold))
         painter.setPen(QColor(THEME["vm_node_text"]))
         painter.drawText(QRectF(12, self.HEADER_H + 58, 104, 16),
                          Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
@@ -184,7 +184,7 @@ class FlowCardItem(QGraphicsItem):
         painter.drawEllipse(QPointF(knob_x, slider.center().y()), 6.5, 6.5)
 
         # Status footer
-        painter.setFont(QFont("Segoe UI", 8, QFont.Weight.Bold))
+        painter.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
         painter.setPen(self._status_color())
         painter.drawText(QRectF(self.WIDTH - 76, self.HEADER_H + 62, 66, 14),
                          Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, self._status_text())
@@ -367,7 +367,7 @@ class FlowOverviewWidget(QWidget):
         title.setStyleSheet("font-weight: 600; color: #d5d8dd;")
         bar_layout.addWidget(title)
         self.lbl_hint = QLabel("Double-click a flow card to edit it, or use its play button to execute a single flow.")
-        self.lbl_hint.setStyleSheet("color: #9ba0a7; font-size: 11px;")
+        self.lbl_hint.setStyleSheet("color: #9ba0a7; font-size: 12px;")
         bar_layout.addWidget(self.lbl_hint)
         bar_layout.addStretch(1)
         root.addWidget(bar)

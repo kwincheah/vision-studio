@@ -201,9 +201,9 @@ class ToolGridWidget(QListWidget):
     two-line wrapped label underneath, packed into a dense multi-column grid.
     """
 
-    ICON_PX = 26
-    CELL_W = 72
-    CELL_H = 80
+    ICON_PX = 30
+    CELL_W = 76
+    CELL_H = 84
 
     tool_activated = pyqtSignal(str)
 
@@ -385,13 +385,13 @@ class ToolCategoryRail(QWidget):
 
         self._buttons: Dict[str, QToolButton] = {}
 
-        self._layout.addWidget(self._make_button("__brand__", "Brand", get_brand_mark(22)))
+        self._layout.addWidget(self._make_button("__brand__", "Brand", get_brand_mark(24)))
         self._layout.addSpacing(6)
 
         self._stretch_item = self._layout.addStretch(1)
 
         self.btn_search = self._make_button(
-            "__search__", "Search all modules", get_action_icon("search", 22)
+            "__search__", "Search all modules", get_action_icon("search", 24)
         )
         self.btn_search.clicked.connect(self.search_requested)
         self._layout.addWidget(self.btn_search)
@@ -423,7 +423,7 @@ class ToolCategoryRail(QWidget):
         for cat in active_cats:
             if cat not in self._buttons:
                 glyph = CATEGORY_GLYPH.get(cat, "gen")
-                btn = self._make_button(cat, cat, get_rail_icon(glyph, 22), checkable=True)
+                btn = self._make_button(cat, cat, get_rail_icon(glyph, 24), checkable=True)
                 btn.clicked.connect(lambda _=False, c=cat: self._on_category_clicked(c))
                 self._buttons[cat] = btn
                 self._layout.insertWidget(stretch_idx, btn)
@@ -433,8 +433,8 @@ class ToolCategoryRail(QWidget):
         btn = QToolButton()
         btn.setObjectName("railCategory")
         btn.setIcon(icon)
-        btn.setIconSize(QSize(22, 22))
-        btn.setFixedSize(self.RAIL_W, 38)
+        btn.setIconSize(QSize(24, 24))
+        btn.setFixedSize(self.RAIL_W, 40)
         btn.setCheckable(checkable)
         btn.setAutoRaise(True)
         btn.setToolTip(tip)

@@ -201,12 +201,12 @@ class ResultTableWidget(QTableWidget):
         self.setColumnCount(len(headers))
         self.setHorizontalHeaderLabels(headers)
         self.setRowCount(len(rows))
-        mono = QFont("Consolas", 9)
+        mono = QFont("Consolas", 10)
         for r, row in enumerate(rows):
             for c in range(len(headers)):
                 text = row[c] if c < len(row) else ""
                 item = QTableWidgetItem(text)
-                item.setFont(mono if c else QFont("Segoe UI", 9))
+                item.setFont(mono if c else QFont("Segoe UI", 10))
                 item.setToolTip(text)
                 if c == 0:
                     item.setTextAlignment(

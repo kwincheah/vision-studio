@@ -180,7 +180,7 @@ class ModuleResultPanel(QWidget):
         root = QTreeWidgetItem([module_name, "", ""])
         root.setFirstColumnSpanned(False)
         root.setExpanded(True)
-        bold = QFont("Segoe UI", 9, QFont.Weight.DemiBold)
+        bold = QFont("Segoe UI", 10, QFont.Weight.DemiBold)
         root.setFont(COL_PARAM, bold)
         root.setForeground(COL_PARAM, QColor("#e6e8ec"))
         self.tree.addTopLevelItem(root)
@@ -226,11 +226,11 @@ class ModuleResultPanel(QWidget):
     def _add_leaf(self, parent: QTreeWidgetItem, name: str, value: str, value_color: Optional[str] = None):
         item = QTreeWidgetItem([name, value, ""])
         item.setForeground(COL_PARAM, QColor("#b9bcc2"))
-        item.setFont(COL_VALUE, QFont("Consolas", 9))
+        item.setFont(COL_VALUE, QFont("Consolas", 10))
         item.setForeground(COL_VALUE, QColor(value_color or "#e4e6ea"))
         item.setData(COL_PARAM, Qt.ItemDataRole.UserRole, name)
         if value_color:
-            item.setFont(COL_VALUE, QFont("Consolas", 9, QFont.Weight.Bold))
+            item.setFont(COL_VALUE, QFont("Consolas", 10, QFont.Weight.Bold))
         item.setIcon(COL_LINK, _link_icon())
         item.setToolTip(COL_PARAM, name)
         item.setToolTip(COL_VALUE, value)
@@ -242,7 +242,7 @@ class ModuleResultPanel(QWidget):
         """Public helper used by tests / callers to append a result group."""
         group = QTreeWidgetItem([title, "", ""])
         group.setExpanded(True)
-        group.setFont(COL_PARAM, QFont("Segoe UI", 9, QFont.Weight.DemiBold))
+        group.setFont(COL_PARAM, QFont("Segoe UI", 10, QFont.Weight.DemiBold))
         group.setForeground(COL_PARAM, QColor("#cfd2d7"))
         self.tree.addTopLevelItem(group)
         for name, value in rows:

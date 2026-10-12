@@ -59,7 +59,7 @@ class CameraManagementDialog(QDialog):
             "Configure GigE Vision, USB3 Vision, Hikrobot MVS, Webcams, and RTSP Streams.\n"
             "Select a camera to preview live feed and adjust exposure/gain parameters."
         )
-        header.setStyleSheet(f"color: {THEME['text_secondary']}; font-size: 11px;")
+        header.setStyleSheet(f"color: {THEME['text_secondary']}; font-size: 12px;")
         hdr_bar.addWidget(header, 1)
 
         # MVS C SDK Status Badge
@@ -69,7 +69,7 @@ class CameraManagementDialog(QDialog):
         mvs_bg = "#12331f" if is_mvs_active else "#1e293b"
         mvs_fg = "#4ade80" if is_mvs_active else "#38bdf8"
         self.lbl_mvs_status.setStyleSheet(
-            f"background-color: {mvs_bg}; color: {mvs_fg}; font-weight: 600; padding: 4px 8px; border-radius: 3px; font-size: 11px;"
+            f"background-color: {mvs_bg}; color: {mvs_fg}; font-weight: 600; padding: 4px 8px; border-radius: 3px; font-size: 12px;"
         )
         hdr_bar.addWidget(self.lbl_mvs_status, 0)
         main_layout.addLayout(hdr_bar)
@@ -155,12 +155,12 @@ class CameraManagementDialog(QDialog):
         # Hikrobot MVS Feature Configuration Actions
         mvs_action_layout = QHBoxLayout()
         self.btn_import_mvs = QPushButton("Import MVS Config (*.mvs, *.xml)...")
-        self.btn_import_mvs.setStyleSheet("background-color: #0369a1; color: #ffffff; font-size: 11px; padding: 4px;")
+        self.btn_import_mvs.setStyleSheet("background-color: #0369a1; color: #ffffff; font-size: 12px; padding: 4px;")
         self.btn_import_mvs.clicked.connect(self._on_import_mvs_config)
         mvs_action_layout.addWidget(self.btn_import_mvs)
 
         self.btn_export_mvs = QPushButton("Export MVS Config (*.mvs)...")
-        self.btn_export_mvs.setStyleSheet("background-color: #334155; color: #f8fafc; font-size: 11px; padding: 4px;")
+        self.btn_export_mvs.setStyleSheet("background-color: #334155; color: #f8fafc; font-size: 12px; padding: 4px;")
         self.btn_export_mvs.clicked.connect(self._on_export_mvs_config)
         mvs_action_layout.addWidget(self.btn_export_mvs)
 
@@ -192,7 +192,7 @@ class CameraManagementDialog(QDialog):
         # Preview status & controls
         prev_bar = QHBoxLayout()
         self.lbl_preview_info = QLabel("Status: Standby")
-        self.lbl_preview_info.setStyleSheet(f"color: {THEME['accent_primary']}; font-size: 10px;")
+        self.lbl_preview_info.setStyleSheet(f"color: {THEME['accent_primary']}; font-size: 11px;")
         prev_bar.addWidget(self.lbl_preview_info, 1)
 
         self.btn_toggle_preview = QPushButton("Start Preview")

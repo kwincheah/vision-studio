@@ -44,11 +44,11 @@ class NewProjectDialog(QDialog):
 
         # Header title
         title_lbl = QLabel("Create New Solution Project")
-        title_lbl.setStyleSheet("font-size: 15px; font-weight: bold; color: #1E293B;")
+        title_lbl.setStyleSheet("font-size: 16px; font-weight: bold; color: #1E293B;")
         layout.addWidget(title_lbl)
 
         sub_lbl = QLabel("Configure solution name, destination directory, and starting template.")
-        sub_lbl.setStyleSheet("font-size: 11px; color: #64748B;")
+        sub_lbl.setStyleSheet("font-size: 12px; color: #64748B;")
         layout.addWidget(sub_lbl)
 
         line = QFrame()
@@ -62,7 +62,7 @@ class NewProjectDialog(QDialog):
 
         # 1. Project Name
         name_lbl = QLabel("Project Name:")
-        name_lbl.setStyleSheet("font-weight: 600; color: #334155; font-size: 12px;")
+        name_lbl.setStyleSheet("font-weight: 600; color: #334155; font-size: 13px;")
         form_layout.addWidget(name_lbl)
 
         # Generate default name based on existing count
@@ -74,7 +74,7 @@ class NewProjectDialog(QDialog):
                 border: 1px solid #CBD5E1;
                 border-radius: 4px;
                 padding: 6px 10px;
-                font-size: 12px;
+                font-size: 13px;
                 color: #1E293B;
             }
             QLineEdit:focus {
@@ -85,7 +85,7 @@ class NewProjectDialog(QDialog):
 
         # 2. Location
         dir_lbl = QLabel("Save Location:")
-        dir_lbl.setStyleSheet("font-weight: 600; color: #334155; font-size: 12px;")
+        dir_lbl.setStyleSheet("font-weight: 600; color: #334155; font-size: 13px;")
         form_layout.addWidget(dir_lbl)
 
         dir_box = QHBoxLayout()
@@ -96,7 +96,7 @@ class NewProjectDialog(QDialog):
                 border: 1px solid #CBD5E1;
                 border-radius: 4px;
                 padding: 6px 10px;
-                font-size: 12px;
+                font-size: 13px;
                 color: #1E293B;
             }
             QLineEdit:focus {
@@ -112,7 +112,7 @@ class NewProjectDialog(QDialog):
                 border: 1px solid #CBD5E1;
                 border-radius: 4px;
                 padding: 6px 12px;
-                font-size: 12px;
+                font-size: 13px;
                 color: #334155;
             }
             QPushButton:hover {
@@ -125,7 +125,7 @@ class NewProjectDialog(QDialog):
 
         # 3. Template
         tpl_lbl = QLabel("Solution Template:")
-        tpl_lbl.setStyleSheet("font-weight: 600; color: #334155; font-size: 12px;")
+        tpl_lbl.setStyleSheet("font-weight: 600; color: #334155; font-size: 13px;")
         form_layout.addWidget(tpl_lbl)
 
         self.combo_template = QComboBox()
@@ -142,7 +142,7 @@ class NewProjectDialog(QDialog):
                 border: 1px solid #CBD5E1;
                 border-radius: 4px;
                 padding: 6px 10px;
-                font-size: 12px;
+                font-size: 13px;
                 color: #1E293B;
             }
             QComboBox::drop-down {
@@ -166,7 +166,7 @@ class NewProjectDialog(QDialog):
                 border: 1px solid #CBD5E1;
                 border-radius: 4px;
                 padding: 6px 16px;
-                font-size: 12px;
+                font-size: 13px;
                 color: #475569;
             }
             QPushButton:hover {
@@ -184,7 +184,7 @@ class NewProjectDialog(QDialog):
                 border: none;
                 border-radius: 4px;
                 padding: 6px 18px;
-                font-size: 12px;
+                font-size: 13px;
                 font-weight: 600;
             }
             QPushButton:hover {
@@ -260,7 +260,7 @@ class ProjectRowWidget(QWidget):
         # Project name
         name_lbl = QLabel(self.name)
         name_lbl.setStyleSheet("""
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
             color: #1E293B;
         """)
@@ -274,7 +274,7 @@ class ProjectRowWidget(QWidget):
                 color: #166534;
                 border-radius: 3px;
                 padding: 1px 5px;
-                font-size: 10px;
+                font-size: 11px;
                 font-weight: bold;
             """)
         else:
@@ -283,7 +283,7 @@ class ProjectRowWidget(QWidget):
                 color: #991B1B;
                 border-radius: 3px;
                 padding: 1px 5px;
-                font-size: 10px;
+                font-size: 11px;
                 font-weight: bold;
             """)
         top_layout.addWidget(badge_lbl)
@@ -296,7 +296,7 @@ class ProjectRowWidget(QWidget):
                 color: #1E40AF;
                 border-radius: 3px;
                 padding: 1px 5px;
-                font-size: 10px;
+                font-size: 11px;
             """)
             top_layout.addWidget(tpl_badge)
 
@@ -304,7 +304,7 @@ class ProjectRowWidget(QWidget):
 
         # Last opened date
         date_lbl = QLabel(self.last_opened)
-        date_lbl.setStyleSheet("font-size: 11px; color: #94A3B8;")
+        date_lbl.setStyleSheet("font-size: 12px; color: #94A3B8;")
         top_layout.addWidget(date_lbl)
 
         # Open button
@@ -317,7 +317,7 @@ class ProjectRowWidget(QWidget):
                 border: none;
                 border-radius: 3px;
                 padding: 2px 10px;
-                font-size: 11px;
+                font-size: 12px;
                 font-weight: 600;
             }
             QPushButton:hover {
@@ -337,7 +337,7 @@ class ProjectRowWidget(QWidget):
                 border: 1px solid #FECACA;
                 border-radius: 3px;
                 padding: 2px 8px;
-                font-size: 11px;
+                font-size: 12px;
                 font-weight: 500;
             }
             QPushButton:hover {
@@ -353,7 +353,7 @@ class ProjectRowWidget(QWidget):
         # Bottom row: File path with tooltip
         path_lbl = QLabel(self.path)
         path_lbl.setToolTip(self.path)
-        path_lbl.setStyleSheet("font-size: 11px; color: #64748B; font-family: Consolas, monospace;")
+        path_lbl.setStyleSheet("font-size: 12px; color: #64748B; font-family: Consolas, monospace;")
         layout.addWidget(path_lbl)
 
 
@@ -415,7 +415,7 @@ class StartPageDialog(QDialog):
 
         brand_lbl = QLabel("APEX VISION STUDIO")
         brand_lbl.setStyleSheet("""
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 800;
             color: #FFFFFF;
             letter-spacing: 1.5px;
@@ -423,7 +423,7 @@ class StartPageDialog(QDialog):
         title_box.addWidget(brand_lbl)
 
         sub_title = QLabel("Modular Industrial Machine Vision Platform & Flow Orchestration v4.3")
-        sub_title.setStyleSheet("font-size: 11px; color: #94A3B8;")
+        sub_title.setStyleSheet("font-size: 12px; color: #94A3B8;")
         title_box.addWidget(sub_title)
         h_layout.addLayout(title_box)
 
@@ -438,7 +438,7 @@ class StartPageDialog(QDialog):
                 border: none;
                 border-radius: 4px;
                 padding: 7px 16px;
-                font-size: 12px;
+                font-size: 13px;
                 font-weight: 600;
             }
             QPushButton:hover {
@@ -467,7 +467,7 @@ class StartPageDialog(QDialog):
         # Section: START
         sec_start_lbl = QLabel("GET STARTED")
         sec_start_lbl.setStyleSheet("""
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
             color: #64748B;
             letter-spacing: 1px;
@@ -484,7 +484,7 @@ class StartPageDialog(QDialog):
                 border-left: 4px solid #2563EB;
                 border-radius: 4px;
                 padding: 10px 14px;
-                font-size: 13px;
+                font-size: 14px;
                 font-weight: 600;
                 color: #1E293B;
                 text-align: left;
@@ -508,7 +508,7 @@ class StartPageDialog(QDialog):
                 border-left: 4px solid #E8792B;
                 border-radius: 4px;
                 padding: 10px 14px;
-                font-size: 13px;
+                font-size: 14px;
                 font-weight: 600;
                 color: #1E293B;
                 text-align: left;
@@ -525,7 +525,7 @@ class StartPageDialog(QDialog):
         # Section: SAMPLE TEMPLATES
         sec_tpl_lbl = QLabel("SAMPLE TEMPLATES")
         sec_tpl_lbl.setStyleSheet("""
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
             color: #64748B;
             letter-spacing: 1px;
@@ -551,7 +551,7 @@ class StartPageDialog(QDialog):
                     border: 1px solid #E2E8F0;
                     border-radius: 4px;
                     padding: 8px 12px;
-                    font-size: 12px;
+                    font-size: 13px;
                     font-weight: 500;
                     color: #334155;
                     text-align: left;
@@ -586,7 +586,7 @@ class StartPageDialog(QDialog):
 
         rec_title = QLabel("RECENT PROJECTS")
         rec_title.setStyleSheet("""
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
             color: #64748B;
             letter-spacing: 1px;
@@ -599,7 +599,7 @@ class StartPageDialog(QDialog):
             color: #475569;
             border-radius: 9px;
             padding: 1px 7px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
         """)
         rec_bar.addWidget(self.count_badge)
@@ -616,7 +616,7 @@ class StartPageDialog(QDialog):
                 border: 1px solid #CBD5E1;
                 border-radius: 4px;
                 padding: 5px 10px;
-                font-size: 12px;
+                font-size: 13px;
                 color: #1E293B;
             }
             QLineEdit:focus {
@@ -633,7 +633,7 @@ class StartPageDialog(QDialog):
                 background: transparent;
                 border: none;
                 color: #64748B;
-                font-size: 11px;
+                font-size: 12px;
                 padding: 4px 6px;
             }
             QPushButton:hover {
@@ -675,7 +675,7 @@ class StartPageDialog(QDialog):
         # Empty state label
         self.lbl_empty = QLabel("No recent projects found.\nClick 'New Project' or 'Open Project File' to get started.")
         self.lbl_empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_empty.setStyleSheet("color: #94A3B8; font-size: 13px; line-height: 1.5;")
+        self.lbl_empty.setStyleSheet("color: #94A3B8; font-size: 14px; line-height: 1.5;")
         self.lbl_empty.setVisible(False)
         right_layout.addWidget(self.lbl_empty)
 
@@ -694,12 +694,12 @@ class StartPageDialog(QDialog):
         self.chk_startup.setChecked(self.pm.get_show_on_startup())
         self.chk_startup.setStyleSheet("""
             QCheckBox {
-                font-size: 12px;
+                font-size: 13px;
                 color: #475569;
             }
             QCheckBox::indicator {
-                width: 15px;
-                height: 15px;
+                width: 16px;
+                height: 16px;
                 border: 1px solid #94A3B8;
                 border-radius: 3px;
                 background: #FFFFFF;
@@ -722,7 +722,7 @@ class StartPageDialog(QDialog):
                 border: 1px solid #CBD5E1;
                 border-radius: 4px;
                 padding: 6px 16px;
-                font-size: 12px;
+                font-size: 13px;
                 color: #334155;
             }
             QPushButton:hover {

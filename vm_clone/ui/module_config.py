@@ -123,7 +123,7 @@ class ModuleConfigDialog(QDialog):
             "Input parameter follows the connection line it is related to; changing the source updates the wire."
         )
         hint.setWordWrap(True)
-        hint.setStyleSheet(f"color: {THEME['text_secondary']}; font-size: 10px;")
+        hint.setStyleSheet(f"color: {THEME['text_secondary']}; font-size: 11px;")
         layout.addWidget(hint)
 
         table = QTableWidget(len(self.tool.inputs), 3)
@@ -203,7 +203,7 @@ class ModuleConfigDialog(QDialog):
             "global-variable subscription list."
         )
         hint.setWordWrap(True)
-        hint.setStyleSheet(f"color: {THEME['text_secondary']}; font-size: 10px;")
+        hint.setStyleSheet(f"color: {THEME['text_secondary']}; font-size: 11px;")
         layout.addWidget(hint)
 
         self.output_tree = QTreeWidget()
@@ -261,7 +261,7 @@ class ModuleConfigDialog(QDialog):
 
             title = QLabel(group_name)
             title.setStyleSheet(
-                f"font-weight: 600; color: {THEME['accent_primary']}; font-size: 11px;")
+                f"font-weight: 600; color: {THEME['accent_primary']}; font-size: 12px;")
             gl.addWidget(title)
 
             form = QFormLayout()
@@ -290,7 +290,7 @@ class ModuleConfigDialog(QDialog):
             gl.setSpacing(4)
             title = QLabel("Module Parameters")
             title.setStyleSheet(
-                f"font-weight: 600; color: {THEME['accent_primary']}; font-size: 11px;")
+                f"font-weight: 600; color: {THEME['accent_primary']}; font-size: 12px;")
             gl.addWidget(title)
             form = QFormLayout()
             form.setLabelAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
@@ -325,7 +325,7 @@ class ModuleConfigDialog(QDialog):
             "the flow runs. Selecting this module subscribes its output image."
         )
         hint.setWordWrap(True)
-        hint.setStyleSheet(f"color: {THEME['text_secondary']}; font-size: 10px;")
+        hint.setStyleSheet(f"color: {THEME['text_secondary']}; font-size: 11px;")
         layout.addWidget(hint)
 
         table = QTableWidget(0, 3)

@@ -638,7 +638,7 @@ class FlowNodeItem(QGraphicsItem):
         painter.setPen(QPen(badge_border, 1.2))
         painter.setBrush(badge_bg)
         painter.drawRoundedRect(badge, badge_h / 2.0, badge_h / 2.0)
-        glyph_icon = get_tool_icon(self.tool.tool_name, 11,
+        glyph_icon = get_tool_icon(self.tool.tool_name, 13,
                                    QColor(THEME["vm_accent"]) if self.isSelected() else QColor("#38bdf8"))
         glyph_icon.paint(painter, badge.adjusted(4.5, 3.5, -3.5, -3.5).toRect())
 
@@ -651,13 +651,13 @@ class FlowNodeItem(QGraphicsItem):
             num_txt, name_txt = "", name.replace("_", " ")
 
         text_rect = QRectF(badge_w / 2.0 + 4.0, 2, self.WIDTH - badge_w / 2.0 - 11, self.HEADER_H - 4)
-        fm_num = QFontMetrics(QFont("Segoe UI", 8, QFont.Weight.Bold))
+        fm_num = QFontMetrics(QFont("Segoe UI", 9, QFont.Weight.Bold))
         num_w = fm_num.horizontalAdvance(num_txt)
-        painter.setFont(QFont("Segoe UI", 8, QFont.Weight.Bold))
+        painter.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
         painter.setPen(QColor(THEME["vm_accent"]))
         painter.drawText(QRectF(text_rect.x(), text_rect.y(), num_w, text_rect.height()),
                          Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, num_txt)
-        name_font = QFont("Segoe UI", 8)
+        name_font = QFont("Segoe UI", 9)
         fm_name = QFontMetrics(name_font)
         avail = text_rect.width() - num_w
         painter.setFont(name_font)
@@ -670,7 +670,7 @@ class FlowNodeItem(QGraphicsItem):
 
         # --- port rows -------------------------------------------------------
         left_rect, right_rect = self._port_label_rects()
-        font_port = QFont("Segoe UI", 7)
+        font_port = QFont("Segoe UI", 8)
         fm_port = QFontMetrics(font_port)
         painter.setFont(font_port)
 
@@ -695,14 +695,14 @@ class FlowNodeItem(QGraphicsItem):
         painter.setPen(QPen(QColor("#2b3547"), 1.0))
         painter.drawLine(QPointF(6, footer_y), QPointF(self.WIDTH - 6, footer_y))
 
-        painter.setFont(QFont("Segoe UI", 7, QFont.Weight.Bold))
+        painter.setFont(QFont("Segoe UI", 8, QFont.Weight.Bold))
         painter.setPen(st_col)
         painter.drawText(QRectF(8, footer_y, 52, self.FOOTER_H),
                          Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, st_text)
 
         if self.elapsed_ms > 0:
             painter.setPen(QColor(THEME["vm_node_text_dim"]))
-            painter.setFont(QFont("Consolas", 7))
+            painter.setFont(QFont("Consolas", 8))
             painter.drawText(QRectF(self.WIDTH - 74, footer_y, 66, self.FOOTER_H),
                              Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
                              f"{self.elapsed_ms:.1f} ms")
@@ -1175,15 +1175,15 @@ class FlowTelemetryBar(QWidget):
         row.setSpacing(10)
 
         self.lbl_flow = QLabel("Flow: 0.00ms")
-        self.lbl_flow.setStyleSheet("color: #38bdf8; font-weight: 600; font-size: 10px;")
+        self.lbl_flow.setStyleSheet("color: #38bdf8; font-weight: 600; font-size: 11px;")
         row.addWidget(self.lbl_flow)
 
         self.lbl_tools = QLabel("Tools: 0")
-        self.lbl_tools.setStyleSheet("color: #94a3b8; font-size: 10px;")
+        self.lbl_tools.setStyleSheet("color: #94a3b8; font-size: 11px;")
         row.addWidget(self.lbl_tools)
 
         self.lbl_algo = QLabel("Algorithm: 0.00ms")
-        self.lbl_algo.setStyleSheet("color: #a78bfa; font-size: 10px;")
+        self.lbl_algo.setStyleSheet("color: #a78bfa; font-size: 11px;")
         row.addWidget(self.lbl_algo)
 
         self.setStyleSheet(

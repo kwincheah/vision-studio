@@ -19,12 +19,15 @@ ICON_COLOR_MUTED = QColor(148, 163, 184)      # Slate 400 (#94a3b8)
 ICON_COLOR_DARK = QColor(22, 26, 34)          # Surface background
 
 
-def _create_canvas(size: int = 16) -> tuple[QPixmap, QPainter]:
+def _create_canvas(size: int = 18) -> tuple[QPixmap, QPainter]:
     pix = QPixmap(size, size)
     pix.fill(Qt.GlobalColor.transparent)
     p = QPainter(pix)
     p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
     p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+    if size != 16:
+        scale = size / 16.0
+        p.scale(scale, scale)
     return pix, p
 
 
@@ -35,7 +38,7 @@ def _create_pen(color: QColor, width: float = 1.35, style: Qt.PenStyle = Qt.PenS
     return pen
 
 
-def get_category_icon(category_name: str, size: int = 16, accent_color: Optional[QColor] = None) -> QIcon:
+def get_category_icon(category_name: str, size: int = 18, accent_color: Optional[QColor] = None) -> QIcon:
     """Returns a crisp, recognizable icon for each module category."""
     pix, p = _create_canvas(size)
     col = accent_color or ICON_COLOR_ACCENT
@@ -127,7 +130,7 @@ def get_category_icon(category_name: str, size: int = 16, accent_color: Optional
     return QIcon(pix)
 
 
-def get_tool_icon(tool_name: str, size: int = 16, accent_color: Optional[QColor] = None) -> QIcon:
+def get_tool_icon(tool_name: str, size: int = 18, accent_color: Optional[QColor] = None) -> QIcon:
     """Returns a specific vector icon for any of the 34 machine vision tools."""
     pix, p = _create_canvas(size)
     col = accent_color or ICON_COLOR_ACCENT
@@ -321,7 +324,7 @@ def get_tool_icon(tool_name: str, size: int = 16, accent_color: Optional[QColor]
     return QIcon(pix)
 
 
-def get_action_icon(action_name: str, size: int = 16) -> QIcon:
+def get_action_icon(action_name: str, size: int = 18) -> QIcon:
     """Returns a vector icon for command toolbar controls."""
     pix, p = _create_canvas(size)
     col = ICON_COLOR_LIGHT

@@ -170,7 +170,7 @@ class FlowValidationDialog(QDialog):
                 sev_item.setForeground(QColor(THEME["status_warn_text"]))
             else:
                 sev_item.setForeground(QColor(THEME["text_secondary"]))
-            sev_item.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
+            sev_item.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
             table.setItem(row, 0, sev_item)
 
             table.setItem(row, 1, QTableWidgetItem(issue.get("node_id", "System/Graph")))
@@ -358,8 +358,8 @@ class VisionMasterMainWindow(QMainWindow):
 
         self.btn_menu_save = QToolButton()
         self.btn_menu_save.setObjectName("btnMenuSave")
-        self.btn_menu_save.setIcon(get_action_icon("save", 16))
-        self.btn_menu_save.setFixedSize(22, 22)
+        self.btn_menu_save.setIcon(get_action_icon("save", 18))
+        self.btn_menu_save.setFixedSize(24, 24)
         self.btn_menu_save.setToolTip("Save Solution (Ctrl+S)")
         self.btn_menu_save.clicked.connect(self.on_save_solution)
         cl.addWidget(self.btn_menu_save)
@@ -436,8 +436,8 @@ class VisionMasterMainWindow(QMainWindow):
     def _make_icon_button(self, action_key: str, tooltip: str, slot, checkable: bool = False) -> QToolButton:
         btn = QToolButton()
         btn.setObjectName("toolbarButton")
-        btn.setIcon(get_action_icon(action_key, 22))
-        btn.setIconSize(QSize(18, 18))
+        btn.setIcon(get_action_icon(action_key, 24))
+        btn.setIconSize(QSize(LM.TOOLBAR_ICON, LM.TOOLBAR_ICON))
         btn.setToolTip(tooltip)
         btn.setCheckable(checkable)
         btn.setAutoRaise(True)
@@ -485,9 +485,9 @@ class VisionMasterMainWindow(QMainWindow):
         self.toolbar_resources = row1
 
         brand = QLabel()
-        brand.setPixmap(get_brand_mark(18).pixmap(18, 18))
+        brand.setPixmap(get_brand_mark(22).pixmap(22, 22))
         brand.setToolTip("Apex Industrial Vision Studio")
-        brand.setFixedWidth(26)
+        brand.setFixedWidth(28)
         row1.addWidget(brand)
 
         for key, tip, slot in (
@@ -793,7 +793,7 @@ class VisionMasterMainWindow(QMainWindow):
         self.tool_tree = QTreeWidget()
         self.tool_tree.setObjectName("toolTreeCompat")
         self.tool_tree.setHeaderHidden(True)
-        self.tool_tree.setIconSize(QSize(16, 16))
+        self.tool_tree.setIconSize(QSize(18, 18))
         self.tool_tree.setColumnCount(1)
         self._populate_tool_tree()
         self.tool_tree.itemDoubleClicked.connect(self.on_add_tool_from_tree)
@@ -816,15 +816,15 @@ class VisionMasterMainWindow(QMainWindow):
                 continue
 
             cat_item = QTreeWidgetItem(self.tool_tree, [cat_name])
-            cat_item.setIcon(0, get_category_icon(cat_name, 16))
+            cat_item.setIcon(0, get_category_icon(cat_name, 18))
             cat_item.setExpanded(True)
-            cat_item.setFont(0, QFont("Segoe UI", 9, QFont.Weight.DemiBold))
+            cat_item.setFont(0, QFont("Segoe UI", 10, QFont.Weight.DemiBold))
             cat_item.setForeground(0, QColor(THEME['text_secondary']))
             for t_name in matching_tools:
                 t_item = QTreeWidgetItem(cat_item, [t_name])
-                t_item.setIcon(0, get_tool_icon(t_name, 16))
+                t_item.setIcon(0, get_tool_icon(t_name, 18))
                 t_item.setData(0, Qt.ItemDataRole.UserRole, t_name)
-                t_item.setFont(0, QFont("Segoe UI", 9))
+                t_item.setFont(0, QFont("Segoe UI", 10))
                 t_item.setForeground(0, QColor(THEME['text_primary']))
                 tool_cls = get_tool_class(t_name)
                 desc = getattr(tool_cls, "description", "") if tool_cls else ""
@@ -1910,7 +1910,7 @@ class VisionMasterMainWindow(QMainWindow):
             st_item = QTableWidgetItem(res.status.value.upper())
             st_color = QColor(THEME['status_ok_text']) if is_pass else QColor(THEME['status_error_text'])
             st_item.setForeground(st_color)
-            st_item.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
+            st_item.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
             self.results_table.setItem(row, 2, st_item)
 
             self.results_table.setItem(row, 3, QTableWidgetItem(f"{res.elapsed_ms:.2f} ms"))
@@ -2132,7 +2132,7 @@ class VisionMasterMainWindow(QMainWindow):
                 item.setForeground(
                     QColor(THEME['status_ok_text']) if overall_ok else QColor(THEME['status_error_text'])
                 )
-                item.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
+                item.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
             self.history_table.setItem(row, col, item)
 
         if self.history_table.rowCount() > 500:

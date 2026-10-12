@@ -111,7 +111,7 @@ class CameraCalibrationDialog(QDialog):
         left_layout.setSpacing(6)
 
         lbl_frames = QLabel("Calibration Views Pool")
-        lbl_frames.setStyleSheet("font-weight: 600; color: #e2e8f0; font-size: 11px;")
+        lbl_frames.setStyleSheet("font-weight: 600; color: #e2e8f0; font-size: 12px;")
         left_layout.addWidget(lbl_frames)
 
         self.list_views = QListWidget()
@@ -172,7 +172,7 @@ class CameraCalibrationDialog(QDialog):
         center_layout.addWidget(self.lbl_image)
 
         self.lbl_view_caption = QLabel("Select or add an image to inspect detected pattern corners.")
-        self.lbl_view_caption.setStyleSheet("color: #94a3b8; font-size: 11px;")
+        self.lbl_view_caption.setStyleSheet("color: #94a3b8; font-size: 12px;")
         center_layout.addWidget(self.lbl_view_caption)
 
         splitter.addWidget(center_panel)
@@ -184,7 +184,7 @@ class CameraCalibrationDialog(QDialog):
         right_layout.setSpacing(8)
 
         lbl_results_title = QLabel("Calibration Solution")
-        lbl_results_title.setStyleSheet("font-weight: 600; color: #e2e8f0; font-size: 11px;")
+        lbl_results_title.setStyleSheet("font-weight: 600; color: #e2e8f0; font-size: 12px;")
         right_layout.addWidget(lbl_results_title)
 
         self.lbl_status_badge = QLabel("NOT CALIBRATED")
@@ -249,7 +249,7 @@ class CameraCalibrationDialog(QDialog):
         # ---------------------------------------------------------------------
         bottom_bar = QHBoxLayout()
         lbl_hint = QLabel("Tip: 3 to 10 angled chessboard frames produce optimal sub-pixel lens correction.")
-        lbl_hint.setStyleSheet("color: #64748b; font-size: 11px;")
+        lbl_hint.setStyleSheet("color: #64748b; font-size: 12px;")
         bottom_bar.addWidget(lbl_hint)
         bottom_bar.addStretch()
 
@@ -287,7 +287,7 @@ class CameraCalibrationDialog(QDialog):
                 background-color: #11141b;
                 border: 1px solid #202735;
                 color: #f1f5f9;
-                font-size: 11px;
+                font-size: 12px;
                 border-radius: 2px;
             }}
             QListWidget::item {{

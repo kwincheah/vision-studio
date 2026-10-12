@@ -95,17 +95,17 @@ def initialize_app_fonts(app: QApplication):
         for fp in font_paths:
             if os.path.exists(fp):
                 QFontDatabase.addApplicationFont(fp)
-        app.setFont(QFont("Segoe UI", 9))
+        app.setFont(QFont("Segoe UI", 10))
     elif sys.platform == "darwin":
-        app.setFont(QFont(".AppleSystemUIFont", 11))
+        app.setFont(QFont(".AppleSystemUIFont", 12))
     else:
         families = QFontDatabase.families()
         for preferred in ("Ubuntu", "DejaVu Sans", "Noto Sans", "Liberation Sans"):
             if preferred in families:
-                app.setFont(QFont(preferred, 10))
+                app.setFont(QFont(preferred, 11))
                 break
         else:
-            app.setFont(QFont("sans-serif", 10))
+            app.setFont(QFont("sans-serif", 11))
 
 
 INDUSTRIAL_THEME_QSS = f"""
@@ -114,7 +114,7 @@ QMainWindow {{
     background-color: {THEME['bg_app']};
     color: {THEME['text_primary']};
     font-family: "Segoe UI", -apple-system, Arial, sans-serif;
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 QWidget {{
@@ -124,14 +124,14 @@ QWidget {{
     selection-color: #ffffff;
     outline: none;
     font-family: "Segoe UI", -apple-system, Arial, sans-serif;
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 /* Dock Widgets (macOS Inspector & Tool Panels) */
 QDockWidget {{
     color: {THEME['text_primary']};
     font-weight: 600;
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 QDockWidget::title {{
@@ -141,7 +141,7 @@ QDockWidget::title {{
     text-align: left;
     color: {THEME['text_secondary']};
     font-weight: 600;
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: 0.5px;
 }}
 
@@ -162,7 +162,7 @@ QMenuBar {{
     color: {THEME['text_secondary']};
     border-bottom: 1px solid {THEME['border_subtle']};
     padding: 2px 6px;
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 QMenuBar::item {{
@@ -217,7 +217,7 @@ QToolButton {{
     border-radius: 4px;
     padding: 4px 8px;
     font-weight: 500;
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 QToolButton:hover {{
@@ -238,7 +238,7 @@ QPushButton {{
     border-radius: 4px;
     padding: 4px 10px;
     font-weight: 500;
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 QPushButton:hover {{
@@ -313,7 +313,7 @@ QTabBar::tab {{
     border-top-right-radius: 4px;
     margin-right: 2px;
     font-weight: 500;
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 QTabBar::tab:selected {{
@@ -334,7 +334,7 @@ QTreeWidget {{
     border-radius: 4px;
     color: {THEME['text_primary']};
     padding: 3px;
-    font-size: 11px;
+    font-size: 12px;
     outline: none;
 }}
 
@@ -369,7 +369,7 @@ QListWidget, QTableWidget {{
     color: {THEME['text_primary']};
     alternate-background-color: {THEME['bg_table_row_alt']};
     gridline-color: {THEME['border_subtle']};
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 QTableWidget::item {{
@@ -387,7 +387,7 @@ QHeaderView::section {{
     padding: 5px 8px;
     border: 1px solid {THEME['border_subtle']};
     font-weight: 600;
-    font-size: 10px;
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }}
@@ -399,7 +399,7 @@ QLineEdit {{
     border-radius: 5px;
     padding: 4px 8px;
     color: {THEME['text_primary']};
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 QLineEdit:focus {{
@@ -413,7 +413,7 @@ QSpinBox, QDoubleSpinBox, QComboBox {{
     border-radius: 4px;
     padding: 3px 6px;
     color: {THEME['text_primary']};
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{
@@ -437,7 +437,7 @@ QComboBox QAbstractItemView {{
 QCheckBox {{
     color: {THEME['text_primary']};
     spacing: 6px;
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 QCheckBox::indicator {{
@@ -497,7 +497,7 @@ QStatusBar {{
     background-color: {THEME['bg_app']};
     color: {THEME['text_muted']};
     border-top: 1px solid {THEME['border_subtle']};
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 QSplitter::handle {{
@@ -522,7 +522,7 @@ QGroupBox {{
     padding-top: 10px;
     color: {THEME['text_secondary']};
     font-weight: 600;
-    font-size: 10px;
+    font-size: 11px;
 }}
 
 QGroupBox::title {{

@@ -126,13 +126,13 @@ class ParameterInspectorWidget(QWidget):
 
         self.lbl_title = QLabel("NO MODULE SELECTED")
         self.lbl_title.setStyleSheet(
-            f"font-size: 11px; font-weight: bold; color: {THEME['accent_primary']};"
+            f"font-size: 12px; font-weight: bold; color: {THEME['accent_primary']};"
         )
         h_card_layout.addWidget(self.lbl_title)
 
         self.lbl_desc = QLabel("Select a module in the flow graph or tool box.")
         self.lbl_desc.setWordWrap(True)
-        self.lbl_desc.setStyleSheet(f"color: {THEME['text_secondary']}; font-size: 10px;")
+        self.lbl_desc.setStyleSheet(f"color: {THEME['text_secondary']}; font-size: 11px;")
         h_card_layout.addWidget(self.lbl_desc)
 
         self.layout.addWidget(self.header_card, 0)
@@ -174,7 +174,7 @@ class ParameterInspectorWidget(QWidget):
         self.lbl_verdict.setStyleSheet(
             f"background-color: {THEME['bg_surface_alt']}; "
             f"border: 1px solid {THEME['border_subtle']}; border-radius: 2px; "
-            f"padding: 4px 6px; color: {THEME['text_secondary']}; font-size: 10px;"
+            f"padding: 4px 6px; color: {THEME['text_secondary']}; font-size: 11px;"
         )
         self.layout.addWidget(self.lbl_verdict, 0)
 
@@ -242,11 +242,11 @@ class ParameterInspectorWidget(QWidget):
             if key == "code":
                 lbl = QLabel("Python Logic Script")
                 lbl.setStyleSheet(
-                    f"font-weight: 600; color: {THEME['accent_primary']}; font-size: 10px;"
+                    f"font-weight: 600; color: {THEME['accent_primary']}; font-size: 11px;"
                 )
                 self.param_layout.addRow(lbl)
                 code_edit = QTextEdit(str(val))
-                code_edit.setFont(QFont("Consolas", 9))
+                code_edit.setFont(QFont("Consolas", 10))
                 code_edit.setMinimumHeight(96)
                 code_edit.setStyleSheet(
                     f"background-color: {THEME['bg_control']}; color: {THEME['text_primary']}; "
@@ -565,7 +565,7 @@ class ParameterInspectorWidget(QWidget):
             self.lbl_verdict.setStyleSheet(
                 f"background-color: {THEME['bg_surface_alt']}; "
                 f"border: 1px solid {THEME['border_subtle']}; border-radius: 2px; "
-                f"padding: 4px 6px; color: {THEME['text_secondary']}; font-size: 10px;"
+                f"padding: 4px 6px; color: {THEME['text_secondary']}; font-size: 11px;"
             )
             return
 
@@ -582,7 +582,7 @@ class ParameterInspectorWidget(QWidget):
         self.lbl_verdict.setStyleSheet(
             f"background-color: {THEME['bg_surface_alt']}; "
             f"border: 1px solid {THEME['border_subtle']}; border-radius: 2px; "
-            f"padding: 4px 6px; color: {THEME['text_secondary']}; font-size: 10px;"
+            f"padding: 4px 6px; color: {THEME['text_secondary']}; font-size: 11px;"
         )
 
         # Keep the compatibility table populated for API consumers.
@@ -600,13 +600,13 @@ class ParameterInspectorWidget(QWidget):
         self.result_table.insertRow(row)
 
         k_item = QTableWidgetItem(key)
-        k_item.setFont(QFont("Segoe UI", 9))
+        k_item.setFont(QFont("Segoe UI", 10))
         v_item = QTableWidgetItem(val)
-        v_item.setFont(QFont("Consolas", 9))
+        v_item.setFont(QFont("Consolas", 10))
 
         if is_status:
             v_item.setForeground(QColor(THEME['status_ok_text']) if is_ok else QColor(THEME['status_error_text']))
-            v_item.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
+            v_item.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
 
         self.result_table.setItem(row, 0, k_item)
         self.result_table.setItem(row, 1, v_item)

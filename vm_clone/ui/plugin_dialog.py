@@ -77,7 +77,7 @@ class PluginManagerDialog(QDialog):
         # Footer Dialog Buttons
         footer = QHBoxLayout()
         hint = QLabel("Plugins run as modular extensions inside the Vision Master DAG pipeline.")
-        hint.setStyleSheet(f"color: {THEME['text_muted']}; font-size: 11px;")
+        hint.setStyleSheet(f"color: {THEME['text_muted']}; font-size: 12px;")
         footer.addWidget(hint, 1)
 
         btn_close = QPushButton("Close")
@@ -152,7 +152,7 @@ class PluginManagerDialog(QDialog):
             color: {THEME['text_primary']};
             border: 1px solid {THEME['border_control']};
             font-family: Consolas, monospace;
-            font-size: 11px;
+            font-size: 12px;
         """)
         grp_layout.addWidget(self.txt_details)
         right_layout.addWidget(grp_details)
@@ -379,7 +379,7 @@ Exported Tools ({len(p.tools)}):
             color: {THEME['text_primary']};
             border: 1px solid {THEME['border_control']};
             font-family: Consolas, monospace;
-            font-size: 11px;
+            font-size: 12px;
         """)
         gm_layout.addWidget(self.txt_market_details)
 
@@ -530,7 +530,7 @@ Overview:
             "Install a custom third-party vision plugin directly from any public GitHub repository.\n"
             "The repository must contain a 'plugin.json' manifest and an '__init__.py' entrypoint."
         )
-        header.setStyleSheet(f"color: {THEME['text_secondary']}; font-size: 11px;")
+        header.setStyleSheet(f"color: {THEME['text_secondary']}; font-size: 12px;")
         layout.addWidget(header)
 
         form_box = QGroupBox("GitHub Repository Settings")
@@ -568,7 +568,7 @@ Overview:
             color: {THEME['text_primary']};
             border: 1px solid {THEME['border_control']};
             font-family: Consolas, monospace;
-            font-size: 11px;
+            font-size: 12px;
         """)
         self.txt_github_log.setPlainText("Ready to download and install plugin from GitHub.")
         gl_layout.addWidget(self.txt_github_log)
@@ -622,7 +622,7 @@ Overview:
             "Scaffold a complete, ready-to-publish Vision Master plugin repository.\n"
             "Generates 'plugin.json', typed 'PluginToolBase' template, 'README.md', and '.gitignore' ready to push to GitHub."
         )
-        header.setStyleSheet(f"color: {THEME['text_secondary']}; font-size: 11px;")
+        header.setStyleSheet(f"color: {THEME['text_secondary']}; font-size: 12px;")
         layout.addWidget(header)
 
         form_box = QGroupBox("Plugin Specification")
@@ -681,7 +681,7 @@ Overview:
             color: {THEME['text_primary']};
             border: 1px solid {THEME['border_control']};
             font-family: Consolas, monospace;
-            font-size: 11px;
+            font-size: 12px;
         """)
         txt_instructions.setPlainText("""1. Generate the plugin scaffold above into your project or local workspace.
 2. In your terminal, navigate into the generated plugin directory:

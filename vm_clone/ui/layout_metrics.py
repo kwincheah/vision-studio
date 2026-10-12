@@ -130,9 +130,9 @@ STRIP_THUMB = (52, 40)
 # Tables and spacing (measured in R1)
 # ---------------------------------------------------------------------------
 #: Result table row height: 27 px of 1310 => 0.0206; 23 px at 760 px height.
-TABLE_ROW_H = 23
+TABLE_ROW_H = 25
 #: Result table header height: measured 33 px.
-TABLE_HEADER_H = 33
+TABLE_HEADER_H = 34
 #: Result table first-column width for a per-feature table (`Index`).
 TABLE_INDEX_COL_W = 52
 #: Result table column width for a `Parameter | Value` fallback table.
@@ -151,7 +151,7 @@ BORDER_W = 1
 #: 26 px icon, inside a strip whose measured height is 66 px at a 1310 px window.
 #: With two control rows this project splits that budget, hence the 32 px button.
 TOOLBAR_BUTTON = (38, 30)
-TOOLBAR_ICON = 18
+TOOLBAR_ICON = 20
 
 # ---------------------------------------------------------------------------
 # Minimum usable sizes (resizing floor)
