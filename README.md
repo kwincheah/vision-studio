@@ -1,10 +1,8 @@
 # Apex Industrial Vision Studio
 
-[![CI Status](https://github.com/kwincheah/vision-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/kwincheah/vision-studio/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-brightgreen.svg)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/kwincheah/vision-studio)
-[![Tests Passing](https://img.shields.io/badge/tests-228%20passed%20(100%25)-success.svg)](tests/)
 
 **Apex Industrial Vision Studio** is an open-source, modular industrial machine-vision platform and visual flow orchestration studio built with **Python 3.12, PyQt6, OpenCV, and NumPy**. It provides an intuitive, node-based workflow environment for designing, calibrating, and executing high-speed automated optical inspection (AOI) pipelines.
 
