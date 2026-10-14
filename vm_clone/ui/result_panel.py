@@ -29,7 +29,7 @@ COL_VALUE = 1
 COL_LINK = 2
 
 
-def _link_icon(color: str = "#9aa0a6") -> QIcon:
+def _link_icon(color: str = "#4f565c") -> QIcon:
     """Chain-link subscription glyph used in the reference third column."""
     return get_action_icon("link", 14)
 
@@ -182,7 +182,7 @@ class ModuleResultPanel(QWidget):
         root.setExpanded(True)
         bold = QFont("Segoe UI", 10, QFont.Weight.DemiBold)
         root.setFont(COL_PARAM, bold)
-        root.setForeground(COL_PARAM, QColor("#e6e8ec"))
+        root.setForeground(COL_PARAM, QColor(THEME['text_primary']))
         self.tree.addTopLevelItem(root)
         root.setExpanded(True)
 
@@ -193,7 +193,7 @@ class ModuleResultPanel(QWidget):
         outputs_group = QTreeWidgetItem(["Outputs", "", ""])
         outputs_group.setExpanded(True)
         outputs_group.setFont(COL_PARAM, bold)
-        outputs_group.setForeground(COL_PARAM, QColor("#cfd2d7"))
+        outputs_group.setForeground(COL_PARAM, QColor(THEME['text_secondary']))
         root.addChild(outputs_group)
         outputs_group.setExpanded(True)
 
@@ -225,9 +225,9 @@ class ModuleResultPanel(QWidget):
     # ------------------------------------------------------------------ rows
     def _add_leaf(self, parent: QTreeWidgetItem, name: str, value: str, value_color: Optional[str] = None):
         item = QTreeWidgetItem([name, value, ""])
-        item.setForeground(COL_PARAM, QColor("#b9bcc2"))
+        item.setForeground(COL_PARAM, QColor(THEME['text_secondary']))
         item.setFont(COL_VALUE, QFont("Consolas", 10))
-        item.setForeground(COL_VALUE, QColor(value_color or "#e4e6ea"))
+        item.setForeground(COL_VALUE, QColor(value_color or THEME['text_primary']))
         item.setData(COL_PARAM, Qt.ItemDataRole.UserRole, name)
         if value_color:
             item.setFont(COL_VALUE, QFont("Consolas", 10, QFont.Weight.Bold))
@@ -243,7 +243,7 @@ class ModuleResultPanel(QWidget):
         group = QTreeWidgetItem([title, "", ""])
         group.setExpanded(True)
         group.setFont(COL_PARAM, QFont("Segoe UI", 10, QFont.Weight.DemiBold))
-        group.setForeground(COL_PARAM, QColor("#cfd2d7"))
+        group.setForeground(COL_PARAM, QColor(THEME['text_secondary']))
         self.tree.addTopLevelItem(group)
         for name, value in rows:
             self._add_leaf(group, name, str(value))

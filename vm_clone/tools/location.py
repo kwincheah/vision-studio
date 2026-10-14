@@ -233,9 +233,16 @@ class PositionCorrectionTool(VisionToolBase):
         }
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
-        run_x = float(context.get("Running_X", self.get_param("fiducial_x", 350.0)))
-        run_y = float(context.get("Running_Y", self.get_param("fiducial_y", 300.0)))
-        run_ang = float(context.get("Running_Angle", 0.0))
+        # The three running pose values arrive from a match/correction chain, so any
+        # of them can be absent, `None`, a string, or non-finite.  `float()` raised on
+        # all of those, and a non-finite value then propagated NaN through the affine
+        # matrix into every downstream module.  `as_float` substitutes the fiducial
+        # default and the run continues with a corrected pose.
+        fallback_x = self.as_float(self.get_param("fiducial_x", 350.0), 350.0)
+        fallback_y = self.as_float(self.get_param("fiducial_y", 300.0), 300.0)
+        run_x = self.as_float(context.get("Running_X"), fallback_x)
+        run_y = self.as_float(context.get("Running_Y"), fallback_y)
+        run_ang = self.as_float(context.get("Running_Angle"), 0.0)
 
         if self.get_param("set_current_as_fiducial", False):
             self.set_param("fiducial_x", run_x)
@@ -243,9 +250,9 @@ class PositionCorrectionTool(VisionToolBase):
             self.set_param("fiducial_angle", run_ang)
             self.set_param("set_current_as_fiducial", False)
 
-        f_x = float(self.get_param("fiducial_x", 350.0))
-        f_y = float(self.get_param("fiducial_y", 300.0))
-        f_ang = float(self.get_param("fiducial_angle", 0.0))
+        f_x = self.as_float(self.get_param("fiducial_x", 350.0), 350.0)
+        f_y = self.as_float(self.get_param("fiducial_y", 300.0), 300.0)
+        f_ang = self.as_float(self.get_param("fiducial_angle", 0.0), 0.0)
 
         dx = run_x - f_x
         dy = run_y - f_y

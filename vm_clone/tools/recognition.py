@@ -86,21 +86,56 @@ class Barcode1DTool(VisionToolBase):
 
         gray = self.to_grayscale(img)
 
-        # Try OpenCV barcode detector if available
+        # Try OpenCV barcode detector if available.  The detector is absent from some
+        # OpenCV builds, and its absence used to be swallowed along with genuine decode
+        # failures, so an operator saw "no barcode decoded" when the module was simply
+        # unavailable.  The two cases are now distinguished, and a decode error is
+        # reported instead of being silently converted into a negative result.
         try:
             detector = cv2.barcode_BarcodeDetector()
-            ret, decoded_info, decoded_type, points = detector.detectAndDecode(gray)
-            if ret and decoded_info and len(decoded_info[0]) > 0:
-                txt = decoded_info[0]
-                typ = decoded_type[0]
+        except (AttributeError, cv2.error) as exc:
+            return ToolExecutionResult(
+                status=ToolStatus.ERROR,
+                message=f"1D barcode detector unavailable in this OpenCV build: {exc}",
+                outputs={"Barcode_Text": "", "Format": "Unavailable"})
+
+        try:
+            decoded = detector.detectAndDecode(gray)
+        except (cv2.error, ValueError) as exc:
+            return ToolExecutionResult(
+                status=ToolStatus.ERROR,
+                message=f"Barcode decode failed: {exc}",
+                outputs={"Barcode_Text": "", "Format": "None"})
+
+        # The return arity varies between OpenCV builds (3 or 4 values), so the result
+        # is unpacked defensively rather than assumed.
+        if not isinstance(decoded, (tuple, list)) or len(decoded) < 3:
+            return ToolExecutionResult(
+                status=ToolStatus.ERROR,
+                message=f"Unexpected barcode decoder result: {type(decoded).__name__}",
+                outputs={"Barcode_Text": "", "Format": "None"})
+        ret, decoded_info, decoded_type = decoded[0], decoded[1], decoded[2]
+
+        def _first(value):
+            """The decoder returns a tuple of results; take the first entry."""
+            if value is None:
+                return None
+            if isinstance(value, (tuple, list, np.ndarray)):
+                return value[0] if len(value) else None
+            return value
+
+        text = _first(decoded_info)
+        if ret and text:
+            txt = text if isinstance(text, str) else str(text)
+            fmt_raw = _first(decoded_type)
+            typ = fmt_raw if isinstance(fmt_raw, str) else str(fmt_raw or "Unknown")
+            if txt:
                 return ToolExecutionResult(
                     status=ToolStatus.OK,
                     message=f"Decoded 1D Barcode: '{txt}' ({typ})",
                     outputs={"Barcode_Text": txt, "Format": typ},
                     overlays=[{"type": "text", "text": f"Barcode: {txt}", "pt": (50, 50), "color": (0, 255, 0)}]
                 )
-        except Exception:
-            pass
 
         return ToolExecutionResult(
             status=ToolStatus.NG,
@@ -174,6 +209,21 @@ class DefectDetectionTool(VisionToolBase):
         self.outputs["Image"] = ToolPort("Image", DataType.IMAGE, "Pass-through image")
         self.outputs["Defect_Count"] = ToolPort("Defect_Count", DataType.VALUE, "Number of defects detected")
         self.outputs["Max_Defect_Area"] = ToolPort("Max_Defect_Area", DataType.VALUE, "Largest defect area")
+        # Structured detections, so this node can be evaluated against ground truth by
+        # the inspection platform.  Until these existed the tool reported only a count,
+        # and a dataset evaluation found nothing to match - it produced no detections at
+        # all while looking like it had run successfully.  The existing outputs are
+        # unchanged; these are additive and follow the same contract as
+        # `Object Detection`.
+        self.outputs["Boxes"] = ToolPort("Boxes", DataType.ANY,
+                                         "Defect boxes [[x, y, w, h], ...]")
+        self.outputs["Classes"] = ToolPort("Classes", DataType.ANY,
+                                           "Class name per box")
+        self.outputs["Scores"] = ToolPort("Scores", DataType.ANY,
+                                          "Confidence per box")
+        self.outputs["Detections"] = ToolPort(
+            "Detections", DataType.ANY,
+            "Structured detection records, consumed by dataset evaluation")
 
     def _init_parameters(self):
         self.parameters = {
@@ -229,13 +279,38 @@ class DefectDetectionTool(VisionToolBase):
         status = ToolStatus.OK if len(defects) == 0 else ToolStatus.NG
         max_area = max([d["area"] for d in defects], default=0.0)
 
+        # The defect class comes from the tool's own `defect_type` parameter, which is
+        # what the operator configured this node to look for.  Confidence is derived
+        # from area against the accepted band: a blob well inside the size the operator
+        # asked for is a more confident call than one at the edge of it.  It is a
+        # heuristic, and it is recorded as such - the evaluation layer never treats a
+        # score as proof of correctness.
+        defect_label = str(self.get_param("defect_type", "defect")).split("/")[0].strip()
+        defect_label = (defect_label or "defect").lower().replace(" ", "_")
+        span = max(1.0, float(max_a) - float(min_a))
+        boxes, classes, scores = [], [], []
+        for d in defects:
+            boxes.append(list(d["box"]))
+            classes.append(defect_label)
+            scores.append(round(min(0.99, 0.5 + 0.5 * (d["area"] - min_a) / span), 4))
+
+        detection_records = [
+            {"box": box, "label": label, "score": score,
+             "model_id": "defect_detection_contour"}
+            for box, label, score in zip(boxes, classes, scores)
+        ]
+
         return ToolExecutionResult(
             status=status,
             message=f"{'PASS (0 defects)' if status == ToolStatus.OK else f'NG: {len(defects)} defect(s) found'}",
             outputs={
                 "Image": img,
                 "Defect_Count": len(defects),
-                "Max_Defect_Area": max_area
+                "Max_Defect_Area": max_area,
+                "Boxes": boxes,
+                "Classes": classes,
+                "Scores": scores,
+                "Detections": detection_records,
             },
             overlays=overlays
         )

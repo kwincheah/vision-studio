@@ -13,9 +13,9 @@ from typing import Dict, Optional
 
 
 # Palette tokens for icon rendering
-ICON_COLOR_ACCENT = QColor(59, 130, 246)     # Engineering Blue (#3b82f6)
-ICON_COLOR_LIGHT = QColor(241, 245, 249)      # Slate 100 text (#f1f5f9)
-ICON_COLOR_MUTED = QColor(148, 163, 184)      # Slate 400 (#94a3b8)
+ICON_COLOR_ACCENT = QColor(59, 130, 246)     # Engineering Blue (THEME['accent_primary'])
+ICON_COLOR_LIGHT = QColor(241, 245, 249)      # Slate 100 text (THEME['text_primary'])
+ICON_COLOR_MUTED = QColor(148, 163, 184)      # Slate 400 (THEME['vm_node_text_dim'])
 ICON_COLOR_DARK = QColor(22, 26, 34)          # Surface background
 
 
@@ -324,10 +324,16 @@ def get_tool_icon(tool_name: str, size: int = 18, accent_color: Optional[QColor]
     return QIcon(pix)
 
 
-def get_action_icon(action_name: str, size: int = 18) -> QIcon:
-    """Returns a vector icon for command toolbar controls."""
+def get_action_icon(action_name: str, size: int = 18,
+                    color: Optional[QColor] = None) -> QIcon:
+    """Returns a vector icon for command toolbar controls.
+
+    ``color`` lets the caller pick ink that suits the surface the icon lands on:
+    the toolbar buttons are transparent over the dark chrome and need a light
+    glyph, while icons placed on a light panel need dark ink.
+    """
     pix, p = _create_canvas(size)
-    col = ICON_COLOR_LIGHT
+    col = color if color is not None else ICON_COLOR_LIGHT
     pen = _create_pen(col, 1.35)
     p.setPen(pen)
 

@@ -44,16 +44,16 @@ class NewProjectDialog(QDialog):
 
         # Header title
         title_lbl = QLabel("Create New Solution Project")
-        title_lbl.setStyleSheet("font-size: 16px; font-weight: bold; color: #1E293B;")
+        title_lbl.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {THEME['text_primary']};")
         layout.addWidget(title_lbl)
 
         sub_lbl = QLabel("Configure solution name, destination directory, and starting template.")
-        sub_lbl.setStyleSheet("font-size: 12px; color: #64748B;")
+        sub_lbl.setStyleSheet(f"font-size: 12px; color: {THEME['text_muted']};")
         layout.addWidget(sub_lbl)
 
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)
-        line.setStyleSheet("color: #E2E8F0;")
+        line.setStyleSheet(f"color: {THEME['vm_panel_header']};")
         layout.addWidget(line)
 
         # Form
@@ -62,7 +62,7 @@ class NewProjectDialog(QDialog):
 
         # 1. Project Name
         name_lbl = QLabel("Project Name:")
-        name_lbl.setStyleSheet("font-weight: 600; color: #334155; font-size: 13px;")
+        name_lbl.setStyleSheet(f"font-weight: 600; color: {THEME['text_primary']}; font-size: 13px;")
         form_layout.addWidget(name_lbl)
 
         # Generate default name based on existing count
@@ -70,37 +70,37 @@ class NewProjectDialog(QDialog):
         self.edit_name = QLineEdit(f"VisionProject_{existing_count}")
         self.edit_name.setStyleSheet("""
             QLineEdit {
-                background: #FFFFFF;
-                border: 1px solid #CBD5E1;
+                background: #f8fafb;
+                border: 1px solid #5a6069;
                 border-radius: 4px;
-                padding: 6px 10px;
+                padding: 6px {THEME['sp_loose']}px;
                 font-size: 13px;
-                color: #1E293B;
+                color: #1a2024;
             }
             QLineEdit:focus {
-                border: 1px solid #2563EB;
+                border: 1px solid #0078b0;
             }
         """)
         form_layout.addWidget(self.edit_name)
 
         # 2. Location
         dir_lbl = QLabel("Save Location:")
-        dir_lbl.setStyleSheet("font-weight: 600; color: #334155; font-size: 13px;")
+        dir_lbl.setStyleSheet(f"font-weight: 600; color: {THEME['text_primary']}; font-size: 13px;")
         form_layout.addWidget(dir_lbl)
 
         dir_box = QHBoxLayout()
         self.edit_dir = QLineEdit(self.pm.default_projects_dir)
         self.edit_dir.setStyleSheet("""
             QLineEdit {
-                background: #FFFFFF;
-                border: 1px solid #CBD5E1;
+                background: #f8fafb;
+                border: 1px solid #5a6069;
                 border-radius: 4px;
-                padding: 6px 10px;
+                padding: 6px {THEME['sp_loose']}px;
                 font-size: 13px;
-                color: #1E293B;
+                color: #1a2024;
             }
             QLineEdit:focus {
-                border: 1px solid #2563EB;
+                border: 1px solid #0078b0;
             }
         """)
         dir_box.addWidget(self.edit_dir)
@@ -108,15 +108,15 @@ class NewProjectDialog(QDialog):
         btn_browse = QPushButton("Browse...")
         btn_browse.setStyleSheet("""
             QPushButton {
-                background: #F1F5F9;
-                border: 1px solid #CBD5E1;
+                background: #e4e7ea;
+                border: 1px solid #5a6069;
                 border-radius: 4px;
                 padding: 6px 12px;
                 font-size: 13px;
-                color: #334155;
+                color: #1a2024;
             }
             QPushButton:hover {
-                background: #E2E8F0;
+                background: #d8dcdf;
             }
         """)
         btn_browse.clicked.connect(self._browse_dir)
@@ -125,7 +125,7 @@ class NewProjectDialog(QDialog):
 
         # 3. Template
         tpl_lbl = QLabel("Solution Template:")
-        tpl_lbl.setStyleSheet("font-weight: 600; color: #334155; font-size: 13px;")
+        tpl_lbl.setStyleSheet(f"font-weight: 600; color: {THEME['text_primary']}; font-size: 13px;")
         form_layout.addWidget(tpl_lbl)
 
         self.combo_template = QComboBox()
@@ -138,12 +138,12 @@ class NewProjectDialog(QDialog):
         ])
         self.combo_template.setStyleSheet("""
             QComboBox {
-                background: #FFFFFF;
-                border: 1px solid #CBD5E1;
+                background: #f8fafb;
+                border: 1px solid #5a6069;
                 border-radius: 4px;
-                padding: 6px 10px;
+                padding: 6px {THEME['sp_loose']}px;
                 font-size: 13px;
-                color: #1E293B;
+                color: #1a2024;
             }
             QComboBox::drop-down {
                 border: none;
@@ -162,15 +162,15 @@ class NewProjectDialog(QDialog):
         btn_cancel = QPushButton("Cancel")
         btn_cancel.setStyleSheet("""
             QPushButton {
-                background: #F1F5F9;
-                border: 1px solid #CBD5E1;
+                background: #e4e7ea;
+                border: 1px solid #5a6069;
                 border-radius: 4px;
                 padding: 6px 16px;
                 font-size: 13px;
-                color: #475569;
+                color: #414850;
             }
             QPushButton:hover {
-                background: #E2E8F0;
+                background: #d8dcdf;
             }
         """)
         btn_cancel.clicked.connect(self.reject)
@@ -179,16 +179,16 @@ class NewProjectDialog(QDialog):
         btn_create = QPushButton("Create Project")
         btn_create.setStyleSheet("""
             QPushButton {
-                background: #2563EB;
-                color: #FFFFFF;
+                background: #0078b0;
+                color: #1a2024;
                 border: none;
                 border-radius: 4px;
-                padding: 6px 18px;
+                padding: 6px {THEME['sp_section']}px;
                 font-size: 13px;
                 font-weight: 600;
             }
             QPushButton:hover {
-                background: #1D4ED8;
+                background: #0078b0;
             }
         """)
         btn_create.clicked.connect(self._create_project)
@@ -262,7 +262,7 @@ class ProjectRowWidget(QWidget):
         name_lbl.setStyleSheet("""
             font-size: 14px;
             font-weight: 600;
-            color: #1E293B;
+            color: #1a2024;
         """)
         top_layout.addWidget(name_lbl)
 
@@ -270,19 +270,19 @@ class ProjectRowWidget(QWidget):
         badge_lbl = QLabel(" Ready " if self.exists else " Missing ")
         if self.exists:
             badge_lbl.setStyleSheet("""
-                background-color: #DCFCE7;
-                color: #166534;
+                background-color: #d8f0e2;
+                color: #076b3a;
                 border-radius: 3px;
-                padding: 1px 5px;
+                padding: {THEME['sp_hair']}px 4px;
                 font-size: 11px;
                 font-weight: bold;
             """)
         else:
             badge_lbl.setStyleSheet("""
-                background-color: #FEE2E2;
-                color: #991B1B;
+                background-color: #fadadd;
+                color: #b81c20;
                 border-radius: 3px;
-                padding: 1px 5px;
+                padding: {THEME['sp_hair']}px 4px;
                 font-size: 11px;
                 font-weight: bold;
             """)
@@ -292,10 +292,10 @@ class ProjectRowWidget(QWidget):
         if self.template and self.template != "Custom":
             tpl_badge = QLabel(self.template)
             tpl_badge.setStyleSheet("""
-                background-color: #EFF6FF;
-                color: #1E40AF;
+                background-color: #f6dcae;
+                color: #0078b0;
                 border-radius: 3px;
-                padding: 1px 5px;
+                padding: {THEME['sp_hair']}px 4px;
                 font-size: 11px;
             """)
             top_layout.addWidget(tpl_badge)
@@ -304,7 +304,7 @@ class ProjectRowWidget(QWidget):
 
         # Last opened date
         date_lbl = QLabel(self.last_opened)
-        date_lbl.setStyleSheet("font-size: 12px; color: #94A3B8;")
+        date_lbl.setStyleSheet(f"font-size: 12px; color: {THEME['text_muted']};")
         top_layout.addWidget(date_lbl)
 
         # Open button
@@ -312,16 +312,16 @@ class ProjectRowWidget(QWidget):
         btn_open.setFixedHeight(22)
         btn_open.setStyleSheet("""
             QPushButton {
-                background: #2563EB;
+                background: #0078b0;
                 color: white;
                 border: none;
                 border-radius: 3px;
-                padding: 2px 10px;
+                padding: 2px {THEME['sp_loose']}px;
                 font-size: 12px;
                 font-weight: 600;
             }
             QPushButton:hover {
-                background: #1D4ED8;
+                background: #0078b0;
             }
         """)
         btn_open.clicked.connect(lambda: self.open_requested.emit(self.path))
@@ -332,17 +332,17 @@ class ProjectRowWidget(QWidget):
         btn_delete.setFixedHeight(22)
         btn_delete.setStyleSheet("""
             QPushButton {
-                background: #FEE2E2;
-                color: #DC2626;
-                border: 1px solid #FECACA;
+                background: #fadadd;
+                color: #b81c20;
+                border: 1px solid #c8161a;
                 border-radius: 3px;
                 padding: 2px 8px;
                 font-size: 12px;
                 font-weight: 500;
             }
             QPushButton:hover {
-                background: #FCA5A5;
-                color: #991B1B;
+                background: #c8161a;
+                color: #b81c20;
             }
         """)
         btn_delete.clicked.connect(lambda: self.delete_requested.emit(self.path))
@@ -353,7 +353,7 @@ class ProjectRowWidget(QWidget):
         # Bottom row: File path with tooltip
         path_lbl = QLabel(self.path)
         path_lbl.setToolTip(self.path)
-        path_lbl.setStyleSheet("font-size: 12px; color: #64748B; font-family: Consolas, monospace;")
+        path_lbl.setStyleSheet(f"font-size: 12px; color: {THEME['text_muted']}; font-family: Consolas, monospace;")
         layout.addWidget(path_lbl)
 
 
@@ -403,7 +403,7 @@ class StartPageDialog(QDialog):
         # 1. Header Banner
         header = QFrame()
         header.setFixedHeight(64)
-        header.setStyleSheet("background-color: #201F24; border-bottom: 2px solid #0284C7;")
+        header.setStyleSheet(f"background-color: {THEME['vm_panel_header']}; border-bottom: 2px solid {THEME['accent_hover']};")
         h_layout = QHBoxLayout(header)
         h_layout.setContentsMargins(24, 0, 24, 0)
         h_layout.setSpacing(14)
@@ -415,15 +415,15 @@ class StartPageDialog(QDialog):
 
         brand_lbl = QLabel("APEX VISION STUDIO")
         brand_lbl.setStyleSheet("""
-            font-size: 17px;
-            font-weight: 800;
-            color: #FFFFFF;
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a2024;
             letter-spacing: 1.5px;
         """)
         title_box.addWidget(brand_lbl)
 
         sub_title = QLabel("Modular Industrial Machine Vision Platform & Flow Orchestration v4.3")
-        sub_title.setStyleSheet("font-size: 12px; color: #94A3B8;")
+        sub_title.setStyleSheet(f"font-size: 12px; color: {THEME['text_muted']};")
         title_box.addWidget(sub_title)
         h_layout.addLayout(title_box)
 
@@ -433,16 +433,16 @@ class StartPageDialog(QDialog):
         btn_enter = QPushButton("Enter Workspace  →")
         btn_enter.setStyleSheet("""
             QPushButton {
-                background: #2563EB;
-                color: #FFFFFF;
+                background: #0078b0;
+                color: #1a2024;
                 border: none;
                 border-radius: 4px;
-                padding: 7px 16px;
+                padding: {THEME['sp_base']}px 16px;
                 font-size: 13px;
                 font-weight: 600;
             }
             QPushButton:hover {
-                background: #1D4ED8;
+                background: #0078b0;
             }
         """)
         btn_enter.clicked.connect(self.accept)
@@ -452,7 +452,7 @@ class StartPageDialog(QDialog):
 
         # 2. Main Two-Column Body
         body = QWidget()
-        body.setStyleSheet("background-color: #F8FAFC;")
+        body.setStyleSheet(f"background-color: #ecf0f0;")
         b_layout = QHBoxLayout(body)
         b_layout.setContentsMargins(24, 20, 24, 20)
         b_layout.setSpacing(24)
@@ -469,7 +469,7 @@ class StartPageDialog(QDialog):
         sec_start_lbl.setStyleSheet("""
             font-size: 12px;
             font-weight: 700;
-            color: #64748B;
+            color: #5a6168;
             letter-spacing: 1px;
         """)
         left_layout.addWidget(sec_start_lbl)
@@ -479,20 +479,20 @@ class StartPageDialog(QDialog):
         self.btn_new_proj.setFixedHeight(46)
         self.btn_new_proj.setStyleSheet("""
             QPushButton {
-                background: #FFFFFF;
-                border: 1px solid #CBD5E1;
-                border-left: 4px solid #2563EB;
+                background: #f8fafb;
+                border: 1px solid #5a6069;
+                border-left: 4px solid #0078b0;
                 border-radius: 4px;
-                padding: 10px 14px;
+                padding: {THEME['sp_loose']}px {THEME['sp_section']}px;
                 font-size: 14px;
                 font-weight: 600;
-                color: #1E293B;
+                color: #1a2024;
                 text-align: left;
             }
             QPushButton:hover {
-                background: #F1F5F9;
-                border-color: #94A3B8;
-                border-left-color: #2563EB;
+                background: #e4e7ea;
+                border-color: #5a6168;
+                border-left-color: #0078b0;
             }
         """)
         self.btn_new_proj.clicked.connect(self.on_new_project_clicked)
@@ -503,20 +503,20 @@ class StartPageDialog(QDialog):
         self.btn_open_proj.setFixedHeight(46)
         self.btn_open_proj.setStyleSheet("""
             QPushButton {
-                background: #FFFFFF;
-                border: 1px solid #CBD5E1;
-                border-left: 4px solid #E8792B;
+                background: #f8fafb;
+                border: 1px solid #5a6069;
+                border-left: 4px solid #e4b030;
                 border-radius: 4px;
-                padding: 10px 14px;
+                padding: {THEME['sp_loose']}px {THEME['sp_section']}px;
                 font-size: 14px;
                 font-weight: 600;
-                color: #1E293B;
+                color: #1a2024;
                 text-align: left;
             }
             QPushButton:hover {
-                background: #F1F5F9;
-                border-color: #94A3B8;
-                border-left-color: #E8792B;
+                background: #e4e7ea;
+                border-color: #5a6168;
+                border-left-color: #e4b030;
             }
         """)
         self.btn_open_proj.clicked.connect(self.on_open_project_clicked)
@@ -527,7 +527,7 @@ class StartPageDialog(QDialog):
         sec_tpl_lbl.setStyleSheet("""
             font-size: 12px;
             font-weight: 700;
-            color: #64748B;
+            color: #5a6168;
             letter-spacing: 1px;
             margin-top: 10px;
         """)
@@ -547,19 +547,19 @@ class StartPageDialog(QDialog):
             t_btn.setFixedHeight(36)
             t_btn.setStyleSheet("""
                 QPushButton {
-                    background: #FFFFFF;
-                    border: 1px solid #E2E8F0;
+                    background: #f8fafb;
+                    border: 1px solid #d8dcdf;
                     border-radius: 4px;
                     padding: 8px 12px;
                     font-size: 13px;
                     font-weight: 500;
-                    color: #334155;
+                    color: #1a2024;
                     text-align: left;
                 }
                 QPushButton:hover {
-                    background: #F8FAFC;
-                    border-color: #2563EB;
-                    color: #2563EB;
+                    background: THEME['vm_panel'];
+                    border-color: #0078b0;
+                    color: #0078b0;
                 }
             """)
             t_btn.clicked.connect(lambda checked, k=key: self.on_template_clicked(k))
@@ -571,7 +571,7 @@ class StartPageDialog(QDialog):
         # Separator line
         v_sep = QFrame()
         v_sep.setFrameShape(QFrame.Shape.VLine)
-        v_sep.setStyleSheet("color: #E2E8F0;")
+        v_sep.setStyleSheet(f"color: #d8dcdf;")
         b_layout.addWidget(v_sep)
 
         # --- RIGHT COLUMN: Recent Projects ---
@@ -588,17 +588,17 @@ class StartPageDialog(QDialog):
         rec_title.setStyleSheet("""
             font-size: 12px;
             font-weight: 700;
-            color: #64748B;
+            color: #5a6168;
             letter-spacing: 1px;
         """)
         rec_bar.addWidget(rec_title)
 
         self.count_badge = QLabel("0")
         self.count_badge.setStyleSheet("""
-            background: #E2E8F0;
-            color: #475569;
+            background: #d8dcdf;
+            color: #414850;
             border-radius: 9px;
-            padding: 1px 7px;
+            padding: {THEME['sp_hair']}px {THEME['sp_base']}px;
             font-size: 12px;
             font-weight: bold;
         """)
@@ -612,15 +612,15 @@ class StartPageDialog(QDialog):
         self.edit_search.setFixedWidth(240)
         self.edit_search.setStyleSheet("""
             QLineEdit {
-                background: #FFFFFF;
-                border: 1px solid #CBD5E1;
+                background: #f8fafb;
+                border: 1px solid #5a6069;
                 border-radius: 4px;
-                padding: 5px 10px;
+                padding: 4px 8px;
                 font-size: 13px;
-                color: #1E293B;
+                color: #1a2024;
             }
             QLineEdit:focus {
-                border-color: #2563EB;
+                border-color: #0078b0;
             }
         """)
         self.edit_search.textChanged.connect(self._on_search_text_changed)
@@ -632,12 +632,12 @@ class StartPageDialog(QDialog):
             QPushButton {
                 background: transparent;
                 border: none;
-                color: #64748B;
+                color: #5a6168;
                 font-size: 12px;
                 padding: 4px 6px;
             }
             QPushButton:hover {
-                color: #DC2626;
+                color: #b81c20;
                 text-decoration: underline;
             }
         """)
@@ -650,21 +650,21 @@ class StartPageDialog(QDialog):
         self.list_projects = QListWidget()
         self.list_projects.setStyleSheet("""
             QListWidget {
-                background-color: #FFFFFF;
-                border: 1px solid #CBD5E1;
-                border-radius: 6px;
+                background-color: #f8fafb;
+                border: 1px solid #5a6069;
+                border-radius: {THEME['r_panel']}px;
                 outline: none;
             }
             QListWidget::item {
-                background: #FFFFFF;
-                border-bottom: 1px solid #F1F5F9;
+                background: #f8fafb;
+                border-bottom: 1px solid #e4e7ea;
             }
             QListWidget::item:hover {
-                background: #F8FAFC;
+                background: THEME['vm_panel'];
             }
             QListWidget::item:selected {
-                background: #EFF6FF;
-                border-left: 3px solid #2563EB;
+                background: #f6dcae;
+                border-left: 3px solid #0078b0;
             }
         """)
         self.list_projects.itemDoubleClicked.connect(self._on_item_double_clicked)
@@ -675,7 +675,7 @@ class StartPageDialog(QDialog):
         # Empty state label
         self.lbl_empty = QLabel("No recent projects found.\nClick 'New Project' or 'Open Project File' to get started.")
         self.lbl_empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_empty.setStyleSheet("color: #94A3B8; font-size: 14px; line-height: 1.5;")
+        self.lbl_empty.setStyleSheet(f"color: #5a6168; font-size: 14px; line-height: 1.5;")
         self.lbl_empty.setVisible(False)
         right_layout.addWidget(self.lbl_empty)
 
@@ -685,7 +685,7 @@ class StartPageDialog(QDialog):
         # 3. Footer Bar
         footer = QFrame()
         footer.setFixedHeight(48)
-        footer.setStyleSheet("background-color: #F1F5F9; border-top: 1px solid #CBD5E1;")
+        footer.setStyleSheet(f"background-color: #e4e7ea; border-top: 1px solid #5a6069;")
         f_layout = QHBoxLayout(footer)
         f_layout.setContentsMargins(24, 0, 24, 0)
 
@@ -695,18 +695,18 @@ class StartPageDialog(QDialog):
         self.chk_startup.setStyleSheet("""
             QCheckBox {
                 font-size: 13px;
-                color: #475569;
+                color: #414850;
             }
             QCheckBox::indicator {
                 width: 16px;
                 height: 16px;
-                border: 1px solid #94A3B8;
+                border: 1px solid #5a6168;
                 border-radius: 3px;
-                background: #FFFFFF;
+                background: #f8fafb;
             }
             QCheckBox::indicator:checked {
-                background: #2563EB;
-                border-color: #2563EB;
+                background: #0078b0;
+                border-color: #0078b0;
             }
         """)
         self.chk_startup.toggled.connect(self._on_startup_toggled)
@@ -718,15 +718,15 @@ class StartPageDialog(QDialog):
         btn_close = QPushButton("Open Workspace")
         btn_close.setStyleSheet("""
             QPushButton {
-                background: #FFFFFF;
-                border: 1px solid #CBD5E1;
+                background: #f8fafb;
+                border: 1px solid #5a6069;
                 border-radius: 4px;
                 padding: 6px 16px;
                 font-size: 13px;
-                color: #334155;
+                color: #1a2024;
             }
             QPushButton:hover {
-                background: #E2E8F0;
+                background: #d8dcdf;
             }
         """)
         btn_close.clicked.connect(self.accept)

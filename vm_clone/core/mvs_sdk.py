@@ -328,7 +328,8 @@ class MvsConfigFileManager:
 
         params: Dict[str, Any] = {}
         try:
-            tree = ET.parse(file_path)
+            from vm_clone.core.xml_safe import safe_parse_file
+            tree = safe_parse_file(file_path)
             root = tree.getroot()
 
             # 1. Parse standard Hikrobot XML Feature nodes: <Feature Name="..." Value="..." />

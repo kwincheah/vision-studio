@@ -1,0 +1,438 @@
+{
+ "tools": [
+  {
+   "tool": "Image Source",
+   "category": "Acquisition",
+   "named_in_tests": [
+    "test_acquisition_file.py",
+    "test_audit_regressions.py",
+    "test_camera_calibration.py",
+    "test_camera_support.py",
+    "test_end_to_end_image_workflow.py",
+    "test_flow_control.py",
+    "test_flow_editor_interactions.py",
+    "test_image_flow_strip.py",
+    "test_mvs_compatibility.py",
+    "test_object_detection.py",
+    "test_plugin_acceptance_e2e.py",
+    "test_plugin_system.py",
+    "test_reference_spec_ui.py",
+    "test_tool_robustness.py",
+    "test_vision_tools.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Image Output",
+   "category": "Acquisition",
+   "named_in_tests": [
+    "test_extended_tools.py",
+    "test_persistence_and_output_fixes.py",
+    "test_right_panel_layout.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Image Buffer",
+   "category": "Acquisition",
+   "named_in_tests": [
+    "test_extended_tools.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Template Match",
+   "category": "Location",
+   "named_in_tests": [
+    "test_flow_control.py",
+    "test_vision_tools.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Position Correction",
+   "category": "Location",
+   "named_in_tests": [
+    "test_extended_tools.py",
+    "test_functional_audit_fixes.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Circle Search",
+   "category": "Location",
+   "named_in_tests": [
+    "test_tool_robustness.py",
+    "test_vision_tools.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Line Search",
+   "category": "Location",
+   "named_in_tests": [
+    "test_vision_tools.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Caliper",
+   "category": "Location",
+   "named_in_tests": [
+    "test_tool_robustness.py",
+    "test_vm_workspace_ui.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Edge Search",
+   "category": "Location",
+   "named_in_tests": [
+    "test_extended_tools.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "BLOB Analysis",
+   "category": "Location",
+   "named_in_tests": [
+    "test_end_to_end_image_workflow.py",
+    "test_flow_editor_interactions.py",
+    "test_tool_robustness.py",
+    "test_vision_tools.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "L2L Measure",
+   "category": "Measurement",
+   "named_in_tests": [
+    "test_functional_audit_fixes.py",
+    "test_vision_tools.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "P2P Measure",
+   "category": "Measurement",
+   "named_in_tests": [
+    "test_functional_audit_fixes.py",
+    "test_vision_tools.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Intensity Measure",
+   "category": "Measurement",
+   "named_in_tests": [
+    "test_tool_robustness.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Pixel Count",
+   "category": "Measurement",
+   "named_in_tests": [
+    "test_extended_tools.py",
+    "test_tool_robustness.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Edge Distance",
+   "category": "Measurement",
+   "named_in_tests": [
+    "test_extended_tools.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Histogram",
+   "category": "Measurement",
+   "named_in_tests": [
+    "test_extended_tools.py",
+    "test_tool_robustness.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Circle/Line Fit",
+   "category": "Image Generation",
+   "named_in_tests": [
+    "test_extended_tools.py",
+    "test_functional_audit_fixes.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Geometry Generation",
+   "category": "Image Generation",
+   "named_in_tests": [],
+   "direct_test": false,
+   "generic_audit": true
+  },
+  {
+   "tool": "Image Binarization",
+   "category": "Image Processing",
+   "named_in_tests": [
+    "test_end_to_end_image_workflow.py",
+    "test_flow_control.py",
+    "test_flow_editor_interactions.py",
+    "test_tool_robustness.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Image Filter",
+   "category": "Image Processing",
+   "named_in_tests": [
+    "test_vm_workspace_ui.py",
+    "test_workflow_e2e.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Image Morphology",
+   "category": "Image Processing",
+   "named_in_tests": [],
+   "direct_test": false,
+   "generic_audit": true
+  },
+  {
+   "tool": "2D BCR Recognition",
+   "category": "Recognition",
+   "named_in_tests": [
+    "test_flow_control.py",
+    "test_flow_editor_interactions.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "BCR Recognition",
+   "category": "Recognition",
+   "named_in_tests": [
+    "test_flow_control.py",
+    "test_flow_editor_interactions.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "OCR Recognition",
+   "category": "Recognition",
+   "named_in_tests": [
+    "test_extended_tools.py",
+    "test_tool_robustness.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Defect Detection",
+   "category": "Defect Detection",
+   "named_in_tests": [
+    "test_tool_robustness.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Linear Edge Defect",
+   "category": "Defect Detection",
+   "named_in_tests": [
+    "test_extended_tools.py",
+    "test_tool_robustness.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Object Detection",
+   "category": "Recognition",
+   "named_in_tests": [
+    "test_object_detection.py",
+    "test_tool_robustness.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Color Extraction",
+   "category": "Color Processing",
+   "named_in_tests": [],
+   "direct_test": false,
+   "generic_audit": true
+  },
+  {
+   "tool": "Color Measurement",
+   "category": "Color Processing",
+   "named_in_tests": [
+    "test_tool_robustness.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "N-Point Calibration",
+   "category": "Calibration",
+   "named_in_tests": [
+    "test_functional_audit_fixes.py",
+    "test_vision_tools.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Lens Distortion Calibration",
+   "category": "Calibration",
+   "named_in_tests": [
+    "test_audit_regressions.py",
+    "test_camera_calibration.py",
+    "test_mvs_compatibility.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "TCP Send",
+   "category": "Communication",
+   "named_in_tests": [],
+   "direct_test": false,
+   "generic_audit": true
+  },
+  {
+   "tool": "Camera IO",
+   "category": "Communication",
+   "named_in_tests": [],
+   "direct_test": false,
+   "generic_audit": true
+  },
+  {
+   "tool": "Condition Branch",
+   "category": "Logic Tools",
+   "named_in_tests": [
+    "test_functional_audit_fixes.py",
+    "test_vision_tools.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Variable Calculation",
+   "category": "Logic Tools",
+   "named_in_tests": [
+    "test_functional_audit_fixes.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Branch",
+   "category": "Logic Tools",
+   "named_in_tests": [
+    "test_flow_control.py",
+    "test_functional_audit_fixes.py",
+    "test_vision_tools.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "If Module",
+   "category": "Logic Tools",
+   "named_in_tests": [
+    "test_flow_control.py",
+    "test_functional_audit_fixes.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Branch String",
+   "category": "Logic Tools",
+   "named_in_tests": [
+    "test_flow_control.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Trigger",
+   "category": "Logic Tools",
+   "named_in_tests": [
+    "test_flow_control.py",
+    "test_mvs_compatibility.py",
+    "test_persistence_and_output_fixes.py",
+    "test_tool_robustness.py",
+    "test_ui_audit_fixes.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  },
+  {
+   "tool": "Script",
+   "category": "Logic Tools",
+   "named_in_tests": [
+    "test_ui_audit_fixes.py",
+    "test_vision_tools.py"
+   ],
+   "direct_test": true,
+   "generic_audit": true
+  }
+ ],
+ "generic_audits": [
+  "audit_inventory.py",
+  "audit_tool_behaviour.py",
+  "audit_tool_contracts.py"
+ ],
+ "all_test_files": [
+  "test_acquisition_file.py",
+  "test_audit_regressions.py",
+  "test_camera_calibration.py",
+  "test_camera_support.py",
+  "test_contrast_and_readability.py",
+  "test_end_to_end_image_workflow.py",
+  "test_extended_tools.py",
+  "test_flow_control.py",
+  "test_flow_editor_interactions.py",
+  "test_functional_audit_fixes.py",
+  "test_image_flow_strip.py",
+  "test_marketplace_and_github.py",
+  "test_measured_layout.py",
+  "test_mvs_compatibility.py",
+  "test_object_detection.py",
+  "test_persistence_and_output_fixes.py",
+  "test_plugin_acceptance_e2e.py",
+  "test_plugin_system.py",
+  "test_project_manager_and_start_page.py",
+  "test_reference_spec_ui.py",
+  "test_right_panel_layout.py",
+  "test_tool_robustness.py",
+  "test_ui_audit_fixes.py",
+  "test_ui_canvas_and_flow.py",
+  "test_ui_icons_and_theme.py",
+  "test_vision_tools.py",
+  "test_vm_workspace_ui.py",
+  "test_workflow_e2e.py"
+ ]
+}

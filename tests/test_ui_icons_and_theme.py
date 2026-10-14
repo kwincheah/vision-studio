@@ -29,8 +29,11 @@ def test_theme_tokens_complete():
         assert key in THEME, f"Missing required theme token: {key}"
         assert isinstance(THEME[key], str) and THEME[key].startswith("#")
 
-    # Palette constraints: ensure accent is steel/engineering blue
-    assert THEME["accent_primary"] in ("#3b82f6", "#2563eb", "#4a90e2")
+    # Palette constraints: the accent is the blue measured from the KEYENCE
+    # references (docs/KEYENCE_DESIGN_SPEC.md §2), not an arbitrary blue.
+    assert THEME["accent_primary"] == "#0078b0"
+    # The signature selection colour is the measured amber.
+    assert THEME["vm_accent"] == "#e4b030"
     # Verify stylesheet is formatted with theme
     assert THEME["bg_app"] in INDUSTRIAL_THEME_QSS
 

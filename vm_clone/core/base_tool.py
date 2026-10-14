@@ -90,12 +90,135 @@ class VisionToolBase:
         """Returns typed parameter schema definitions if defined."""
         return getattr(self, "param_definitions", {}) or {}
 
+    #: Largest magnitude a numeric parameter may hold.  Python integers are unbounded,
+    #: so a crafted project file could set `caliper_count` to 10**18 and the tool would
+    #: then try to allocate an array of that many samples (a MemoryError, i.e. a
+    #: denial of service from a data file).  No real inspection parameter -
+    #: coordinates, gains, counts, timings - approaches 1e12, so anything beyond it is
+    #: treated as invalid input and the current value is kept.
+    MAX_PARAM_MAGNITUDE = 1e12
+
+    def _coerce_param(self, key: str, value: Any) -> Any:
+        """Make ``value`` compatible with the parameter's declared type.
+
+        A parameter's type is fixed by the default its `_init_parameters` supplies.  A
+        value of any other type can only arrive from outside the type-aware property
+        editor - a hand-edited or older project file, a plugin, or scripted use - and
+        every tool then converts it with a bare `int()`/`float()` at the point of use.
+        Coercing here keeps that invariant, so a bad stored value degrades to the
+        default instead of raising out of the tool mid-inspection.
+
+        Only scalars are coerced; lists, dicts and tuples are passed through because
+        several tools legitimately store structured values there.
+        """
+        current = self.parameters.get(key)
+        # A parameter that is already absent/None carries no type information, so the
+        # value is stored as given rather than coerced against a missing default.
+        if current is None:
+            return value
+        if value is None:
+            # Clearing a parameter keeps its typed default so an accidental blank in a
+            # project file cannot turn a numeric knob into None.
+            return current
+        if isinstance(current, bool):
+            if isinstance(value, str):
+                text = value.strip().lower()
+                if text in ("true", "1", "yes", "on"):
+                    return True
+                if text in ("false", "0", "no", "off"):
+                    return False
+                return current
+            if isinstance(value, (int, float)):
+                return bool(value)
+            return current
+        if isinstance(current, int) and not isinstance(current, bool):
+            if isinstance(value, bool):
+                return int(value)
+            if isinstance(value, int):
+                return value if abs(value) <= self.MAX_PARAM_MAGNITUDE else current
+            if isinstance(value, float):
+                # `int(inf)` raises OverflowError and `int(nan)` raises ValueError, so
+                # both are screened rather than caught.
+                if not np.isfinite(value) or abs(value) > self.MAX_PARAM_MAGNITUDE:
+                    return current
+                return int(value)
+            if isinstance(value, str):
+                # "1e999" parses to infinity and then overflows the int conversion.
+                try:
+                    parsed = float(value)
+                except (TypeError, ValueError, OverflowError):
+                    return current
+                if not np.isfinite(parsed) or abs(parsed) > self.MAX_PARAM_MAGNITUDE:
+                    return current
+                try:
+                    return int(parsed)
+                except (OverflowError, ValueError):
+                    return current
+            return current
+        if isinstance(current, float):
+            if isinstance(value, bool):
+                return float(value)
+            if isinstance(value, (int, float)):
+                if not np.isfinite(value) or abs(value) > self.MAX_PARAM_MAGNITUDE:
+                    return current
+                return float(value)
+            if isinstance(value, str):
+                try:
+                    parsed = float(value)
+                except (TypeError, ValueError, OverflowError):
+                    return current
+                if not np.isfinite(parsed) or abs(parsed) > self.MAX_PARAM_MAGNITUDE:
+                    return current
+                return parsed
+            return current
+        if isinstance(current, str):
+            if isinstance(value, (int, float, bool)):
+                return str(value)
+            if isinstance(value, str):
+                return value
+            return current
+        # Structured parameters (ROIs, point lists, dictionaries) carry geometry, so
+        # their *shape* is validated rather than their scalar type: a string or a
+        # scalar stored here reaches code that unpacks it (`x, y, w, h = roi`) and
+        # raised "not enough values to unpack".  A value of the wrong shape is
+        # rejected in favour of the current one.
+        if isinstance(current, (list, tuple)):
+            if not isinstance(value, (list, tuple)):
+                return current
+            if current and len(value) != len(current):
+                return current
+            return type(current)(value) if isinstance(current, tuple) else list(value)
+        if isinstance(current, dict):
+            if not isinstance(value, dict):
+                return current
+            return dict(value)
+        return value
+
     def set_param(self, key: str, value: Any):
         if key in self.parameters:
-            self.parameters[key] = value
+            self.parameters[key] = self._coerce_param(key, value)
 
     def get_param(self, key: str, default: Any = None) -> Any:
         return self.parameters.get(key, default)
+
+    def get_bounded_param(self, key: str, default: float = 0.0,
+                          minimum: Optional[float] = None,
+                          maximum: Optional[float] = None,
+                          integer: bool = False) -> Any:
+        """Read a numeric parameter clamped to a usable range.
+
+        `_coerce_param` guarantees the *type*, but a value can still be outside the
+        range the algorithm tolerates - a negative buffer capacity fails
+        `deque(maxlen=...)`, and a zero kernel size asserts in OpenCV.  Tools with such
+        a constraint read through this helper so the constraint is stated once, in the
+        place that depends on it.
+        """
+        value = self.as_float(self.get_param(key, default), float(default))
+        if minimum is not None:
+            value = max(minimum, value)
+        if maximum is not None:
+            value = min(maximum, value)
+        return int(round(value)) if integer else value
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
         """
@@ -118,7 +241,16 @@ class VisionToolBase:
     def load_dict(self, data: Dict[str, Any]):
         self.name = data.get("name", self.name)
         self.enabled = data.get("enabled", self.enabled)
-        self.parameters.update(data.get("parameters", {}))
+        # Route every stored value through the same type coercion as `set_param`, so a
+        # project file written by an older build (or edited by hand) cannot put a
+        # wrong-typed value into a parameter and crash the tool at inspection time.
+        for key, value in (data.get("parameters") or {}).items():
+            if key in self.parameters:
+                self.parameters[key] = self._coerce_param(key, value)
+            else:
+                # An unknown key is kept: plugins may read their own extra keys, and
+                # dropping it would silently lose data on a save/load round trip.
+                self.parameters[key] = value
 
     def get_input_image(
         self,
@@ -190,6 +322,90 @@ class VisionToolBase:
                 res = img[:, :, 0]
             return res if res.dtype == np.uint8 else np.clip(res, 0, 255).astype(np.uint8)
         return img.reshape(img.shape[0], img.shape[1], -1)[:, :, 0].astype(np.uint8)
+
+    # ------------------------------------------------------------------
+    # Input coercion helpers
+    # ------------------------------------------------------------------
+    # Region and geometry ports are fed either by an upstream module or by a
+    # technician dragging handles on the canvas, so a downstream tool must treat
+    # every value as hostile.  These helpers convert, validate and report rather
+    # than unpacking and raising, which would surface to the operator as a bare
+    # "Exception: ..." with no diagnosis.
+    @staticmethod
+    def as_float(value: Any, default: float = 0.0) -> float:
+        """Coerce to a finite float, falling back to ``default``.
+
+        Rejects ``None``, non-numeric strings, sequences, ``NaN`` and ``inf`` - all
+        of which a numeric port can legitimately receive, and each of which would
+        otherwise raise deep inside the algorithm.
+        """
+        try:
+            result = float(value)
+        except (TypeError, ValueError, OverflowError):
+            return default
+        if not np.isfinite(result):
+            return default
+        return result
+
+    @classmethod
+    def as_point(cls, value: Any) -> Optional[Tuple[float, float]]:
+        """Coerce a point port to ``(x, y)``, or ``None`` when malformed.
+
+        Accepts a 2-sequence or a mapping using any of the documented key pairs.
+        """
+        if isinstance(value, dict):
+            for xk, yk in (("cx", "cy"), ("x", "y"), ("x1", "y1")):
+                if xk in value and yk in value:
+                    return (cls.as_float(value[xk]), cls.as_float(value[yk]))
+            return None
+        if isinstance(value, (list, tuple, np.ndarray)) and len(value) >= 2:
+            return (cls.as_float(value[0]), cls.as_float(value[1]))
+        return None
+
+    @classmethod
+    def as_line(cls, value: Any) -> Optional[Tuple[float, float, float, float]]:
+        """Coerce a line port to ``(x1, y1, x2, y2)``, or ``None`` when malformed.
+
+        Accepts the documented ``{x1, y1, x2, y2}`` mapping, a 4-sequence, or the
+        ``[(x1, y1), (x2, y2)]`` pair-of-endpoints form.  A partial mapping or a
+        3-element sequence is reported as malformed instead of raising.
+        """
+        if isinstance(value, dict):
+            try:
+                return (cls.as_float(value["x1"]), cls.as_float(value["y1"]),
+                        cls.as_float(value["x2"]), cls.as_float(value["y2"]))
+            except KeyError:
+                return None
+        if isinstance(value, (list, tuple, np.ndarray)):
+            if len(value) == 4 and not isinstance(value[0], (list, tuple, np.ndarray, dict)):
+                return (cls.as_float(value[0]), cls.as_float(value[1]),
+                        cls.as_float(value[2]), cls.as_float(value[3]))
+            if len(value) == 2:
+                a = cls.as_point(value[0])
+                b = cls.as_point(value[1])
+                if a is not None and b is not None:
+                    return (a[0], a[1], b[0], b[1])
+            return None
+        return None
+
+    @classmethod
+    def as_point_list(cls, value: Any, minimum: int = 1) -> Optional[np.ndarray]:
+        """Coerce a point-set port to an ``(N, 2)`` float array, or ``None``.
+
+        A ragged or wrongly-shaped list yields ``None`` rather than a silently
+        mis-shaped array whose columns are then read as coordinates.
+        """
+        if value is None or isinstance(value, (str, bytes)):
+            return None
+        try:
+            arr = np.asarray(value, dtype=np.float64)
+        except (TypeError, ValueError):
+            return None
+        if arr.ndim != 2 or arr.shape[0] < minimum or arr.shape[1] != 2:
+            return None
+        if not np.all(np.isfinite(arr)):
+            return None
+        return arr
 
 
 class MissingPluginPlaceholderTool(VisionToolBase):

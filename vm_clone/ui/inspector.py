@@ -118,7 +118,7 @@ class ParameterInspectorWidget(QWidget):
         self.header_card = QWidget()
         self.header_card.setStyleSheet(
             f"background-color: {THEME['bg_surface']}; "
-            f"border: 1px solid {THEME['border_subtle']}; border-radius: 2px;"
+            f"border: 1px solid {THEME['border_subtle']}; border-radius: {THEME['r_control']}px;"
         )
         h_card_layout = QVBoxLayout(self.header_card)
         h_card_layout.setContentsMargins(7, 5, 7, 5)
@@ -173,7 +173,7 @@ class ParameterInspectorWidget(QWidget):
         self.lbl_verdict.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.lbl_verdict.setStyleSheet(
             f"background-color: {THEME['bg_surface_alt']}; "
-            f"border: 1px solid {THEME['border_subtle']}; border-radius: 2px; "
+            f"border: 1px solid {THEME['border_subtle']}; border-radius: {THEME['r_control']}px; "
             f"padding: 4px 6px; color: {THEME['text_secondary']}; font-size: 11px;"
         )
         self.layout.addWidget(self.lbl_verdict, 0)
@@ -546,13 +546,21 @@ class ParameterInspectorWidget(QWidget):
                 self.set_tool(self.current_tool)
 
     def _on_list_changed(self, key: str, text: str):
+        import ast
+        import json
+        val = None
+        stripped = text.strip()
         try:
-            val = eval(text)
-            if isinstance(val, list) and self.current_tool:
-                self.current_tool.set_param(key, val)
-                self.param_changed.emit(key, val)
+            val = json.loads(stripped)
         except Exception:
-            pass
+            try:
+                val = ast.literal_eval(stripped)
+            except Exception:
+                val = None
+
+        if isinstance(val, list) and self.current_tool:
+            self.current_tool.set_param(key, val)
+            self.param_changed.emit(key, val)
 
     def update_results(self, result: ToolExecutionResult):
         """Render the live verdict strip. The full port table lives in the
@@ -564,7 +572,7 @@ class ParameterInspectorWidget(QWidget):
             self.lbl_verdict.setText("Not executed")
             self.lbl_verdict.setStyleSheet(
                 f"background-color: {THEME['bg_surface_alt']}; "
-                f"border: 1px solid {THEME['border_subtle']}; border-radius: 2px; "
+                f"border: 1px solid {THEME['border_subtle']}; border-radius: {THEME['r_control']}px; "
                 f"padding: 4px 6px; color: {THEME['text_secondary']}; font-size: 11px;"
             )
             return
@@ -581,7 +589,7 @@ class ParameterInspectorWidget(QWidget):
         )
         self.lbl_verdict.setStyleSheet(
             f"background-color: {THEME['bg_surface_alt']}; "
-            f"border: 1px solid {THEME['border_subtle']}; border-radius: 2px; "
+            f"border: 1px solid {THEME['border_subtle']}; border-radius: {THEME['r_control']}px; "
             f"padding: 4px 6px; color: {THEME['text_secondary']}; font-size: 11px;"
         )
 

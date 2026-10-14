@@ -70,7 +70,7 @@ class FlowCardItem(QGraphicsItem):
 
     def _status_color(self) -> QColor:
         if not self.flow.last_results:
-            return QColor("#8b9096")
+            return QColor(THEME['vm_node_text_dim'])
         ok = all(r.status != ToolStatus.NG for r in self.flow.last_results.values())
         return QColor(THEME["status_ok_text"] if ok else THEME["status_error_text"])
 
@@ -94,10 +94,10 @@ class FlowCardItem(QGraphicsItem):
 
         # Header strip
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor("#242c3b"))
+        painter.setBrush(QColor(THEME['bg_surface_alt']))
         painter.drawRoundedRect(QRectF(0.6, 0.6, self.WIDTH - 1.2, self.HEADER_H), 5, 5)
         painter.drawRect(QRectF(0.6, self.HEADER_H - 8, self.WIDTH - 1.2, 8))
-        painter.setPen(QPen(QColor("#2b3547"), 1.0))
+        painter.setPen(QPen(QColor(THEME['bg_control']), 1.0))
         painter.drawLine(QPointF(0, self.HEADER_H), QPointF(self.WIDTH, self.HEADER_H))
 
         painter.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold))
@@ -106,7 +106,7 @@ class FlowCardItem(QGraphicsItem):
                          Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, self.flow.name)
 
         # Header glyphs: overview + delete
-        painter.setPen(QPen(QColor("#94a3b8"), 1.3))
+        painter.setPen(QPen(QColor(THEME['vm_node_text_dim']), 1.3))
         painter.drawRect(QRectF(self.WIDTH - 38, 7, 9, 10))
         painter.drawLine(QPointF(self.WIDTH - 35, 5), QPointF(self.WIDTH - 32, 5))
         painter.drawLine(QPointF(self.WIDTH - 32, 5), QPointF(self.WIDTH - 32, 7))
@@ -121,12 +121,12 @@ class FlowCardItem(QGraphicsItem):
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.setBrush(QColor(THEME["vm_accent"]))
                 painter.drawRoundedRect(rect, 4, 4)
-                glyph = QColor("#ffffff")
+                glyph = QColor(THEME['text_primary'])
             else:
-                painter.setPen(QPen(QColor("#38455a"), 1.1))
-                painter.setBrush(QColor("#273244") if active else QColor("#1c2330"))
+                painter.setPen(QPen(QColor(THEME['border_control']), 1.1))
+                painter.setBrush(QColor(THEME['border_subtle']) if active else QColor(THEME['bg_surface_alt']))
                 painter.drawEllipse(rect)
-                glyph = QColor(THEME["vm_accent"]) if active else QColor("#94a3b8")
+                glyph = QColor(THEME['vm_accent']) if active else QColor(THEME['vm_node_text_dim'])
 
             painter.setPen(QPen(glyph, 1.5))
             cx = rect.center().x()
@@ -152,7 +152,7 @@ class FlowCardItem(QGraphicsItem):
                 painter.drawLine(QPointF(cx + 2.0, cy - 4.0), QPointF(cx + 2.0, cy - 1.5))
 
         # Divider below the buttons
-        painter.setPen(QPen(QColor("#2b3547"), 1.0))
+        painter.setPen(QPen(QColor(THEME['bg_control']), 1.0))
         painter.drawLine(QPointF(9, self.HEADER_H + 34), QPointF(self.WIDTH - 9, self.HEADER_H + 34))
 
         # Statistics block
@@ -171,7 +171,7 @@ class FlowCardItem(QGraphicsItem):
         # Run/result toggle (slider)
         slider = QRectF(self.WIDTH - 66, self.HEADER_H + 46, 36, 16)
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor("#242c3b"))
+        painter.setBrush(QColor(THEME['bg_surface_alt']))
         painter.drawRoundedRect(slider, 8, 8)
         if self.flow.enabled:
             painter.setBrush(QColor(THEME["vm_accent"]))
@@ -179,7 +179,7 @@ class FlowCardItem(QGraphicsItem):
             painter.setBrush(QColor(THEME["vm_accent_hover"]))
             knob_x = slider.right() - 8
         else:
-            painter.setBrush(QColor("#ffffff"))
+            painter.setBrush(QColor(THEME['text_primary']))
             knob_x = slider.left() + 8
         painter.drawEllipse(QPointF(knob_x, slider.center().y()), 6.5, 6.5)
 
@@ -364,10 +364,10 @@ class FlowOverviewWidget(QWidget):
         bar_layout.setContentsMargins(8, 5, 8, 5)
         bar_layout.setSpacing(8)
         title = QLabel("Solution Flows")
-        title.setStyleSheet("font-weight: 600; color: #d5d8dd;")
+        title.setStyleSheet(f"font-weight: 600; color: {THEME['text_secondary']};")
         bar_layout.addWidget(title)
         self.lbl_hint = QLabel("Double-click a flow card to edit it, or use its play button to execute a single flow.")
-        self.lbl_hint.setStyleSheet("color: #9ba0a7; font-size: 12px;")
+        self.lbl_hint.setStyleSheet(f"color: {THEME['text_muted']}; font-size: 12px;")
         bar_layout.addWidget(self.lbl_hint)
         bar_layout.addStretch(1)
         root.addWidget(bar)

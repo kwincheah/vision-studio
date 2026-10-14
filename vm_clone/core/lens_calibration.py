@@ -265,7 +265,7 @@ class LensCalibrationModel:
         cx, cy = self.get_principal_point()
         return {
             "version": "1.0",
-            "is_calibrated": self.is_calibrated,
+            "is_calibrated": bool(self.is_calibrated),
             "rms_error": self.rms_error,
             "image_size": list(self.image_size),
             "camera_matrix": self.camera_matrix.tolist(),
@@ -361,7 +361,8 @@ class LensCalibrationModel:
         if not os.path.exists(filepath):
             return False
         try:
-            tree = ET.parse(filepath)
+            from vm_clone.core.xml_safe import safe_parse_file
+            tree = safe_parse_file(filepath)
             root = tree.getroot()
 
             def get_f(tag: str, default: float = 0.0) -> float:

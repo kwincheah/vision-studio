@@ -129,14 +129,27 @@ class ImageMorphologyTool(VisionToolBase):
             "iterations": 1
         }
 
+    #: Upper bound on the structuring element.  A larger kernel is almost certainly a
+    #: typo, and OpenCV allocates it eagerly.
+    MAX_KERNEL = 255
+
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
         img = self.get_input_image(context)
         if img is None:
             return ToolExecutionResult(status=ToolStatus.NG, message="No valid input image provided")
 
         op = self.get_param("operation", "Open")
-        ksize = int(self.get_param("kernel_size", 3))
-        iters = int(self.get_param("iterations", 1))
+
+        # `kernel_size` must be a positive *odd* integer.  OpenCV asserts on 0 and on
+        # negative sizes (cv::normalizeAnchor), and an even size has no true centre so
+        # the result is shifted by half a pixel.  A blank or non-numeric entry used to
+        # raise straight out of `int()` and surface as a generic pipeline exception.
+        ksize = int(round(self.as_float(self.get_param("kernel_size", 3), 3.0)))
+        ksize = max(1, min(ksize, self.MAX_KERNEL))
+        if ksize % 2 == 0:
+            ksize += 1
+
+        iters = max(1, int(round(self.as_float(self.get_param("iterations", 1), 1.0))))
 
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (ksize, ksize))
 
@@ -148,7 +161,12 @@ class ImageMorphologyTool(VisionToolBase):
             "Gradient": cv2.MORPH_GRADIENT
         }
         morph_op = op_map.get(op, cv2.MORPH_OPEN)
-        dst = cv2.morphologyEx(img, morph_op, kernel, iterations=iters)
+        try:
+            dst = cv2.morphologyEx(img, morph_op, kernel, iterations=iters)
+        except cv2.error as exc:
+            return ToolExecutionResult(
+                status=ToolStatus.ERROR,
+                message=f"Morphology '{op}' failed (k={ksize}, iters={iters}): {exc}")
 
         return ToolExecutionResult(
             status=ToolStatus.OK,

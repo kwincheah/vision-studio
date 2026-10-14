@@ -26,14 +26,10 @@ class ConditionBranchTool(VisionToolBase):
         }
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
-        val = context.get("Val_In")
-        if val is None:
-            val = 80.0
-        else:
-            try:
-                val = float(val)
-            except (ValueError, TypeError):
-                val = 80.0
+        # A non-finite value passes `float()` and then makes every comparison
+        # False, so NaN used to yield a confident NG verdict.  `as_float` screens
+        # NaN/inf as well as None and non-numerics.
+        val = self.as_float(context.get("Val_In"), 80.0)
 
         op = self.get_param("operator", ">=")
         low = float(self.get_param("threshold_low", 50.0))
@@ -57,7 +53,16 @@ class ConditionBranchTool(VisionToolBase):
             passed = True
 
         status = ToolStatus.OK if passed else ToolStatus.NG
-        msg = f"Val={val:.2f} {op} [{low}, {high}] -> {'PASS' if passed else 'FAIL'}"
+        # The message must show the bound that was actually applied.  Printing the
+        # unused `threshold_high` alongside a single-bound operator made the verdict
+        # read as "7.00 <= [0.0, 150.0] -> FAIL", which looks like a contradiction.
+        def _num(v: float) -> str:
+            return f"{v:g}"
+        if op == "Between":
+            condition = f"in [{_num(low)}, {_num(high)}]"
+        else:
+            condition = f"{op} {_num(low)}"
+        msg = f"Val={val:g} {condition} -> {'PASS' if passed else 'FAIL'}"
 
         return ToolExecutionResult(
             status=status,
@@ -92,16 +97,12 @@ class VariableCalculationTool(VisionToolBase):
         }
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
-        raw_a = context.get("Val_A", self.get_param("default_a", 10.0))
-        raw_b = context.get("Val_B", self.get_param("default_b", 5.0))
-        try:
-            a = float(raw_a) if raw_a is not None else float(self.get_param("default_a", 10.0))
-        except (ValueError, TypeError):
-            a = float(self.get_param("default_a", 10.0))
-        try:
-            b = float(raw_b) if raw_b is not None else float(self.get_param("default_b", 5.0))
-        except (ValueError, TypeError):
-            b = float(self.get_param("default_b", 5.0))
+        # Non-finite operands are screened out here: `float()` accepts them and the
+        # arithmetic then silently produced NaN for every downstream consumer.
+        fallback_a = self.as_float(self.get_param("default_a", 10.0), 10.0)
+        fallback_b = self.as_float(self.get_param("default_b", 5.0), 5.0)
+        a = self.as_float(context.get("Val_A"), fallback_a)
+        b = self.as_float(context.get("Val_B"), fallback_b)
 
         op = self.get_param("operation", "+")
 
@@ -148,10 +149,12 @@ class BranchTool(VisionToolBase):
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
         raw_cond = context.get("Condition_In")
-        try:
-            cond_val = int(raw_cond) if raw_cond is not None else int(self.get_param("target_value", 1))
-        except (ValueError, TypeError):
-            cond_val = int(self.get_param("target_value", 1))
+        # `int(inf)` raises OverflowError and `int(nan)` raises ValueError, and the
+        # guard previously caught neither OverflowError nor the non-finite case, so a
+        # non-finite upstream value crashed the branch instead of being treated as
+        # "no condition".  `as_float` screens both before the integer conversion.
+        target_default = self.as_float(self.get_param("target_value", 1), 1.0)
+        cond_val = int(self.as_float(raw_cond, target_default))
         mode = self.get_param("mode", "Index by Value")
 
         if mode == "Index by Bit":
@@ -206,11 +209,9 @@ class IfModuleTool(VisionToolBase):
         }
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
-        val = context.get("Val_In", 50.0)
-        try:
-            fval = float(val)
-        except (ValueError, TypeError):
-            fval = 0.0
+        # See ConditionBranch: a NaN operand would compare False against the range
+        # and report a confident NG instead of a usable value.
+        fval = self.as_float(context.get("Val_In"), 50.0)
 
         min_v = float(self.get_param("min_val", 0.0))
         max_v = float(self.get_param("max_val", 100.0))

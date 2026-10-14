@@ -42,8 +42,13 @@ def create_pcb_inspection_solution() -> VisionPipeline:
     pipe.connect("node_source", "Image", "node_defect", "Image")
 
     cond = create_tool_instance("Condition Branch", "node_branch", "06_QualityJudge")
-    cond.set_param("operator", "<=")
+    # Acceptance for an AOI verdict: the part passes only when the defect count is at
+    # or below the tolerance.  The sample previously used `<=` against a tolerance of
+    # 0 while its downstream logic read the result as "within limits", so a board with
+    # several defects reported PASS.
+    cond.set_param("operator", "==")
     cond.set_param("threshold_low", 0.0)
+    cond.set_param("threshold_high", 0.0)
     pipe.add_node(cond)
     pipe.connect("node_defect", "Defect_Count", "node_branch", "Val_In")
 

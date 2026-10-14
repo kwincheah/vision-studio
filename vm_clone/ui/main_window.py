@@ -234,6 +234,7 @@ class VisionMasterMainWindow(QMainWindow):
         self._init_property_dock()
         self._init_default_image_flow()
         self._init_module_log_dock()
+        self._init_inspection_dock()
         self._init_status_bar()
         self._apply_measured_stretch()
         self._layout_settling = False
@@ -254,6 +255,7 @@ class VisionMasterMainWindow(QMainWindow):
             self.flow_scene.select_node(first_id)
             self.on_node_selected(first_id)
         self._apply_responsive_chrome()
+        self._last_saved_snapshot = self._take_solution_snapshot()
         self.run_pipeline_step()
 
     @property
@@ -327,6 +329,30 @@ class VisionMasterMainWindow(QMainWindow):
         self._add_action(system_menu, "Log Viewer", self.on_show_log_viewer)
         system_menu.addSeparator()
         self._add_action(system_menu, "Performance Options", self.on_performance_options)
+
+        # --- Inspection ---------------------------------------------------
+        # The evaluation platform's entry points.  Each opens the same dock on a
+        # different tab, so the surfaces are discoverable from the menu bar without
+        # adding a second window to maintain.
+        inspection_menu = mb.addMenu("&Inspection")
+        self._add_action(inspection_menu, "Dataset Evaluation...",
+                         lambda: self.show_inspection_panel(0))
+        self._add_action(inspection_menu, "Evaluation Results",
+                         lambda: self.show_inspection_panel(1))
+        self._add_action(inspection_menu, "Failure Analysis...",
+                         lambda: self.show_inspection_panel(2))
+        self._add_action(inspection_menu, "Experiments...",
+                         lambda: self.show_inspection_panel(3))
+        self._add_action(inspection_menu, "Compare Experiments...",
+                         lambda: self.show_inspection_panel(4))
+        inspection_menu.addSeparator()
+        self._add_action(inspection_menu, "Generate PCB Defect Dataset...",
+                         self.on_generate_pcb_dataset)
+        self._add_action(inspection_menu, "Explainability (Grad-CAM)...",
+                         self.on_explainability_info)
+        inspection_menu.addSeparator()
+        self._add_action(inspection_menu, "Open Experiment Folder",
+                         self.on_open_experiment_folder)
 
         # --- View ---------------------------------------------------------
         view_menu = self._init_view_menu(mb)
@@ -436,7 +462,12 @@ class VisionMasterMainWindow(QMainWindow):
     def _make_icon_button(self, action_key: str, tooltip: str, slot, checkable: bool = False) -> QToolButton:
         btn = QToolButton()
         btn.setObjectName("toolbarButton")
-        btn.setIcon(get_action_icon(action_key, 24))
+        # The toolbar buttons are transparent on the dark chrome strip, so the
+        # glyph carries the contrast: a light ink is used here, matching the
+        # measured KEYENCE relationship (white labels on `#636e6d` = 5.2:1).
+        # Dark glyphs on this strip only reached 1.9:1.
+        btn.setIcon(get_action_icon(
+            action_key, 24, QColor(THEME["text_on_chrome"])))
         btn.setIconSize(QSize(LM.TOOLBAR_ICON, LM.TOOLBAR_ICON))
         btn.setToolTip(tooltip)
         btn.setCheckable(checkable)
@@ -646,14 +677,14 @@ class VisionMasterMainWindow(QMainWindow):
         layout.setSpacing(6)
 
         title = QLabel("Display & Formatting")
-        title.setStyleSheet("font-weight: 600; color: #d5d8dd; font-size: 13px;")
+        title.setStyleSheet(f"font-weight: 600; color: {THEME['text_secondary']}; font-size: 13px;")
         layout.addWidget(title)
 
         hints = QLabel(
             "Control which result overlays are rendered over the inspection image.\n"
             "Layer switches apply immediately to the live image view."
         )
-        hints.setStyleSheet("color: #9ba0a7;")
+        hints.setStyleSheet(f"color: {THEME['text_muted']};")
         layout.addWidget(hints)
 
         self.act_layer_all = QAction("All Overlays", self, checkable=True)
@@ -696,20 +727,20 @@ class VisionMasterMainWindow(QMainWindow):
 
         layout.addSpacing(8)
         sub = QLabel("Module Result Linking")
-        sub.setStyleSheet("font-weight: 600; color: #d5d8dd;")
+        sub.setStyleSheet(f"font-weight: 600; color: {THEME['text_secondary']};")
         layout.addWidget(sub)
         link_hint = QLabel(
             "Select a module in the Flow Diagram, then use the Result tab on the right\n"
             "to subscribe individual output parameters to global variables."
         )
-        link_hint.setStyleSheet("color: #9ba0a7;")
+        link_hint.setStyleSheet(f"color: {THEME['text_muted']};")
         layout.addWidget(link_hint)
 
         layout.addStretch(1)
 
         # Formatting tool preview (manual p.96 "Output Params")
         fmt = QLabel("Output Parameter Formatting")
-        fmt.setStyleSheet("font-weight: 600; color: #d5d8dd;")
+        fmt.setStyleSheet(f"font-weight: 600; color: {THEME['text_secondary']};")
         layout.addWidget(fmt)
         self.txt_format_preview = QPlainTextEdit()
         self.txt_format_preview.setReadOnly(True)
@@ -973,6 +1004,146 @@ class VisionMasterMainWindow(QMainWindow):
         self.result_dock = dock
         self.dock_menu.addAction(dock.toggleViewAction())
 
+    def _init_inspection_dock(self):
+        """Dataset evaluation, failure analysis and experiment comparison.
+
+        Added as a bottom dock alongside the module log rather than as a new tab in the
+        measured workspace: the reference layout's rail/canvas/right-column ratios are
+        untouched, and the panel is a *workspace* surface the user opens when they are
+        evaluating rather than something that competes with the flow diagram.
+
+        It starts hidden for the same reason the module log does - the default view
+        matches the measured reference - and is reachable from `View > Panels` and the
+        `Inspection` menu.
+        """
+        from vm_clone.ui.inspection_controller import InspectionController
+        from vm_clone.ui.inspection_panel import InspectionPanel
+
+        dock = QDockWidget("Inspection & Evaluation", self)
+        dock.setObjectName("inspectionDock")
+        dock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea
+                             | Qt.DockWidgetArea.RightDockWidgetArea)
+
+        controller = InspectionController(
+            store_directory=self._default_experiment_store())
+        self.inspection_panel = InspectionPanel(controller)
+        self.inspection_panel.status_message.connect(self._on_inspection_status)
+        dock.setWidget(self.inspection_panel)
+        dock.setMinimumHeight(300)
+        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, dock)
+        dock.hide()
+        self.inspection_dock = dock
+        self.dock_menu.addAction(dock.toggleViewAction())
+
+    def _default_experiment_store(self) -> str:
+        """Where experiment records live unless the user chooses elsewhere.
+
+        Kept inside the project's own `projects` directory so a run's history travels
+        with the workspace rather than being buried in a user profile directory.
+        """
+        root = os.path.dirname(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))))
+        return os.path.join(root, "projects", "experiments")
+
+    def _on_inspection_status(self, message: str) -> None:
+        """Show the panel's status on the main status bar."""
+        try:
+            self.lbl_global_status.setText(message)
+        except Exception:                               # noqa: BLE001 - status only
+            pass
+
+    def show_inspection_panel(self, tab: int = 0) -> None:
+        """Reveal the inspection dock on a given tab, and sync the active workflow."""
+        if not hasattr(self, "inspection_dock"):
+            return
+        self.inspection_dock.show()
+        self.inspection_dock.raise_()
+        if hasattr(self, "inspection_panel"):
+            self.inspection_panel.set_active_solution(self.solution)
+            if 0 <= tab < self.inspection_panel.tabs.count():
+                self.inspection_panel.tabs.setCurrentIndex(tab)
+
+    def on_generate_pcb_dataset(self) -> None:
+        """Render a labelled synthetic PCB dataset into a chosen folder."""
+        from PyQt6.QtWidgets import QFileDialog, QInputDialog, QMessageBox
+
+        from vm_clone.samples.pcb_defect_dataset import build_dataset
+
+        directory = QFileDialog.getExistingDirectory(
+            self, "Choose a folder for the PCB defect dataset")
+        if not directory:
+            return
+        count, ok = QInputDialog.getInt(
+            self, "Dataset size", "Number of boards to generate:", 40, 4, 2000, 4)
+        if not ok:
+            return
+
+        target = os.path.join(directory, "pcb_defect_synth")
+        try:
+            dataset = build_dataset(target, count=count)
+        except Exception as exc:                        # noqa: BLE001 - reported
+            QMessageBox.critical(self, "Dataset generation failed",
+                                 f"{type(exc).__name__}: {exc}")
+            return
+
+        counts = dataset.counts()
+        self.show_inspection_panel(0)
+        self.inspection_panel.load_dataset_path(
+            os.path.join(target, "annotations.json"))
+        QMessageBox.information(
+            self, "Dataset generated",
+            f"{counts['images']} boards ({counts['empty_images']} clean) with "
+            f"{counts['annotations']} ground-truth boxes in\n{target}\n\n"
+            f"Classes: {', '.join(dataset.label_set())}\n\n"
+            f"This is a procedurally generated development fixture, not a benchmark.")
+
+    def on_explainability_info(self) -> None:
+        """Explain what explainability support exists, honestly.
+
+        No attribution method is wired up.  Saying so is the correct behaviour: a menu
+        entry that produced an unvalidated heatmap would invite exactly the wrong
+        conclusion - that a coloured overlay proves the detector reasoned correctly.
+        """
+        from PyQt6.QtWidgets import QMessageBox
+
+        QMessageBox.information(
+            self, "Explainability",
+            "<b>No attribution method is implemented.</b><br><br>"
+            "Grad-CAM and similar methods require a differentiable model and a target "
+            "layer, and the detector this platform can validate today is a classical "
+            "one with no such structure. The workflow's detector node can be a YOLO "
+            "model, but none of the weights available here are trained on PCB defects, "
+            "so an explanation of its output would explain the wrong thing.<br><br>"
+            "Shipping a heatmap under these conditions would produce a picture that "
+            "looks like evidence and is not. The failure-analysis view is the supported "
+            "way to inspect why a detection happened: it shows the ground truth, the "
+            "prediction, the overlap and the reason the match failed, all of which are "
+            "measurable.")
+
+    def on_open_experiment_folder(self) -> None:
+        """Open the experiment store in the system file browser."""
+        import subprocess
+
+        from PyQt6.QtWidgets import QMessageBox
+
+        directory = self.inspection_panel.controller.store_directory
+        if not directory or not os.path.isdir(directory):
+            QMessageBox.information(
+                self, "Experiments",
+                "No experiment store yet. Run an evaluation and save it, or choose a "
+                "folder in the Experiments tab.")
+            return
+        try:
+            if sys.platform == "win32":
+                os.startfile(directory)                  # noqa: S606
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", directory])
+            else:
+                subprocess.Popen(["xdg-open", directory])
+        except Exception as exc:                        # noqa: BLE001 - reported
+            QMessageBox.warning(self, "Experiments",
+                                f"Could not open the folder:\n{exc}")
+
     def _shortcut_help_text(self) -> str:
         return (
             "<b>Flow Diagram</b><br>"
@@ -1018,7 +1189,8 @@ class VisionMasterMainWindow(QMainWindow):
 
         self.lbl_vm_version = QLabel("V4.3.0 Build20230510")
         self.lbl_vm_version.setObjectName("statusVersion")
-        self.lbl_vm_version.setStyleSheet("color: #64748b; font-size: 10px; padding-left: 6px;")
+        # Ink comes from the `statusVersion` QSS rule so it tracks the chrome
+        # surface; an inline colour here would go stale if the surface changed.
         sb.addPermanentWidget(self.lbl_vm_version)
 
     # =====================================================================
@@ -1156,13 +1328,13 @@ class VisionMasterMainWindow(QMainWindow):
         if LM.DEBUG:
             total = (self.tool_dock.width() + self.centralWidget().width()
                      + self.property_dock.width())
-            print(f"[layout-settled] content {total} overhead {overhead} -> l/c/r "
-                  f"{self.tool_dock.width()}/{self.centralWidget().width()}/"
-                  f"{self.property_dock.width()} "
-                  f"ratios {self.tool_dock.width() / total:.4f}/"
-                  f"{self.centralWidget().width() / total:.4f}/"
-                  f"{self.property_dock.width() / total:.4f} "
-                  f"split_right {self.split_right.sizes()}")
+            logger.debug(f"[layout-settled] content {total} overhead {overhead} -> l/c/r "
+                         f"{self.tool_dock.width()}/{self.centralWidget().width()}/"
+                         f"{self.property_dock.width()} "
+                         f"ratios {self.tool_dock.width() / total:.4f}/"
+                         f"{self.centralWidget().width() / total:.4f}/"
+                         f"{self.property_dock.width() / total:.4f} "
+                         f"split_right {self.split_right.sizes()}")
 
     def _size_right_column(self):
         """Set the right column's two bands to the measured heights.
@@ -1221,7 +1393,7 @@ class VisionMasterMainWindow(QMainWindow):
         bg, fg, border = palette.get(kind, palette["ok"])
         self.lbl_global_status.setText(f" {text} ")
         self.lbl_global_status.setStyleSheet(
-            f"font-weight: bold; font-size: 11px; padding: 2px 12px; border-radius: 2px; "
+            f"font-weight: bold; font-size: 11px; padding: 2px 12px; border-radius: {THEME['r_control']}px; "
             f"background-color: {bg}; color: {fg}; border: 1px solid {border};"
         )
 
@@ -1654,10 +1826,7 @@ class VisionMasterMainWindow(QMainWindow):
                 if new_name in self.solution.flows:
                     QMessageBox.warning(self, "Rename Error", f"A flow named '{new_name}' already exists.")
                 else:
-                    self.solution.flows[new_name] = self.solution.flows.pop(flow_name)
-                    target_flow.name = new_name
-                    if self.solution.active_flow_name == flow_name:
-                        self.solution.active_flow_name = new_name
+                    self.solution.rename_flow(flow_name, new_name)
                     self._refresh_flow_tabs()
                     self.statusBar().showMessage(f"Renamed flow to '{new_name}'", 2500)
 
@@ -2158,7 +2327,7 @@ class VisionMasterMainWindow(QMainWindow):
         flow = self.solution.flows.get(flow_name)
         dot = "●"
         if self.run_timer.isActive():
-            color = "#38bdf8"
+            color = "#e4b030"
             verdict = "RUNNING"
         elif overall_ok:
             color = THEME["status_ok_text"]
@@ -2583,6 +2752,7 @@ class VisionMasterMainWindow(QMainWindow):
         if getattr(self, "flow_overview", None) is not None:
             self.flow_overview.rebuild(self.solution.flows, self.solution.get_trigger_flow_name())
         self.result_panel.global_variables = self.solution.global_variables
+        self._last_saved_snapshot = self._take_solution_snapshot()
         self.run_pipeline_step()
         self._set_hint(f"Loaded solution '{solution.name}' ({len(solution.flows)} flow(s))", 4000)
 
@@ -2624,6 +2794,7 @@ class VisionMasterMainWindow(QMainWindow):
             try:
                 self.project_manager.save_project(self.solution, fpath)
                 self.current_project_path = fpath
+                self._last_saved_snapshot = self._take_solution_snapshot()
                 self.setWindowTitle(f"Apex Industrial Vision Studio v4.3 - [{self.solution.name}]")
                 QMessageBox.information(self, "Solution Saved", f"Solution saved successfully to:\n{fpath}")
             except Exception as e:
@@ -2644,6 +2815,72 @@ class VisionMasterMainWindow(QMainWindow):
                 QMessageBox.information(self, "Export Complete", f"Saved results to {fpath}")
             except Exception as e:
                 QMessageBox.critical(self, "Export Error", str(e))
+
+    def _take_solution_snapshot(self) -> Optional[str]:
+        """Produce a serialized JSON snapshot excluding transient telemetry."""
+        if not getattr(self, "solution", None):
+            return None
+        try:
+            d = self.solution.to_dict()
+            # Strip transient runtime counters from flows
+            for flow_data in d.get("flows", {}).values():
+                flow_data.pop("execution_count", None)
+            return json.dumps(d, sort_keys=True)
+        except Exception:
+            return None
+
+    def has_unsaved_changes(self) -> bool:
+        """Check whether current solution differs from last saved baseline."""
+        if not getattr(self, "solution", None) or self._last_saved_snapshot is None:
+            return False
+        current = self._take_solution_snapshot()
+        return current != self._last_saved_snapshot
+
+    def _confirm_discard_changes(self) -> str:
+        """Prompt user on exit with unsaved changes. Returns 'save', 'discard', or 'cancel'."""
+        msg = QMessageBox(self)
+        msg.setWindowTitle("Unsaved Changes")
+        msg.setText(f"The solution '{self.solution.name}' has unsaved modifications.\nDo you want to save before closing?")
+        msg.setIcon(QMessageBox.Icon.Question)
+        btn_save = msg.addButton("Save", QMessageBox.ButtonRole.AcceptRole)
+        btn_discard = msg.addButton("Discard", QMessageBox.ButtonRole.DestructiveRole)
+        btn_cancel = msg.addButton("Cancel", QMessageBox.ButtonRole.RejectRole)
+        msg.setDefaultButton(btn_save)
+        msg.exec()
+        clicked = msg.clickedButton()
+        if clicked == btn_save:
+            return "save"
+        elif clicked == btn_discard:
+            return "discard"
+        return "cancel"
+
+    def closeEvent(self, event):
+        """Cleanly handle application teardown, timers, and unsaved changes."""
+        if self.has_unsaved_changes():
+            choice = self._confirm_discard_changes()
+            if choice == "cancel":
+                event.ignore()
+                return
+            elif choice == "save":
+                self.on_save_solution()
+                if self.has_unsaved_changes():
+                    # Save was canceled or failed
+                    event.ignore()
+                    return
+
+        # Stop workflow execution timer
+        if hasattr(self, "run_timer") and self.run_timer.isActive():
+            self.run_timer.stop()
+
+        # Release active camera drivers
+        try:
+            from vm_clone.core.camera_manager import CameraManager
+            if CameraManager._instance is not None:
+                CameraManager._instance.close_all()
+        except Exception as e:
+            logger.warning("Error releasing cameras during close: %s", e)
+
+        event.accept()
 
     def on_about(self):
         QMessageBox.about(

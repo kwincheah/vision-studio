@@ -4,6 +4,7 @@ Implements:
 - N-Point Calibration (Affine / Homography transformation from Pixel coordinates (u, v) to World/Robot coordinates (X, Y) in mm)
 - Camera Calibration / Distortion Correction (Pinhole camera model undistortion)
 """
+import os
 import cv2
 import numpy as np
 from typing import Dict, Any, List
@@ -59,16 +60,12 @@ class NPointCalibrationTool(VisionToolBase):
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
         self._compute_transform()
 
-        raw_px = context.get("Pixel_X", 400.0)
-        raw_py = context.get("Pixel_Y", 300.0)
-        try:
-            px = float(raw_px) if raw_px is not None else 400.0
-        except (ValueError, TypeError):
-            px = 400.0
-        try:
-            py = float(raw_py) if raw_py is not None else 300.0
-        except (ValueError, TypeError):
-            py = 300.0
+        # `float()` accepts NaN and inf, and those then passed into `cv2.transform`,
+        # producing a NaN world coordinate that silently poisoned every downstream
+        # measurement.  `as_float` rejects non-finite values and falls back to the
+        # configured default pixel.
+        px = self.as_float(context.get("Pixel_X"), 400.0)
+        py = self.as_float(context.get("Pixel_Y"), 300.0)
 
         if self.transform_matrix is None:
             return ToolExecutionResult(status=ToolStatus.NG, message="Calibration matrix computation failed")

@@ -66,8 +66,8 @@ class CameraManagementDialog(QDialog):
         mvs_status_text = f"Hikrobot MVS C SDK: {self.camera_manager.get_mvs_sdk_version()}"
         self.lbl_mvs_status = QLabel(mvs_status_text)
         is_mvs_active = self.camera_manager.is_mvs_sdk_active()
-        mvs_bg = "#12331f" if is_mvs_active else "#1e293b"
-        mvs_fg = "#4ade80" if is_mvs_active else "#38bdf8"
+        mvs_bg = "#12331f" if is_mvs_active else "#f8fafb"
+        mvs_fg = "#4ade80" if is_mvs_active else "#e4b030"
         self.lbl_mvs_status.setStyleSheet(
             f"background-color: {mvs_bg}; color: {mvs_fg}; font-weight: 600; padding: 4px 8px; border-radius: 3px; font-size: 12px;"
         )
@@ -85,11 +85,19 @@ class CameraManagementDialog(QDialog):
 
         # Table of enumerated cameras
         self.table_devices = QTableWidget(0, 4)
-        self.table_devices.setHorizontalHeaderLabels(["Name / Model", "Type", "Serial / ID", "Interface"])
-        self.table_devices.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        self.table_devices.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        self.table_devices.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        self.table_devices.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_devices.setHorizontalHeaderLabels(
+            ["Name / Model", "Type", "Serial / ID", "Interface"])
+        header = self.table_devices.horizontalHeader()
+        # The first column takes the slack and the other three take their content
+        # width.  The default minimum section is 104 px, which is wider than
+        # "Interface" needs, so the four columns together overflowed the pane and the
+        # header was clipped mid-word behind a horizontal scrollbar; a smaller floor
+        # lets the content-sized columns actually fit.
+        header.setMinimumSectionSize(64)
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        for col in (1, 2, 3):
+            header.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         self.table_devices.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table_devices.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self.table_devices.setAlternatingRowColors(True)
@@ -155,12 +163,12 @@ class CameraManagementDialog(QDialog):
         # Hikrobot MVS Feature Configuration Actions
         mvs_action_layout = QHBoxLayout()
         self.btn_import_mvs = QPushButton("Import MVS Config (*.mvs, *.xml)...")
-        self.btn_import_mvs.setStyleSheet("background-color: #0369a1; color: #ffffff; font-size: 12px; padding: 4px;")
+        self.btn_import_mvs.setStyleSheet(f"background-color: {THEME['border_focus']}; color: {THEME['text_primary']}; font-size: 12px; padding: 4px;")
         self.btn_import_mvs.clicked.connect(self._on_import_mvs_config)
         mvs_action_layout.addWidget(self.btn_import_mvs)
 
         self.btn_export_mvs = QPushButton("Export MVS Config (*.mvs)...")
-        self.btn_export_mvs.setStyleSheet("background-color: #334155; color: #f8fafc; font-size: 12px; padding: 4px;")
+        self.btn_export_mvs.setStyleSheet(f"background-color: {THEME['border_control']}; color: {THEME['text_primary']}; font-size: 12px; padding: 4px;")
         self.btn_export_mvs.clicked.connect(self._on_export_mvs_config)
         mvs_action_layout.addWidget(self.btn_export_mvs)
 
@@ -182,9 +190,13 @@ class CameraManagementDialog(QDialog):
         self.lbl_preview = QLabel("Select a camera to start preview")
         self.lbl_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_preview.setMinimumSize(320, 240)
+        # The braces matter: without them the token name became literal CSS text and
+        # Qt discarded the entire inline stylesheet, leaving the preview unstyled.
+        # The ink must be the *viewport* text tone: the body ink measured 1.8:1 on
+        # this dark surface.
         self.lbl_preview.setStyleSheet(f"""
-            background-color: #101216;
-            color: {THEME['text_secondary']};
+            background-color: {THEME['vm_viewport']};
+            color: {THEME['vm_viewport_text']};
             border: 1px solid {THEME['border_control']};
         """)
         preview_layout.addWidget(self.lbl_preview, 1)
@@ -211,7 +223,7 @@ class CameraManagementDialog(QDialog):
         # Dialog Buttons (OK / Cancel) + Lens Calibration Wizard
         bottom_row = QHBoxLayout()
         btn_lens_calib = QPushButton("Lens Calibration Wizard...")
-        btn_lens_calib.setStyleSheet("background-color: #0284c7; color: #ffffff; font-weight: 500;")
+        btn_lens_calib.setStyleSheet(f"background-color: {THEME['border_focus']}; color: {THEME['text_primary']}; font-weight: 500;")
         btn_lens_calib.clicked.connect(self._on_open_lens_calib)
         bottom_row.addWidget(btn_lens_calib)
         bottom_row.addStretch()
@@ -265,18 +277,11 @@ class CameraManagementDialog(QDialog):
             QLineEdit.EchoMode.Normal, "rtsp://192.168.1.64:554/live"
         )
         if ok and url.strip():
-            dev_id = f"rtsp_{int(time.time())}"
-            dev_info = CameraDeviceInfo(
-                device_id=dev_id,
-                name=f"Network Stream ({url.strip()})",
-                camera_type="IP/RTSP Stream",
-                interface_name="RTSP Stream"
-            )
-            self.camera_manager._devices[dev_id] = dev_info
+            dev_info = self.camera_manager.add_network_stream(url.strip())
             self._populate_devices()
             # Select new device
             for r in range(self.table_devices.rowCount()):
-                if self.table_devices.item(r, 0).data(Qt.ItemDataRole.UserRole) == dev_id:
+                if self.table_devices.item(r, 0).data(Qt.ItemDataRole.UserRole) == dev_info.device_id:
                     self.table_devices.selectRow(r)
                     break
 

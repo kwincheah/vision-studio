@@ -355,9 +355,19 @@ class MarketplaceService:
             with open(manifest_path, "r", encoding="utf-8") as f:
                 manifest_data = json.load(f)
             plugin_id = manifest_data.get("id", repo)
+            if (
+                not isinstance(plugin_id, str)
+                or plugin_id in (".", "..")
+                or not re.fullmatch(r"[a-zA-Z0-9_.-]+", plugin_id)
+            ):
+                return False, f"Invalid plugin id {plugin_id!r}: only letters, digits, '_', '.', '-' are allowed.", None
 
             # 4. Copy to target destination in plugins/
             final_plugin_dir = os.path.join(dest_base, plugin_id)
+            real_base = os.path.realpath(dest_base)
+            if os.path.dirname(os.path.realpath(final_plugin_dir)) != real_base:
+                return False, f"Plugin id {plugin_id!r} resolves outside the plugins directory.", None
+
             if os.path.exists(final_plugin_dir):
                 # Unload first if previously active
                 pm = PluginManager.get_instance()

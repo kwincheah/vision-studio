@@ -548,7 +548,7 @@ Overview:
 
         btn_row = QHBoxLayout()
         self.btn_github_install = QPushButton("Download, Validate & Install")
-        self.btn_github_install.setStyleSheet(f"font-weight: bold; padding: 6px 14px; background-color: {THEME['accent_primary']}; color: #ffffff; border-radius: 4px;")
+        self.btn_github_install.setStyleSheet(f"font-weight: bold; padding: 6px {THEME['sp_section']}px; background-color: {THEME['accent_primary']}; color: {THEME['text_primary']}; border-radius: 4px;")
         self.btn_github_install.clicked.connect(self._on_direct_github_install_clicked)
         btn_row.addWidget(self.btn_github_install)
         btn_row.addStretch(1)
@@ -663,7 +663,7 @@ Overview:
         form_layout.addRow("Output Folder:", dir_row)
 
         btn_create = QPushButton("Generate Plugin Scaffold")
-        btn_create.setStyleSheet(f"font-weight: bold; padding: 6px 14px; background-color: {THEME['accent_primary']}; color: #ffffff; border-radius: 4px;")
+        btn_create.setStyleSheet(f"font-weight: bold; padding: 6px {THEME['sp_section']}px; background-color: {THEME['accent_primary']}; color: {THEME['text_primary']}; border-radius: 4px;")
         btn_create.clicked.connect(self._on_generate_scaffold_clicked)
         form_layout.addRow("", btn_create)
 

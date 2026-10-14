@@ -45,20 +45,41 @@ def qapp():
 # Theme
 # =========================================================================
 def test_vm_theme_tokens_match_sampled_reference():
-    """Distinctive Apex Industrial Vision Studio design tokens."""
+    """The workspace tokens are the palette measured from the KEYENCE references.
+
+    Values trace to `docs/KEYENCE_DESIGN_SPEC.md` §2 / `keyence/tokens.json`.
+    """
     required = [
-        "vm_chrome", "vm_rail", "vm_flyout", "vm_canvas", "vm_canvas_dot",
-        "vm_panel", "vm_panel_header", "vm_accent", "vm_node", "vm_node_text",
-        "vm_node_border", "vm_wire",
+        "vm_chrome", "vm_chrome_dark", "vm_rail", "vm_flyout", "vm_canvas",
+        "vm_canvas_dot", "vm_panel", "vm_panel_header", "vm_accent", "vm_node",
+        "vm_node_text", "vm_node_border", "vm_wire", "vm_viewport",
     ]
     for key in required:
         assert key in THEME, f"missing VM theme token: {key}"
         assert THEME[key].startswith("#") and len(THEME[key]) == 7
 
-    # Distinctive Apex Studio design tokens (differentiated from proprietary trade dress)
-    assert THEME["vm_accent"] == "#0ea5e9"
-    assert THEME["vm_canvas"] == "#0f131a"
-    assert THEME["vm_node"] == "#1e2532"
+    # Signature amber selection, measured from the selected tab / Flow Editor node.
+    assert THEME["vm_accent"] == "#e4b030"
+    # Canvas and card surfaces, measured from the XG Flow Editor.
+    assert THEME["vm_canvas"] == "#b4b8c0"
+    assert THEME["vm_node"] == "#fcfcfc"
+    # Chrome greys, measured from the CV-X menu bar and the XG toolbar.
+    assert THEME["vm_chrome"] == "#848c94"
+    assert THEME["vm_chrome_dark"] == "#646c6c"
+    # The image viewport is the measured near-black field.
+    assert THEME["vm_viewport"] == "#201c20"
+
+    # Light-theme honesty: the refinement must be a light UI, not a dark one.
+    def _luma(h: str) -> float:
+        r, g, b = (int(h[i:i + 2], 16) for i in (1, 3, 5))
+        return 0.299 * r + 0.587 * g + 0.114 * b
+
+    assert _luma(THEME["vm_canvas"]) > 150, "canvas must be a light surface"
+    assert _luma(THEME["vm_panel"]) > 200, "panels must be light surfaces"
+    assert _luma(THEME["vm_node"]) > 220, "cards must be near-white"
+    assert _luma(THEME["text_primary"]) < 60, "ink must be dark on light surfaces"
+    # The rail carries light glyphs, so it must stay dark enough for AA contrast.
+    assert _luma(THEME["vm_rail"]) < 110, "rail must stay dark for glyph contrast"
 
     # Every chrome token must be interpolated by the stylesheet. The canvas and
     # node-card colours are consumed by the QGraphicsScene / QGraphicsItem
@@ -78,8 +99,8 @@ def test_vm_theme_tokens_match_sampled_reference():
     for key in ("vm_canvas", "vm_canvas_dot", "vm_node", "vm_node_text", "vm_wire"):
         assert f'"{key}"' in painter_sources, f"{key} is not consumed by any painter"
 
-    # The original engineering-blue identity must be preserved for focus rings.
-    assert THEME["accent_primary"] == "#3b82f6"
+    # The focus-ring accent is the blue measured from the KEYENCE references.
+    assert THEME["accent_primary"] == "#0078b0"
 
 
 # =========================================================================

@@ -8,104 +8,299 @@ Grounded in Apple Human Interface Guidelines adapted for Desktop Industrial Engi
 - Semantic status strictness: Green, Amber, Red exclusively for verified functional states (color.md)
 """
 import os
+from typing import Dict
+
 from PyQt6.QtGui import QFontDatabase, QFont
 from PyQt6.QtWidgets import QApplication
 
 THEME = {
-    # Surfaces & Backgrounds (macOS Dark Mode Depth Hierarchy)
-    "bg_app": "#0f1217",           # Deep slate window root
-    "bg_surface": "#151921",       # Primary panels, sidebars, dock containers
-    "bg_surface_alt": "#1a202a",   # Secondary card surfaces, parameter groups
-    "bg_control": "#202633",       # Buttons, input fields, tree nodes
-    "bg_control_hover": "#272f3e", # Control hover state
-    "bg_control_active": "#171c26",# Control pressed state
-    "bg_header": "#181d26",        # Dock titles, table headers
-    "bg_table_row_alt": "#12161f", # Alternating row surface
+    # --- Surfaces & backgrounds (KEYENCE light: K1 panel / K2 canvas) --------
+    "bg_app": "#e4e7ea",           # window field
+    "bg_surface": "#ecf0f0",       # panels, sidebars, dock containers   (K1 0.17)
+    "bg_surface_alt": "#f8fafb",   # card surfaces, parameter groups
+    "bg_control": "#c0c4c8",       # buttons, inputs, tree nodes         (K1 0.39)
+    "bg_control_hover": "#d4d8db", # control hover
+    "bg_control_active": "#a8adb2",# control pressed
+    "bg_header": "#848c94",        # menus, dock titles, table headers   (K1 0.69)
+    "bg_table_row_alt": "#f2f5f6", # alternating row surface
 
-    # Borders & Outlines
-    "border_subtle": "#232a37",    # 1px frame and divider lines
-    "border_control": "#2d3647",   # Input & button boundaries
-    "border_focus": "#3b82f6",     # macOS System Blue focus ring
+    # --- Borders & outlines -------------------------------------------------
+    # Borders are *meaningful graphics* (they delimit every control), so they are
+    # held to the WCAG non-text 3:1 rule rather than being decorative hairlines.
+    # The reference draws them hard: a CV-X group box border measures 13.1:1 on its
+    # panel, and an XG unit-node edge 5.5:1 on the canvas.
+    "border_subtle": "#5f666d",    # 1 px frame and divider lines
+    "border_control": "#5a6069",   # input & button boundaries
+    "border_focus": "#0078b0",     # focus ring (K1 blue accent)
 
-    # Typography (WCAG AAA Contrast against dark surfaces)
-    "text_primary": "#f1f5f9",     # Slate 100 primary content (>11:1 contrast)
-    "text_secondary": "#94a3b8",   # Slate 400 headers, units, sub-captions
-    "text_muted": "#64748b",       # Slate 500 placeholders, timestamps
+    # --- Typography (dark-on-light, WCAG AA+ on the light surfaces) ---------
+    "text_primary": "#1a2024",     # body text                           (K1)
+    "text_secondary": "#414850",   # headers, units, sub-captions
+    "text_muted": "#5a6168",       # placeholders, timestamps, captions
+    "text_on_chrome": "#f0f2f4",   # labels on the dark chrome           (K2)
+    "text_on_menu": "#1a2120",     # dark ink on the lighter menu strip  (K1 4.99:1)
 
-    # Restrained System Accent (Engineering Blue)
-    "accent_primary": "#3b82f6",   # Primary accent
-    "accent_hover": "#60a5fa",     # Accent hover
-    "accent_dim": "#1a3458",       # Selected item background pill
-    "accent_border": "#2563eb",    # Selection pill border
+    # --- Accents (KEYENCE: blue primary, amber selection) -------------------
+    "accent_primary": "#0078b0",   # active glyphs, links                (K1)
+    "accent_hover": "#2f96ce",
+    "accent_dim": "#f6dcae",       # amber selection wash                (K1 0.07)
+    #: Selection edge.  The reference marks a selected node with a hard dark edge
+    #: (measured 8.38:1 against the canvas), so the amber edge is deepened until it
+    #: clears 3:1 against *both* the card fill and the canvas.  The amber fill itself
+    #: is the approved brand colour and is unchanged.
+    "accent_border": "#6f4a04",
 
-    # Semantic Status Tokens (Exclusively reserved for Pass/Warn/Fail/Run)
-    "status_ok_text": "#22c55e",
-    "status_ok_bg": "#122e1b",
-    "status_ok_border": "#19562e",
+    # --- Semantic status tokens (functional meaning, corrected contrast) ----
+    "status_ok_text": "#076b3a",
+    "status_ok_bg": "#d8f0e2",
+    "status_ok_border": "#00754a",   # K2 Run button green
 
-    "status_warn_text": "#f59e0b",
-    "status_warn_bg": "#36250d",
-    "status_warn_border": "#5e4012",
+    "status_warn_text": "#8a5a0e",
+    "status_warn_bg": "#fbeccf",
+    "status_warn_border": "#8a5a0e", # K1 caution orange
 
-    "status_error_text": "#ef4444",
-    "status_error_bg": "#361417",
-    "status_error_border": "#5e1d23",
+    "status_error_text": "#b81c20",
+    "status_error_bg": "#fadadd",
+    "status_error_border": "#c8161a",# K2 error LED
 
-    "status_running_text": "#38bdf8",
-    "status_running_bg": "#10273a",
-    "status_running_border": "#194060",
+    "status_running_text": "#0a6a96",
+    "status_running_bg": "#d4e8f4",
+    "status_running_border": "#0078b0",
 
-    # --- Apex Vision Studio Distinctive Industrial Design Tokens -------------
-    # Original industrial dark titanium workstation identity, differentiated
-    # from proprietary trade dress. Replaces white paper cards and brown-orange
-    # palettes with elevated slate-obsidian surfaces, Electric Cyan / Cobalt accents,
-    # and crisp WCAG AAA legibility.
-    "vm_chrome": "#11141a",          # title / menu / toolbar strip (deep titanium)
-    "vm_rail": "#161b24",            # left category icon rail (slate-navy)
-    "vm_rail_hover": "#222938",
-    "vm_flyout": "#1a202c",          # tool flyout panel surface (elevated slate)
-    "vm_flyout_header": "#141822",   # flyout category header
-    "vm_canvas": "#0f131a",          # flow canvas base (obsidian slate CAD canvas)
-    "vm_canvas_dot": "#1f2736",      # flow canvas dot grid
-    "vm_canvas_dot_major": "#2c384e",
-    "vm_panel": "#151922",           # right-side data panel (deep sleek slate)
-    "vm_panel_header": "#1c222e",    # panel header / table header
-    "vm_card": "#1e2532",            # flow overview card surface
-    "vm_accent": "#0ea5e9",          # Apex signature Electric Cyan / Cobalt
-    "vm_accent_hover": "#38bdf8",    # hover state
-    "vm_accent_dim": "#0e324a",      # cyan glow selection wash
-    "vm_node": "#1e2532",            # module card body (elevated dark slate)
-    "vm_node_text": "#f1f5f9",       # module card primary text (crisp light slate)
-    "vm_node_text_dim": "#94a3b8",   # module card secondary text (slate 400)
-    "vm_node_border": "#2e3848",     # module card border
-    "vm_wire": "#0ea5e9",            # dependency wire (electric cyan)
+    # --- Vision-workspace tokens (Apex identity on a KEYENCE-derived base) --
+    "vm_chrome": "#848c94",          # menu strip            (measured K1 0.46)
+    "vm_chrome_dark": "#646c6c",     # toolbar + status bar  (measured K2 0.39)
+    #: The rail carries light glyphs, so it uses the darker end of the measured chrome
+    #: range: at `#646c6c` the white glyphs only reach 3.6:1, short of the 4.5:1 needed
+    #: for UI text.  The measured darkest chrome gives 6.9:1.
+    "vm_rail": "#505854",
+    "vm_rail_hover": "#6a7270",
+    "vm_flyout": "#f8fafb",          # tool flyout panel surface (measured K1 #f4f4f4)
+    "vm_flyout_header": "#dfe3e6",   # flyout category header
+    "vm_canvas": "#b4b8c0",          # flow canvas base      (measured K2 0.54)
+    #: The grid is a *subtle* texture on the light canvas and is decorative (nodes align
+    #: by drag, not by grid), so it is deliberately below the non-text target and is
+    #: exempt from the audit gate.
+    "vm_canvas_dot": "#949aa4",
+    "vm_canvas_dot_major": "#868d98",
+    "vm_panel": "#ecf0f0",           # right-side data panel
+    "vm_panel_header": "#d8dcdf",    # panel header / table header
+    "vm_card": "#fcfcfc",            # flow overview card surface (K2 node)
+    "vm_accent": "#e4b030",          # signature amber selection (measured K1)
+    "vm_accent_hover": "#f0c050",
+    "vm_accent_dim": "#f8e8c8",      # amber selection wash
+    "vm_node": "#fcfcfc",            # module card body      (measured K2)
+    "vm_node_text": "#1a2024",       # module card primary text
+    "vm_node_text_dim": "#4f565c",   # module card secondary text
+    #: Node edge, deepened to match the reference's hard graph-paper outline
+    #: (XG unit node vs canvas measures 5.5:1).
+    "vm_node_border": "#5c636a",
+    #: Dependency wire.  On this lighter canvas the reference's exact accent blue only
+    #: reaches 2.45:1, so the wire uses a deepened shade of the same hue.
+    "vm_wire": "#005f8c",
+    "vm_viewport": "#201c20",        # image viewport / result field (measured K2)
+    "vm_viewport_text": "#e8eaec",
 }
+
+# ===========================================================================
+# Design-system tokens
+# ---------------------------------------------------------------------------
+# The palette above is *colour*.  These are the dimensions and the type ramp that make
+# components of the same kind look like the same component.  They live here rather than
+# inline in each widget because a measured audit found 383 hardcoded visual constants
+# across `vm_clone/ui` - 24 distinct margin tuples, 29 padding shorthands, 12 spacings,
+# 5 radii and 6 font sizes - which is what made equivalent controls differ between
+# panels.  See `docs/DESIGN_SYSTEM.md`.
+#
+# Sizes are CSS pixels because Qt's stylesheet channel (`font-size: Npx`) is what
+# resolves for styled widgets; `initialize_app_fonts` drives the application-font
+# channel from the same value so the two cannot disagree.
+# ===========================================================================
+
+#: Type ramp.  `body` is the default; every other size has a distinct role.
+TYPE = {
+    "micro": 10,      # build stamps, axis ticks, calibration readouts
+    "caption": 11,    # secondary labels, units, table sub-captions
+    "body": 12,       # default UI text: buttons, fields, tables, panels
+    "label": 13,      # form labels, dialog body, module card text
+    "subtitle": 14,   # section headings
+    "title": 16,      # dialog and page titles
+}
+
+#: Font weights, named for the role rather than the number.
+WEIGHT = {
+    "regular": 400,
+    "medium": 500,
+    "demibold": 600,
+    "bold": 700,
+}
+
+#: Every text size the ramp permits.
+TYPE_SCALE = tuple(sorted(set(TYPE.values())))
+
+#: Control heights, in pixels, each named for a *purpose* so a widget picks the tier
+#: matching its role instead of inventing a height.
+SIZE = {
+    "input": 24,          # single-line text, numeric and combo fields
+    "button": 26,         # standard push buttons
+    "compact": 24,        # icon-only buttons in dense rows
+    "toolbar": 30,        # the measured command-strip button
+    "tab": 26,            # tab-bar and panel-header rows
+    "row": 24,            # table and tree row pitch
+    "header": 30,         # table header
+    "toolbar_strip": 30,
+    "status_strip": 24,
+    "indicator": 13,      # check-box / radio glyph
+    "icon_sm": 16,
+    "icon_md": 20,
+    "icon_lg": 24,
+}
+
+#: Spacing scale.  Off-scale gaps are snapped with `nearest_space`.
+SPACE = {
+    "none": 0,
+    "hair": 2,      # between a label and its own indicator
+    "tight": 4,     # inside a dense row
+    "snug": 6,      # between related controls
+    "base": 8,      # default gap and panel padding
+    "loose": 12,    # between groups
+    "section": 16,  # between sections
+}
+
+#: Corner radii: controls, containers, and pills.
+RADIUS = {"none": 0, "control": 3, "panel": 4, "pill": 9}
+
+#: Border widths.
+BORDER = {"none": 0, "hair": 1, "focus": 2, "selected": 2}
+
+#: The font stack, so a stylesheet rule and a `QFont` fall back identically.
+FONT_STACK = "Segoe UI, Noto Sans, Ubuntu, DejaVu Sans, Arial, sans-serif"
+#: Family used when constructing a `QFont` in code.
+FONT_FAMILY = "Segoe UI"
+
+#: Flat names for the stylesheet vocabulary.  The dicts above are the source of truth;
+#: generating the keys keeps a rule (`font-size: {T['fs_body']}px`) and the ramp from
+#: ever disagreeing.
+THEME.update({f"fs_{k}": v for k, v in TYPE.items()})
+THEME.update({f"fw_{k}": v for k, v in WEIGHT.items()})
+THEME.update({f"h_{k}": v for k, v in SIZE.items()})
+THEME.update({f"r_{k}": v for k, v in RADIUS.items()})
+THEME.update({f"sp_{k}": v for k, v in SPACE.items()})
+THEME.update({f"bw_{k}": v for k, v in BORDER.items()})
+THEME["font_stack"] = FONT_STACK
+
+
+def font_px(size_key: str = "body") -> int:
+    """Pixel size for a type-ramp role."""
+    return TYPE.get(size_key, TYPE["body"])
+
+
+def font_weight(weight_key: str = "regular") -> int:
+    """Numeric weight for a named weight role."""
+    return WEIGHT.get(weight_key, WEIGHT["regular"])
+
+
+def control_h(size_key: str = "button") -> int:
+    """Pixel height for a control role."""
+    return SIZE.get(size_key, SIZE["button"])
+
+
+def space(space_key: str = "base") -> int:
+    """Pixel gap for a spacing role."""
+    return SPACE.get(space_key, SPACE["base"])
+
+
+def corner_radius(radius_key: str = "control") -> int:
+    """Pixel corner radius for a role."""
+    return RADIUS.get(radius_key, RADIUS["control"])
+
+
+def nearest_space(value: int) -> int:
+    """Snap an arbitrary pixel gap onto the spacing scale.
+
+    Ties round *up*, because a control that is slightly too roomy reads better than one
+    whose content touches its border.
+    """
+    return min(SPACE.values(), key=lambda step: (abs(step - value), -step))
+
+
+def _preferred_family(app: QApplication) -> str:
+    """The first installed family from the token font stack."""
+    families = set(QFontDatabase.families())
+    for candidate in FONT_STACK.split(","):
+        candidate = candidate.strip().strip("'\"")
+        if candidate in families:
+            return candidate
+    return FONT_FAMILY
+
+
+def _point_size_for(px: int) -> float:
+    """Convert a CSS pixel size to points for the application-font channel.
+
+    Qt reports a font set with `setPixelSize` as `pointSize() == -1`, and widgets that
+    read the point size then warn and fall back - the tab bar does this when it applies
+    the stylesheet's font (`QFont::setPointSize: Point size <= 0 (-1)`).  Expressing the
+    application font in points keeps both channels readable; they agree because the
+    conversion uses the same logical DPI Qt lays out with.
+    """
+    from PyQt6.QtGui import QGuiApplication
+
+    screen = QGuiApplication.primaryScreen()
+    dpi = screen.logicalDotsPerInch() if screen is not None else 96.0
+    if not dpi or dpi <= 0:
+        dpi = 96.0
+    return px * 72.0 / dpi
 
 
 def initialize_app_fonts(app: QApplication):
-    """Loads system fonts reliably across Windows, macOS, and Linux."""
+    """Load the UI font and set the application default.
+
+    Qt has two font channels: the application font set here, which unstyled widgets
+    inherit, and the `font-size` a stylesheet declares, which overrides it for styled
+    widgets.  When the two disagreed, text in a styled panel and text in an unstyled
+    one rendered at different sizes - the "inconsistent typography" the audit reported.
+    Both are driven from `TYPE['body']` here.
+    """
     import sys
     if sys.platform == "win32":
-        font_paths = [
-            "C:/Windows/Fonts/segoeui.ttf",
-            "C:/Windows/Fonts/segoeuib.ttf",
-            "C:/Windows/Fonts/arial.ttf",
-            "C:/Windows/Fonts/consola.ttf"
-        ]
-        for fp in font_paths:
+        for fp in ("C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/segoeuib.ttf",
+                   "C:/Windows/Fonts/arial.ttf", "C:/Windows/Fonts/consola.ttf"):
             if os.path.exists(fp):
                 QFontDatabase.addApplicationFont(fp)
-        app.setFont(QFont("Segoe UI", 10))
-    elif sys.platform == "darwin":
-        app.setFont(QFont(".AppleSystemUIFont", 12))
-    else:
-        families = QFontDatabase.families()
-        for preferred in ("Ubuntu", "DejaVu Sans", "Noto Sans", "Liberation Sans"):
-            if preferred in families:
-                app.setFont(QFont(preferred, 11))
-                break
-        else:
-            app.setFont(QFont("sans-serif", 11))
+
+    base = QFont(_preferred_family(app))
+    base.setPointSizeF(_point_size_for(TYPE["body"]))
+    base.setWeight(QFont.Weight.Normal)
+    app.setFont(base)
+
+
+def apply_type(widget, size_key: str = "body", weight_key: str = "regular"):
+    """Set a widget's font from the type ramp.
+
+    Prefer this to constructing `QFont(family, size)` inline: the audit found 33 such
+    constructions using six different sizes, which is why labels in the flow editor,
+    the canvas and the dialogs disagreed with each other.
+    """
+    f = widget.font()
+    f.setFamily(FONT_FAMILY)
+    f.setPointSizeF(_point_size_for(font_px(size_key)))
+    f.setWeight(QFont.Weight(font_weight(weight_key)))
+    widget.setFont(f)
+    return f
+
+
+def ramp_report() -> Dict[str, object]:
+    """The design tokens, for documentation and the validation tests."""
+    return {
+        "type": dict(TYPE),
+        "weights": dict(WEIGHT),
+        "sizes": dict(SIZE),
+        "spacing": dict(SPACE),
+        "radius": dict(RADIUS),
+        "border": dict(BORDER),
+        "font_stack": FONT_STACK,
+    }
+
 
 
 INDUSTRIAL_THEME_QSS = f"""
@@ -114,7 +309,7 @@ QMainWindow {{
     background-color: {THEME['bg_app']};
     color: {THEME['text_primary']};
     font-family: "Segoe UI", -apple-system, Arial, sans-serif;
-    font-size: 12px;
+    font-size: {THEME['fs_body']}px;
 }}
 
 QWidget {{
@@ -124,36 +319,36 @@ QWidget {{
     selection-color: #ffffff;
     outline: none;
     font-family: "Segoe UI", -apple-system, Arial, sans-serif;
-    font-size: 12px;
+    font-size: {THEME['fs_body']}px;
 }}
 
 /* Dock Widgets (macOS Inspector & Tool Panels) */
 QDockWidget {{
     color: {THEME['text_primary']};
-    font-weight: 600;
-    font-size: 12px;
+    font-weight: {THEME['fw_demibold']};
+    font-size: {THEME['fs_body']}px;
 }}
 
 QDockWidget::title {{
     background-color: {THEME['bg_header']};
     border-bottom: 1px solid {THEME['border_subtle']};
-    padding: 6px 10px;
+    padding: {THEME['sp_snug']}px {THEME['sp_loose']}px;
     text-align: left;
     color: {THEME['text_secondary']};
-    font-weight: 600;
-    font-size: 11px;
+    font-weight: {THEME['fw_demibold']};
+    font-size: {THEME['fs_caption']}px;
     letter-spacing: 0.5px;
 }}
 
 QDockWidget::close-button, QDockWidget::float-button {{
     background: transparent;
     border: none;
-    padding: 2px;
+    padding: {THEME['sp_hair']}px;
 }}
 
 QDockWidget::close-button:hover, QDockWidget::float-button:hover {{
     background-color: {THEME['bg_control_hover']};
-    border-radius: 3px;
+    border-radius: {THEME['r_control']}px;
 }}
 
 /* Menu Bar */
@@ -161,15 +356,15 @@ QMenuBar {{
     background-color: {THEME['bg_surface']};
     color: {THEME['text_secondary']};
     border-bottom: 1px solid {THEME['border_subtle']};
-    padding: 2px 6px;
-    font-size: 12px;
+    padding: {THEME['sp_hair']}px {THEME['sp_snug']}px;
+    font-size: {THEME['fs_body']}px;
 }}
 
 QMenuBar::item {{
     background: transparent;
-    padding: 4px 8px;
-    border-radius: 3px;
-    margin: 1px 1px;
+    padding: {THEME['sp_tight']}px {THEME['sp_base']}px;
+    border-radius: {THEME['r_control']}px;
+    margin: {THEME['sp_hair']}px {THEME['sp_hair']}px;
 }}
 
 QMenuBar::item:selected {{
@@ -181,14 +376,14 @@ QMenu {{
     background-color: {THEME['bg_surface_alt']};
     color: {THEME['text_primary']};
     border: 1px solid {THEME['border_control']};
-    border-radius: 4px;
-    padding: 4px 2px;
+    border-radius: {THEME['r_panel']}px;
+    padding: {THEME['sp_tight']}px {THEME['sp_hair']}px;
 }}
 
 QMenu::item {{
-    padding: 5px 24px 5px 20px;
-    border-radius: 3px;
-    margin: 1px 2px;
+    padding: {THEME['sp_tight']}px {THEME['sp_section']}px {THEME['sp_tight']}px {THEME['sp_loose']}px;
+    border-radius: {THEME['r_control']}px;
+    margin: {THEME['sp_hair']}px {THEME['sp_hair']}px;
 }}
 
 QMenu::item:selected {{
@@ -199,7 +394,7 @@ QMenu::item:selected {{
 QMenu::separator {{
     height: 1px;
     background-color: {THEME['border_subtle']};
-    margin: 4px 6px;
+    margin: {THEME['sp_tight']}px {THEME['sp_snug']}px;
 }}
 
 /* Command Toolbar */
@@ -207,17 +402,17 @@ QToolBar {{
     background-color: {THEME['bg_surface']};
     border-bottom: 1px solid {THEME['border_subtle']};
     spacing: 5px;
-    padding: 3px 8px;
+    padding: {THEME['sp_tight']}px {THEME['sp_base']}px;
 }}
 
 QToolButton {{
     background-color: {THEME['bg_control']};
     color: {THEME['text_primary']};
     border: 1px solid {THEME['border_control']};
-    border-radius: 4px;
-    padding: 4px 8px;
-    font-weight: 500;
-    font-size: 12px;
+    border-radius: {THEME['r_panel']}px;
+    padding: {THEME['sp_tight']}px {THEME['sp_base']}px;
+    font-weight: {THEME['fw_medium']};
+    font-size: {THEME['fs_body']}px;
 }}
 
 QToolButton:hover {{
@@ -235,10 +430,10 @@ QPushButton {{
     background-color: {THEME['bg_control']};
     color: {THEME['text_primary']};
     border: 1px solid {THEME['border_control']};
-    border-radius: 4px;
-    padding: 4px 10px;
-    font-weight: 500;
-    font-size: 12px;
+    border-radius: {THEME['r_panel']}px;
+    padding: {THEME['sp_tight']}px {THEME['sp_loose']}px;
+    font-weight: {THEME['fw_medium']};
+    font-size: {THEME['fs_body']}px;
 }}
 
 QPushButton:hover {{
@@ -256,7 +451,7 @@ QPushButton#btnRunOnce {{
     background-color: {THEME['status_ok_bg']};
     border: 1px solid {THEME['status_ok_border']};
     color: {THEME['status_ok_text']};
-    font-weight: 600;
+    font-weight: {THEME['fw_demibold']};
 }}
 
 QPushButton#btnRunOnce:hover {{
@@ -269,7 +464,7 @@ QPushButton#btnContinuous {{
     background-color: {THEME['bg_control']};
     border: 1px solid {THEME['border_control']};
     color: {THEME['text_primary']};
-    font-weight: 600;
+    font-weight: {THEME['fw_demibold']};
 }}
 
 QPushButton#btnContinuous:hover {{
@@ -288,7 +483,7 @@ QPushButton#btnStop {{
     background-color: {THEME['status_error_bg']};
     border: 1px solid {THEME['status_error_border']};
     color: {THEME['status_error_text']};
-    font-weight: 600;
+    font-weight: {THEME['fw_demibold']};
 }}
 
 QPushButton#btnStop:hover {{
@@ -306,14 +501,14 @@ QTabWidget::pane {{
 QTabBar::tab {{
     background-color: {THEME['bg_surface']};
     color: {THEME['text_secondary']};
-    padding: 6px 14px;
+    padding: {THEME['sp_snug']}px {THEME['sp_section']}px;
     border: 1px solid {THEME['border_subtle']};
     border-bottom: none;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
     margin-right: 2px;
-    font-weight: 500;
-    font-size: 12px;
+    font-weight: {THEME['fw_medium']};
+    font-size: {THEME['fs_body']}px;
 }}
 
 QTabBar::tab:selected {{
@@ -331,18 +526,18 @@ QTabBar::tab:hover:!selected {{
 QTreeWidget {{
     background-color: {THEME['bg_surface']};
     border: 1px solid {THEME['border_subtle']};
-    border-radius: 4px;
+    border-radius: {THEME['r_panel']}px;
     color: {THEME['text_primary']};
-    padding: 3px;
-    font-size: 12px;
+    padding: {THEME['sp_hair']}px;
+    font-size: {THEME['fs_body']}px;
     outline: none;
 }}
 
 QTreeWidget::item {{
     height: 24px;
-    padding: 2px 6px;
-    margin: 1px 2px;
-    border-radius: 4px;
+    padding: {THEME['sp_hair']}px {THEME['sp_snug']}px;
+    margin: {THEME['sp_hair']}px {THEME['sp_hair']}px;
+    border-radius: {THEME['r_panel']}px;
     border: 1px solid transparent;
 }}
 
@@ -355,7 +550,7 @@ QTreeWidget::item:selected {{
     background-color: {THEME['accent_dim']};
     border: 1px solid {THEME['accent_border']};
     color: #ffffff;
-    font-weight: 500;
+    font-weight: {THEME['fw_medium']};
 }}
 
 QTreeWidget::branch {{
@@ -365,15 +560,15 @@ QTreeWidget::branch {{
 QListWidget, QTableWidget {{
     background-color: {THEME['bg_surface']};
     border: 1px solid {THEME['border_subtle']};
-    border-radius: 4px;
+    border-radius: {THEME['r_panel']}px;
     color: {THEME['text_primary']};
     alternate-background-color: {THEME['bg_table_row_alt']};
     gridline-color: {THEME['border_subtle']};
-    font-size: 12px;
+    font-size: {THEME['fs_body']}px;
 }}
 
 QTableWidget::item {{
-    padding: 4px 6px;
+    padding: {THEME['sp_tight']}px {THEME['sp_snug']}px;
 }}
 
 QTableWidget::item:selected {{
@@ -384,10 +579,10 @@ QTableWidget::item:selected {{
 QHeaderView::section {{
     background-color: {THEME['bg_header']};
     color: {THEME['text_secondary']};
-    padding: 5px 8px;
+    padding: {THEME['sp_tight']}px {THEME['sp_base']}px;
     border: 1px solid {THEME['border_subtle']};
-    font-weight: 600;
-    font-size: 11px;
+    font-weight: {THEME['fw_demibold']};
+    font-size: {THEME['fs_caption']}px;
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }}
@@ -396,10 +591,10 @@ QHeaderView::section {{
 QLineEdit {{
     background-color: {THEME['bg_control']};
     border: 1px solid {THEME['border_control']};
-    border-radius: 5px;
-    padding: 4px 8px;
+    border-radius: {THEME['r_panel']}px;
+    padding: {THEME['sp_tight']}px {THEME['sp_base']}px;
     color: {THEME['text_primary']};
-    font-size: 12px;
+    font-size: {THEME['fs_body']}px;
 }}
 
 QLineEdit:focus {{
@@ -410,10 +605,10 @@ QLineEdit:focus {{
 QSpinBox, QDoubleSpinBox, QComboBox {{
     background-color: {THEME['bg_control']};
     border: 1px solid {THEME['border_control']};
-    border-radius: 4px;
-    padding: 3px 6px;
+    border-radius: {THEME['r_panel']}px;
+    padding: {THEME['sp_tight']}px {THEME['sp_snug']}px;
     color: {THEME['text_primary']};
-    font-size: 12px;
+    font-size: {THEME['fs_body']}px;
 }}
 
 QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{
@@ -429,7 +624,7 @@ QComboBox::drop-down {{
 QComboBox QAbstractItemView {{
     background-color: {THEME['bg_surface_alt']};
     border: 1px solid {THEME['border_control']};
-    border-radius: 4px;
+    border-radius: {THEME['r_panel']}px;
     selection-background-color: {THEME['accent_primary']};
     selection-color: #ffffff;
 }}
@@ -437,14 +632,14 @@ QComboBox QAbstractItemView {{
 QCheckBox {{
     color: {THEME['text_primary']};
     spacing: 6px;
-    font-size: 12px;
+    font-size: {THEME['fs_body']}px;
 }}
 
 QCheckBox::indicator {{
     width: 14px;
     height: 14px;
     border: 1px solid {THEME['border_control']};
-    border-radius: 3px;
+    border-radius: {THEME['r_control']}px;
     background-color: {THEME['bg_control']};
 }}
 
@@ -462,8 +657,8 @@ QScrollBar:vertical {{
 
 QScrollBar::handle:vertical {{
     background: {THEME['border_control']};
-    min-height: 20px;
-    border-radius: 3px;
+    min-height: {THEME['h_icon_md']}px;
+    border-radius: {THEME['r_control']}px;
 }}
 
 QScrollBar::handle:vertical:hover {{
@@ -479,7 +674,7 @@ QScrollBar:horizontal {{
 QScrollBar::handle:horizontal {{
     background: {THEME['border_control']};
     min-width: 20px;
-    border-radius: 3px;
+    border-radius: {THEME['r_control']}px;
 }}
 
 QScrollBar::handle:horizontal:hover {{
@@ -497,7 +692,7 @@ QStatusBar {{
     background-color: {THEME['bg_app']};
     color: {THEME['text_muted']};
     border-top: 1px solid {THEME['border_subtle']};
-    font-size: 12px;
+    font-size: {THEME['fs_body']}px;
 }}
 
 QSplitter::handle {{
@@ -517,19 +712,19 @@ QDialog {{
 /* Group Boxes */
 QGroupBox {{
     border: 1px solid {THEME['border_subtle']};
-    border-radius: 4px;
+    border-radius: {THEME['r_panel']}px;
     margin-top: 8px;
     padding-top: 10px;
     color: {THEME['text_secondary']};
-    font-weight: 600;
-    font-size: 11px;
+    font-weight: {THEME['fw_demibold']};
+    font-size: {THEME['fs_caption']}px;
 }}
 
 QGroupBox::title {{
     subcontrol-origin: margin;
     subcontrol-position: top left;
     left: 8px;
-    padding: 0 4px;
+    padding: 0 {THEME['sp_tight']}px;
     background-color: {THEME['bg_surface']};
     color: {THEME['text_secondary']};
 }}

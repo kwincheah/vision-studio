@@ -301,7 +301,7 @@ class ResultDisplayArea(QWidget):
         self.lbl_help.setTextFormat(Qt.TextFormat.RichText)
         self.lbl_help.setWordWrap(True)
         self.lbl_help.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-        self.lbl_help.setStyleSheet("color: #c3c6cb;")
+        self.lbl_help.setStyleSheet(f"color: {THEME['text_secondary']};")
         help_scroll = QScrollArea()
         help_scroll.setWidgetResizable(True)
         help_scroll.setFrameShape(QScrollArea.Shape.NoFrame)

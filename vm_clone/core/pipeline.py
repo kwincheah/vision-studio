@@ -41,6 +41,10 @@ class FlowConnection:
             self.to_port == other.to_port
         )
 
+    def __hash__(self):
+        return hash((self.from_node, self.from_port, self.to_node, self.to_port))
+
+
 
 class VisionPipeline:
     """
@@ -179,33 +183,39 @@ class VisionPipeline:
         Detects cycles, missing inputs, and isolated modules.
         """
         issues = []
-        # 1. Cycle detection in overall graph
+        # 1. Cycle detection in overall graph (iterative 3-color DFS to avoid RecursionError)
         adj: Dict[str, List[str]] = {n: [] for n in self.nodes}
         for c in self.connections:
             if c.from_node in adj:
                 adj[c.from_node].append(c.to_node)
 
-        visited = set()
-        rec_stack = set()
-
-        def dfs(node):
-            visited.add(node)
-            rec_stack.add(node)
-            for neighbor in adj.get(node, []):
-                if neighbor not in visited:
-                    if dfs(neighbor):
-                        return True
-                elif neighbor in rec_stack:
-                    return True
-            rec_stack.remove(node)
-            return False
-
+        # 0 = unvisited, 1 = visiting (in stack), 2 = visited
+        state: Dict[str, int] = {n: 0 for n in self.nodes}
         has_cycle = False
-        for n in self.nodes:
-            if n not in visited:
-                if dfs(n):
-                    has_cycle = True
-                    break
+
+        for start_node in self.nodes:
+            if state[start_node] != 0:
+                continue
+            stack = [(start_node, 0)]
+            state[start_node] = 1
+            while stack:
+                curr, nbr_idx = stack[-1]
+                nbrs = adj.get(curr, [])
+                if nbr_idx < len(nbrs):
+                    stack[-1] = (curr, nbr_idx + 1)
+                    nbr = nbrs[nbr_idx]
+                    nbr_state = state.get(nbr, 0)
+                    if nbr_state == 1:
+                        has_cycle = True
+                        break
+                    elif nbr_state == 0:
+                        state[nbr] = 1
+                        stack.append((nbr, 0))
+                else:
+                    state[curr] = 2
+                    stack.pop()
+            if has_cycle:
+                break
 
         if has_cycle:
             issues.append({
@@ -294,18 +304,18 @@ class VisionPipeline:
         elif t == "int":
             try:
                 return int(text.strip())
-            except ValueError:
-                return 0
+            except ValueError as e:
+                raise ValueError(f"Malformed XML integer value: {text!r}") from e
         elif t == "float":
             try:
                 return float(text.strip())
-            except ValueError:
-                return 0.0
+            except ValueError as e:
+                raise ValueError(f"Malformed XML float value: {text!r}") from e
         elif t in ("json", "list", "dict"):
             try:
                 return json.loads(text)
-            except Exception:
-                return text
+            except Exception as e:
+                raise ValueError(f"Malformed XML {t} JSON payload: {text!r}") from e
         elif t == "str":
             return text
         else:
@@ -380,10 +390,10 @@ class VisionPipeline:
     @classmethod
     def from_xml(cls, xml_str: str) -> "VisionPipeline":
         """Deserialize flow pipeline from standard XML string."""
-        import xml.etree.ElementTree as ET
+        from vm_clone.core.xml_safe import safe_fromstring
         from vm_clone.core.registry import create_tool_instance
 
-        root = ET.fromstring(xml_str)
+        root = safe_fromstring(xml_str)
         name = root.attrib.get("name", "ImportedFlow")
         pipe = cls(name=name)
 
@@ -443,9 +453,8 @@ class VisionPipeline:
 
     def export_to_xml(self, filepath: str):
         """Export flow directly to XML file."""
-        xml_content = self.to_xml()
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(xml_content)
+        from vm_clone.core.fileio import atomic_write_text
+        atomic_write_text(filepath, self.to_xml())
 
     @classmethod
     def import_from_xml(cls, filepath: str) -> "VisionPipeline":
@@ -459,9 +468,8 @@ class VisionPipeline:
         if filepath.lower().endswith(".xml"):
             self.export_to_xml(filepath)
         else:
-            data = self.to_dict()
-            with open(filepath, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
+            from vm_clone.core.fileio import atomic_write_json
+            atomic_write_json(filepath, self.to_dict())
 
     @classmethod
     def from_dict(cls, data: dict) -> "VisionPipeline":
@@ -472,6 +480,7 @@ class VisionPipeline:
         pipe.run_interval_ms = float(data.get("run_interval_ms", 50.0))
         pipe.stop_on_ng = bool(data.get("stop_on_ng", False))
         pipe.flow_timeout_ms = float(data.get("flow_timeout_ms", 5000.0))
+        pipe.execution_count = int(data.get("execution_count", 0))
 
         for n_data in data.get("nodes", []):
             tool = create_tool_instance(n_data["tool_name"], n_data["instance_id"], n_data.get("name"), allow_placeholder=True)
@@ -561,6 +570,8 @@ class VisionPipeline:
                 res = node.execute(node_context)
                 res.elapsed_ms = (time.perf_counter() - t0) * 1000.0
             except Exception as e:
+                import logging
+                logging.getLogger("vm_clone.pipeline").exception(f"Unhandled exception executing node '{node.name}' ({node_id}): {e}")
                 res = ToolExecutionResult(
                     status=ToolStatus.ERROR,
                     message=f"Exception: {str(e)}",
@@ -644,9 +655,45 @@ class SolutionManager:
         if flow_name not in self.flows:
             raise KeyError(f"Flow '{flow_name}' not found.")
         orig = self.flows[flow_name]
-        cloned = orig.duplicate(new_name=new_name)
-        self.flows[cloned.name] = cloned
+        if new_name is not None:
+            if new_name in self.flows:
+                raise ValueError(f"Flow named '{new_name}' already exists in solution.")
+            target_name = new_name
+        else:
+            base_name = f"{orig.name}_Copy"
+            target_name = base_name
+            counter = 1
+            while target_name in self.flows:
+                target_name = f"{base_name}_{counter}"
+                counter += 1
+
+        cloned = orig.duplicate(new_name=target_name)
+        self.flows[target_name] = cloned
         return cloned
+
+    def rename_flow(self, old_name: str, new_name: str) -> None:
+        """Renames an existing flow, maintaining dictionary order and updating references."""
+        if old_name not in self.flows:
+            raise KeyError(f"Flow '{old_name}' not found.")
+        if new_name == old_name:
+            return
+        if new_name in self.flows:
+            raise ValueError(f"Flow named '{new_name}' already exists.")
+
+        # Preserve key order by reconstructing dict
+        new_flows: Dict[str, VisionPipeline] = {}
+        for k, v in self.flows.items():
+            if k == old_name:
+                v.name = new_name
+                new_flows[new_name] = v
+            else:
+                new_flows[k] = v
+        self.flows = new_flows
+
+        if self.active_flow_name == old_name:
+            self.active_flow_name = new_name
+        if self.trigger_flow_name == old_name:
+            self.trigger_flow_name = new_name
 
     def export_flow(self, flow_name: str, filepath: str):
         """Exports a single flow to .xml / .prc / .json format (Manual p. 93)."""
@@ -733,9 +780,8 @@ class SolutionManager:
 
     def save_to_file(self, filepath: str):
         """Save entire solution to .vmp / .sol / .json file."""
-        data = self.to_dict()
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
+        from vm_clone.core.fileio import atomic_write_json
+        atomic_write_json(filepath, self.to_dict())
 
     @classmethod
     def load_from_file(cls, filepath: str) -> "SolutionManager":

@@ -8,6 +8,19 @@
 
 **Apex Industrial Vision Studio** is an open-source, modular industrial machine-vision platform and visual flow orchestration studio built with **Python 3.12, PyQt6, OpenCV, and NumPy**. It provides an intuitive, node-based workflow environment for designing, calibrating, and executing high-speed automated optical inspection (AOI) pipelines.
 
+## 🎨 Visual design
+
+The interface is a **light industrial theme whose palette is measured from official
+KEYENCE manual screenshots**, not chosen by eye: steel-grey chrome (`#646c6c` toolbar,
+`#848c94` menus), near-white panels (`#ecf0f0`), a light canvas (`#b4b8c0`) with white
+module cards, a dark image viewport (`#201c20`), and the signature **amber selection**
+(`#e4b030`). Green / red / orange stay functional signals for run, fail and caution.
+
+Chrome, amber selection, viewport and panel tones match their measured reference values
+at **ΔE 0.0**. See [docs/KEYENCE_DESIGN_SPEC.md](docs/KEYENCE_DESIGN_SPEC.md) for the
+sampled evidence and [docs/screenshots/keyence_comparison.png](docs/screenshots/keyence_comparison.png)
+for the side-by-side.
+
 ---
 
 ## 🌟 Key Capabilities
@@ -139,6 +152,9 @@ See the full [Plugin Development Guide](docs/PLUGIN_DEVELOPMENT_GUIDE.md) for co
 ```text
 ├── .github/              # GitHub Actions CI/CD workflows and issue templates
 ├── docs/                 # Documentation, specifications, and architecture guides
+│   ├── KEYENCE_DESIGN_SPEC.md          # measured palette + verification + gaps
+│   ├── VISIONMASTER_STORYBOARD.md      # 分镜 layout breakdown (measured geometry)
+│   ├── VISIONMASTER_REFERENCE_SPEC.md  # vendor region map + gap status
 │   ├── PLUGIN_DEVELOPMENT_GUIDE.md
 │   ├── RELEASE_NOTES_v4.3.0.md
 │   └── ...

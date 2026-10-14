@@ -10,15 +10,19 @@ from PyQt6.QtCore import Qt
 if getattr(sys, "frozen", False):
     app_root = os.path.dirname(sys.executable)
 else:
-    app_root = os.path.abspath(".")
+    app_root = os.path.dirname(os.path.abspath(__file__))
 if app_root not in sys.path:
     sys.path.insert(0, app_root)
 
+from vm_clone.core.logging_setup import setup_logging, install_global_excepthook
 from vm_clone.ui.styles import initialize_app_fonts
 from vm_clone.ui.main_window import VisionMasterMainWindow
 
 
 def main():
+    setup_logging()
+    install_global_excepthook()
+
     # Pass-through high DPI scaling
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
@@ -40,7 +44,10 @@ def main():
             sol = win.project_manager.load_project(file_path)
             win.load_solution_manager(sol, filepath=file_path)
         except Exception as e:
-            print(f"Error opening project from argument: {e}", file=sys.stderr)
+            from PyQt6.QtWidgets import QMessageBox
+            import logging
+            logging.getLogger("vm_clone.main").exception(f"Error opening project: {e}")
+            QMessageBox.critical(None, "Project Load Error", f"Failed to open project '{file_path}':\n\n{e}")
         win.show()
         sys.exit(app.exec())
 

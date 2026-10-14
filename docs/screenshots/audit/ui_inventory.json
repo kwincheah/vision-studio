@@ -1,0 +1,854 @@
+{
+ "menus": [
+  {
+   "menu": "File",
+   "items": [
+    {
+     "text": "Start Page...",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": "Ctrl+H"
+    },
+    {
+     "separator": true
+    },
+    {
+     "text": "New Solution...",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": "Ctrl+N"
+    },
+    {
+     "text": "Open Solution...",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": "Ctrl+O"
+    },
+    {
+     "text": "Save Solution",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": "Ctrl+S"
+    },
+    {
+     "text": "Save Solution As...",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": "Ctrl+Shift+S"
+    },
+    {
+     "separator": true
+    },
+    {
+     "text": "Load Image File...",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": "Ctrl+I"
+    },
+    {
+     "separator": true
+    },
+    {
+     "text": "Load Example Solution",
+     "submenu": [
+      "PCB Inspection  Defect Analysis",
+      "Precision Dimensional Measurement",
+      "Deep Learning Object Detection (YOLOv11)",
+      "Color Extraction  Robot Calibration"
+     ]
+    },
+    {
+     "text": "Export Results to CSV...",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "Export Flow as XML...",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "Import Flow from XML...",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "Export Flow Procedure (.prc)...",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "Import Flow Procedure (.prc)...",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "separator": true
+    },
+    {
+     "text": "Exit",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": "Alt+F4"
+    }
+   ]
+  },
+  {
+   "menu": "Settings",
+   "items": [
+    {
+     "text": "Global Variables...",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "Hardware Trigger Settings",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "Communication Configuration",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    }
+   ]
+  },
+  {
+   "menu": "Tools",
+   "items": [
+    {
+     "text": "Camera Lens Distortion Calibration Wizard...",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "N-Point Spatial Calibration Wizard",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "Calibration Target Generator",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "Module Generator",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "Plugin Manager...",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "Plugin Marketplace...",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "Create Vision Plugin...",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "separator": true
+    },
+    {
+     "text": "Validate Active Flow",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "Arrange Modules Hierarchically",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    }
+   ]
+  },
+  {
+   "menu": "System",
+   "items": [
+    {
+     "text": "Camera Set",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "Controller Management",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "Log Viewer",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "separator": true
+    },
+    {
+     "text": "Performance Options",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    }
+   ]
+  },
+  {
+   "menu": "View",
+   "items": [
+    {
+     "text": "Flow Diagram",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": "Ctrl+1"
+    },
+    {
+     "text": "Operation Interface",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": "Ctrl+2"
+    },
+    {
+     "text": "Multi-Flow Overview",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": "Ctrl+3"
+    },
+    {
+     "separator": true
+    },
+    {
+     "text": "Fit Modules to View",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": "Ctrl+0"
+    },
+    {
+     "text": "Auto-Arrange Modules",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "separator": true
+    },
+    {
+     "text": "Show Canvas Alignment Grid",
+     "enabled": true,
+     "checkable": true,
+     "checked": true,
+     "shortcut": ""
+    },
+    {
+     "separator": true
+    },
+    {
+     "text": "Panels",
+     "submenu": [
+      "Tool Box",
+      "Image  |  Result",
+      "Module Log"
+     ]
+    }
+   ]
+  },
+  {
+   "menu": "Help",
+   "items": [
+    {
+     "text": "User Manual",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": "F1"
+    },
+    {
+     "text": "Keyboard Shortcuts",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "Language / \u8bed\u8a00",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "separator": true
+    },
+    {
+     "text": "Version Information",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    },
+    {
+     "text": "About Apex Industrial Vision Studio",
+     "enabled": true,
+     "checkable": false,
+     "checked": false,
+     "shortcut": ""
+    }
+   ]
+  }
+ ],
+ "toolbars": [
+  {
+   "name": "controlToolbar",
+   "controls": [
+    {
+     "object": "qt_toolbar_ext_button",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": false,
+     "size": [
+      100,
+      30
+     ],
+     "text": "",
+     "tooltip": ""
+    },
+    {
+     "object": "QLabel",
+     "type": "QLabel",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      28,
+      32
+     ],
+     "text": "",
+     "tooltip": "Apex Industrial Vision Studio"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Save Solution (Ctrl+S)"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Open Solution (Ctrl+O)"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Load Image File (Ctrl+I)"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Undo (Ctrl+Z)"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Redo (Ctrl+Y)"
+    },
+    {
+     "object": "QWidget",
+     "type": "QWidget",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      11,
+      32
+     ],
+     "text": "",
+     "tooltip": ""
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Locking - freeze module and wire editing"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Camera Set - manage global cameras"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Controller Management"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Global Variable - up to 32 variables"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Communication Management"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Global Trigger - event / string trigger"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Global Script"
+    },
+    {
+     "object": "QWidget",
+     "type": "QWidget",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      11,
+      32
+     ],
+     "text": "",
+     "tooltip": ""
+    },
+    {
+     "object": "btnRunOnce",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Once - execute the active flow a single time"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Continuously - execute the active flow in a loop"
+    },
+    {
+     "object": "btnStop",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Stop - halt all flows"
+    },
+    {
+     "object": "QWidget",
+     "type": "QWidget",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      11,
+      32
+     ],
+     "text": "",
+     "tooltip": ""
+    },
+    {
+     "object": "flowStatusBadge",
+     "type": "QLabel",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      60,
+      32
+     ],
+     "text": " FAIL ",
+     "tooltip": ""
+    },
+    {
+     "object": "QWidget",
+     "type": "QWidget",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      677,
+      32
+     ],
+     "text": "",
+     "tooltip": ""
+    }
+   ]
+  },
+  {
+   "name": "flowToolbar",
+   "controls": [
+    {
+     "object": "qt_toolbar_ext_button",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": false,
+     "size": [
+      100,
+      30
+     ],
+     "text": "",
+     "tooltip": ""
+    },
+    {
+     "object": "flowTabBar",
+     "type": "QTabBar",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      147,
+      29
+     ],
+     "text": "",
+     "tooltip": ""
+    },
+    {
+     "object": "QAbstractButton",
+     "type": "QAbstractButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      16,
+      16
+     ],
+     "text": "",
+     "tooltip": "Close Tab"
+    },
+    {
+     "object": "ScrollLeftButton",
+     "type": "QToolButton",
+     "enabled": false,
+     "visible": false,
+     "size": [
+      100,
+      30
+     ],
+     "text": "",
+     "tooltip": ""
+    },
+    {
+     "object": "ScrollRightButton",
+     "type": "QToolButton",
+     "enabled": false,
+     "visible": false,
+     "size": [
+      100,
+      30
+     ],
+     "text": "",
+     "tooltip": ""
+    },
+    {
+     "object": "btnFlowOnce",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Execute the active flow once"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Loop the active flow"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Add a new sub-flow"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Set as the active trigger flow"
+    },
+    {
+     "object": "QWidget",
+     "type": "QWidget",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      850,
+      32
+     ],
+     "text": "",
+     "tooltip": ""
+    },
+    {
+     "object": "btnOperation",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Operation Interface - overlay display options"
+    },
+    {
+     "object": "btnHistogram",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Live intensity histogram"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Draw ROI on the image"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Fit Image to Window"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "1:1 Pixel Zoom"
+    },
+    {
+     "object": "toolbarButton",
+     "type": "QToolButton",
+     "enabled": true,
+     "visible": true,
+     "size": [
+      38,
+      30
+     ],
+     "text": "",
+     "tooltip": "Auto-arrange the flow hierarchically"
+    }
+   ]
+  }
+ ],
+ "docks": [
+  {
+   "object": "toolBoxDock",
+   "title": "Tool Box",
+   "visible": true,
+   "floating": false,
+   "size": [
+    42,
+    617
+   ]
+  },
+  {
+   "object": "imageResultDock",
+   "title": "Image  |  Result",
+   "visible": true,
+   "floating": false,
+   "size": [
+    562,
+    617
+   ]
+  },
+  {
+   "object": "moduleLogDock",
+   "title": "Module Log",
+   "visible": false,
+   "floating": false,
+   "size": [
+    100,
+    120
+   ]
+  }
+ ]
+}

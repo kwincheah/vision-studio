@@ -1,0 +1,64 @@
+{
+ "xg_bands": [
+  {
+   "y0": 0,
+   "y1": 48,
+   "luma": 118.5,
+   "colour": "#646c6c",
+   "share": 0.393
+  },
+  {
+   "y0": 48,
+   "y1": 54,
+   "luma": 90.6,
+   "colour": "#3c4040",
+   "share": 0.143
+  }
+ ],
+ "cvx_bands": [
+  {
+   "y0": 0,
+   "y1": 10,
+   "luma": 252.3,
+   "colour": "#fcfcfc",
+   "share": 0.955
+  },
+  {
+   "y0": 13,
+   "y1": 60,
+   "luma": 170.3,
+   "colour": "#848c94",
+   "share": 0.458
+  },
+  {
+   "y0": 63,
+   "y1": 69,
+   "luma": 163.0,
+   "colour": "#848c94",
+   "share": 0.472
+  },
+  {
+   "y0": 87,
+   "y1": 125,
+   "luma": 167.9,
+   "colour": "#c0c4c8",
+   "share": 0.272
+  }
+ ],
+ "delta": [
+  {
+   "token": "vm_chrome_dark",
+   "applied": "#646c6c",
+   "measured": "#646c6c",
+   "region": "XG toolbar strip",
+   "distance": 0.0
+  },
+  {
+   "token": "vm_chrome",
+   "applied": "#848c94",
+   "measured": "#848c94",
+   "region": "CV-X menu strip",
+   "distance": 0.0
+  }
+ ]
+}

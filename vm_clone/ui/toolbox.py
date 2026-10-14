@@ -62,16 +62,37 @@ CATEGORY_GLYPH = {
 }
 
 
+def get_rail_icon(glyph: str, size: int = 24, color=None) -> QIcon:
+    """Render a category-rail glyph in a caller-chosen ink.
+
+    The rail sits on the dark chrome, so its glyphs must be light; the selected
+    item is re-inked in the dark body colour because its fill is light.  Without
+    this accessor the rail had no way to re-ink on selection, which left the
+    selected glyph invisible against its own fill.
+    """
+    category = next((c for c, g in CATEGORY_GLYPH.items() if g == glyph),
+                    glyph if glyph in CATEGORY_GLYPH else "Image Generation")
+    return get_category_icon(category, size,
+                             color or QColor(THEME["text_on_chrome"]))
+
+
 # =============================================================================
 # Rail glyphs - original vector drawings in the VisionMaster icon language
 # =============================================================================
-def _rail_painter(size: int):
+def _rail_painter(size: int, color=None):
+    """Painter for the category rail's glyphs.
+
+    The rail is dark chrome, so the default ink is the chrome tone: the previous
+    body-ink default rendered dark-on-dark at under 2:1.  `color` overrides it for
+    the selected item, whose fill is light.
+    """
     from PyQt6.QtGui import QPixmap
     pix = QPixmap(size, size)
     pix.fill(Qt.GlobalColor.transparent)
     p = QPainter(pix)
     p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
-    pen = QPen(QColor("#c9cbd0"), 1.5)
+    ink = QColor(color) if color is not None else QColor(THEME["text_on_chrome"])
+    pen = QPen(ink, 1.5)
     pen.setCapStyle(Qt.PenCapStyle.RoundCap)
     pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
     p.setPen(pen)
@@ -263,6 +284,10 @@ class ToolFlyoutPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("vmToolFlyout")
+        # A QWidget subclass does not paint its `#objectName` background from
+        # the stylesheet unless it is told to; without this it falls back to
+        # the global light `QWidget` background.
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self._all_categories: Dict[str, List[str]] = {}
         self._current_category: Optional[str] = None
@@ -378,6 +403,12 @@ class ToolCategoryRail(QWidget):
         super().__init__(parent)
         self.setObjectName("vmCategoryRail")
         self.setFixedWidth(self.RAIL_W)
+        # A QWidget subclass does not paint its `#objectName` background from
+        # the stylesheet unless it is told to.  Without this the rail fell back to
+        # the global light `QWidget` background, which left the light rail glyphs
+        # invisible on a light strip.
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.setAutoFillBackground(False)
 
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 4, 0, 4)
@@ -451,8 +482,20 @@ class ToolCategoryRail(QWidget):
         self.category_selected.emit(category)
 
     def select_category(self, category: str):
+        """Check the chosen glyph and re-ink it.
+
+        The selected glyph sits on the flyout's light fill, so a light icon would be
+        invisible; the ink is swapped to the dark body colour for the selected item
+        and back to the chrome ink for the rest.  This is the icon-side half of the
+        `QToolButton#railCategory:checked` rule.
+        """
         for name, btn in self._buttons.items():
-            btn.setChecked(name == category)
+            selected = name == category
+            btn.setChecked(selected)
+            glyph = CATEGORY_GLYPH.get(name, "gen")
+            ink = QColor(THEME["text_primary"] if selected
+                         else THEME["text_on_chrome"])
+            btn.setIcon(get_rail_icon(glyph, 24, ink))
 
     def category_names(self) -> List[str]:
         return list(self._buttons.keys())

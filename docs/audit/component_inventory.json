@@ -1,0 +1,7943 @@
+{
+ "main_window": {
+  "QMenuBar": [
+   {
+    "class": "QMenuBar",
+    "object": "",
+    "size": [
+     1400,
+     30
+    ],
+    "size_hint": [
+     879,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QToolButton": [
+   {
+    "class": "QToolButton",
+    "object": "qt_menubar_ext_button",
+    "size": [
+     32,
+     28
+    ],
+    "size_hint": [
+     32,
+     32
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "btnMenuSave",
+    "size": [
+     24,
+     24
+    ],
+    "size_hint": [
+     29,
+     29
+    ],
+    "min_size": [
+     24,
+     24
+    ],
+    "max_size": [
+     24,
+     24
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "qt_toolbar_ext_button",
+    "size": [
+     100,
+     30
+    ],
+    "size_hint": [
+     32,
+     32
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "btnRunOnce",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "btnStop",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "qt_toolbar_ext_button",
+    "size": [
+     100,
+     30
+    ],
+    "size_hint": [
+     32,
+     32
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "ScrollLeftButton",
+    "size": [
+     100,
+     30
+    ],
+    "size_hint": [
+     21,
+     21
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": false,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "ScrollRightButton",
+    "size": [
+     100,
+     30
+    ],
+    "size_hint": [
+     21,
+     21
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": false,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "btnFlowOnce",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "btnOperation",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "btnHistogram",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "toolbarButton",
+    "size": [
+     38,
+     30
+    ],
+    "size_hint": [
+     33,
+     33
+    ],
+    "min_size": [
+     38,
+     30
+    ],
+    "max_size": [
+     38,
+     30
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "flowZoomButton",
+    "size": [
+     20,
+     18
+    ],
+    "size_hint": [
+     21,
+     22
+    ],
+    "min_size": [
+     20,
+     18
+    ],
+    "max_size": [
+     20,
+     18
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "\u2212",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "flowZoomButton",
+    "size": [
+     20,
+     18
+    ],
+    "size_hint": [
+     21,
+     22
+    ],
+    "min_size": [
+     20,
+     18
+    ],
+    "max_size": [
+     20,
+     18
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "+",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "flowZoomButton",
+    "size": [
+     20,
+     18
+    ],
+    "size_hint": [
+     19,
+     22
+    ],
+    "min_size": [
+     20,
+     18
+    ],
+    "max_size": [
+     20,
+     18
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "\u25a1",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "ScrollLeftButton",
+    "size": [
+     20,
+     30
+    ],
+    "size_hint": [
+     29,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": false,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "ScrollRightButton",
+    "size": [
+     20,
+     30
+    ],
+    "size_hint": [
+     29,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": false,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "railCategory",
+    "size": [
+     42,
+     40
+    ],
+    "size_hint": [
+     30,
+     39
+    ],
+    "min_size": [
+     42,
+     40
+    ],
+    "max_size": [
+     42,
+     40
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "railCategory",
+    "size": [
+     42,
+     40
+    ],
+    "size_hint": [
+     30,
+     39
+    ],
+    "min_size": [
+     42,
+     40
+    ],
+    "max_size": [
+     42,
+     40
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "railCategory",
+    "size": [
+     42,
+     40
+    ],
+    "size_hint": [
+     30,
+     41
+    ],
+    "min_size": [
+     42,
+     40
+    ],
+    "max_size": [
+     42,
+     40
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": true
+   },
+   {
+    "class": "QToolButton",
+    "object": "railCategory",
+    "size": [
+     42,
+     40
+    ],
+    "size_hint": [
+     30,
+     39
+    ],
+    "min_size": [
+     42,
+     40
+    ],
+    "max_size": [
+     42,
+     40
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "railCategory",
+    "size": [
+     42,
+     40
+    ],
+    "size_hint": [
+     30,
+     39
+    ],
+    "min_size": [
+     42,
+     40
+    ],
+    "max_size": [
+     42,
+     40
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "railCategory",
+    "size": [
+     42,
+     40
+    ],
+    "size_hint": [
+     30,
+     39
+    ],
+    "min_size": [
+     42,
+     40
+    ],
+    "max_size": [
+     42,
+     40
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "railCategory",
+    "size": [
+     42,
+     40
+    ],
+    "size_hint": [
+     30,
+     39
+    ],
+    "min_size": [
+     42,
+     40
+    ],
+    "max_size": [
+     42,
+     40
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "railCategory",
+    "size": [
+     42,
+     40
+    ],
+    "size_hint": [
+     30,
+     39
+    ],
+    "min_size": [
+     42,
+     40
+    ],
+    "max_size": [
+     42,
+     40
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "railCategory",
+    "size": [
+     42,
+     40
+    ],
+    "size_hint": [
+     30,
+     39
+    ],
+    "min_size": [
+     42,
+     40
+    ],
+    "max_size": [
+     42,
+     40
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "railCategory",
+    "size": [
+     42,
+     40
+    ],
+    "size_hint": [
+     30,
+     39
+    ],
+    "min_size": [
+     42,
+     40
+    ],
+    "max_size": [
+     42,
+     40
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "railCategory",
+    "size": [
+     42,
+     40
+    ],
+    "size_hint": [
+     30,
+     39
+    ],
+    "min_size": [
+     42,
+     40
+    ],
+    "max_size": [
+     42,
+     40
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "railCategory",
+    "size": [
+     42,
+     40
+    ],
+    "size_hint": [
+     30,
+     39
+    ],
+    "min_size": [
+     42,
+     40
+    ],
+    "max_size": [
+     42,
+     40
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "railCategory",
+    "size": [
+     42,
+     40
+    ],
+    "size_hint": [
+     30,
+     39
+    ],
+    "min_size": [
+     42,
+     40
+    ],
+    "max_size": [
+     42,
+     40
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "railCategory",
+    "size": [
+     42,
+     40
+    ],
+    "size_hint": [
+     30,
+     39
+    ],
+    "min_size": [
+     42,
+     40
+    ],
+    "max_size": [
+     42,
+     40
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "",
+    "size": [
+     22,
+     18
+    ],
+    "size_hint": [
+     29,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "",
+    "size": [
+     22,
+     18
+    ],
+    "size_hint": [
+     29,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "ScrollLeftButton",
+    "size": [
+     20,
+     30
+    ],
+    "size_hint": [
+     29,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": false,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "ScrollRightButton",
+    "size": [
+     20,
+     30
+    ],
+    "size_hint": [
+     29,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": false,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "viewToolButton",
+    "size": [
+     26,
+     24
+    ],
+    "size_hint": [
+     25,
+     25
+    ],
+    "min_size": [
+     26,
+     24
+    ],
+    "max_size": [
+     26,
+     24
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "viewToolButton",
+    "size": [
+     26,
+     24
+    ],
+    "size_hint": [
+     25,
+     25
+    ],
+    "min_size": [
+     26,
+     24
+    ],
+    "max_size": [
+     26,
+     24
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "viewToolButton",
+    "size": [
+     26,
+     24
+    ],
+    "size_hint": [
+     25,
+     25
+    ],
+    "min_size": [
+     26,
+     24
+    ],
+    "max_size": [
+     26,
+     24
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "viewToolButton",
+    "size": [
+     26,
+     24
+    ],
+    "size_hint": [
+     25,
+     25
+    ],
+    "min_size": [
+     26,
+     24
+    ],
+    "max_size": [
+     26,
+     24
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "viewToolButton",
+    "size": [
+     26,
+     24
+    ],
+    "size_hint": [
+     25,
+     25
+    ],
+    "min_size": [
+     26,
+     24
+    ],
+    "max_size": [
+     26,
+     24
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "viewToolButton",
+    "size": [
+     26,
+     24
+    ],
+    "size_hint": [
+     25,
+     25
+    ],
+    "min_size": [
+     26,
+     24
+    ],
+    "max_size": [
+     26,
+     24
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "viewToolButton",
+    "size": [
+     26,
+     24
+    ],
+    "size_hint": [
+     25,
+     25
+    ],
+    "min_size": [
+     26,
+     24
+    ],
+    "max_size": [
+     26,
+     24
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": true
+   },
+   {
+    "class": "QToolButton",
+    "object": "viewToolButton",
+    "size": [
+     26,
+     24
+    ],
+    "size_hint": [
+     25,
+     25
+    ],
+    "min_size": [
+     26,
+     24
+    ],
+    "max_size": [
+     26,
+     24
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "stripAddImage",
+    "size": [
+     24,
+     24
+    ],
+    "size_hint": [
+     31,
+     31
+    ],
+    "min_size": [
+     24,
+     24
+    ],
+    "max_size": [
+     24,
+     24
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "stripClearImages",
+    "size": [
+     24,
+     24
+    ],
+    "size_hint": [
+     31,
+     31
+    ],
+    "min_size": [
+     24,
+     24
+    ],
+    "max_size": [
+     24,
+     24
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "viewToolButton",
+    "size": [
+     24,
+     24
+    ],
+    "size_hint": [
+     25,
+     25
+    ],
+    "min_size": [
+     24,
+     24
+    ],
+    "max_size": [
+     24,
+     24
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "stripNavPrev",
+    "size": [
+     18,
+     48
+    ],
+    "size_hint": [
+     31,
+     31
+    ],
+    "min_size": [
+     18,
+     48
+    ],
+    "max_size": [
+     18,
+     48
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "stripNavNext",
+    "size": [
+     18,
+     48
+    ],
+    "size_hint": [
+     31,
+     31
+    ],
+    "min_size": [
+     18,
+     48
+    ],
+    "max_size": [
+     18,
+     48
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "ScrollLeftButton",
+    "size": [
+     20,
+     30
+    ],
+    "size_hint": [
+     29,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": false,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   },
+   {
+    "class": "QToolButton",
+    "object": "ScrollRightButton",
+    "size": [
+     20,
+     30
+    ],
+    "size_hint": [
+     29,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": false,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "",
+    "checked": false
+   }
+  ],
+  "QMenu": [
+   {
+    "class": "QMenu",
+    "object": "",
+    "size": [
+     100,
+     30
+    ],
+    "size_hint": [
+     308,
+     423
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QMenu",
+    "object": "",
+    "size": [
+     100,
+     30
+    ],
+    "size_hint": [
+     313,
+     126
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QMenu",
+    "object": "",
+    "size": [
+     100,
+     30
+    ],
+    "size_hint": [
+     235,
+     97
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QMenu",
+    "object": "",
+    "size": [
+     100,
+     30
+    ],
+    "size_hint": [
+     319,
+     280
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QMenu",
+    "object": "",
+    "size": [
+     100,
+     30
+    ],
+    "size_hint": [
+     201,
+     135
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QMenu",
+    "object": "",
+    "size": [
+     100,
+     30
+    ],
+    "size_hint": [
+     289,
+     240
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QMenu",
+    "object": "",
+    "size": [
+     100,
+     30
+    ],
+    "size_hint": [
+     176,
+     97
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QMenu",
+    "object": "",
+    "size": [
+     100,
+     30
+    ],
+    "size_hint": [
+     280,
+     164
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QMenu",
+    "object": "",
+    "size": [
+     100,
+     30
+    ],
+    "size_hint": [
+     108,
+     184
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QComboBox": [
+   {
+    "class": "QComboBox",
+    "object": "comboSolution",
+    "size": [
+     217,
+     22
+    ],
+    "size_hint": [
+     217,
+     25
+    ],
+    "min_size": [
+     130,
+     22
+    ],
+    "max_size": [
+     16777215,
+     22
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QComboBox",
+    "object": "comboRole",
+    "size": [
+     127,
+     22
+    ],
+    "size_hint": [
+     127,
+     25
+    ],
+    "min_size": [
+     125,
+     22
+    ],
+    "max_size": [
+     16777215,
+     22
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QComboBox",
+    "object": "runScopeCombo",
+    "size": [
+     108,
+     28
+    ],
+    "size_hint": [
+     101,
+     28
+    ],
+    "min_size": [
+     108,
+     28
+    ],
+    "max_size": [
+     16777215,
+     26
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Run all"
+   }
+  ],
+  "QToolBar": [
+   {
+    "class": "QToolBar",
+    "object": "controlToolbar",
+    "size": [
+     1400,
+     44
+    ],
+    "size_hint": [
+     723,
+     42
+    ],
+    "min_size": [
+     0,
+     44
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "margins": [
+     6,
+     6,
+     6,
+     6
+    ],
+    "spacing": 1
+   },
+   {
+    "class": "QToolBar",
+    "object": "flowToolbar",
+    "size": [
+     1400,
+     44
+    ],
+    "size_hint": [
+     550,
+     42
+    ],
+    "min_size": [
+     0,
+     44
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "margins": [
+     6,
+     6,
+     6,
+     6
+    ],
+    "spacing": 1
+   }
+  ],
+  "QLabel": [
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     28,
+     32
+    ],
+    "size_hint": [
+     28,
+     22
+    ],
+    "min_size": [
+     28,
+     0
+    ],
+    "max_size": [
+     28,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": ""
+   },
+   {
+    "class": "QLabel",
+    "object": "flowStatusBadge",
+    "size": [
+     60,
+     32
+    ],
+    "size_hint": [
+     60,
+     21
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 700,
+     "bold": true
+    },
+    "style_len": 144,
+    "style_head": "font-weight: bold; font-size: 11px; padding: 2px 12px; border-radius: 2px; background-color: #fadadd; color: #b81c20; border: 1px solid #c8161a;",
+    "text": " FAIL "
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     640,
+     480
+    ],
+    "size_hint": [
+     91,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 33,
+    "style_head": "font-weight: 600; color: #414850;",
+    "text": "Solution Flows"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     640,
+     480
+    ],
+    "size_hint": [
+     421,
+     16
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 32,
+    "style_head": "color: #5a6168; font-size: 12px;",
+    "text": "Double-click a flow card to edit it, or "
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     624,
+     17
+    ],
+    "size_hint": [
+     134,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 50,
+    "style_head": "font-weight: 600; color: #414850; font-size: 13px;",
+    "text": "Display & Formatting"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     624,
+     34
+    ],
+    "size_hint": [
+     406,
+     34
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 15,
+    "style_head": "color: #5a6168;",
+    "text": "Control which result overlays are render"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     624,
+     17
+    ],
+    "size_hint": [
+     139,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 33,
+    "style_head": "font-weight: 600; color: #414850;",
+    "text": "Module Result Linking"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     624,
+     34
+    ],
+    "size_hint": [
+     425,
+     34
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 15,
+    "style_head": "color: #5a6168;",
+    "text": "Select a module in the Flow Diagram, the"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     624,
+     17
+    ],
+    "size_hint": [
+     184,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 33,
+    "style_head": "font-weight: 600; color: #414850;",
+    "text": "Output Parameter Formatting"
+   },
+   {
+    "class": "QLabel",
+    "object": "flowZoomLabel",
+    "size": [
+     34,
+     20
+    ],
+    "size_hint": [
+     34,
+     15
+    ],
+    "min_size": [
+     34,
+     0
+    ],
+    "max_size": [
+     34,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "text": "100%"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     87,
+     18
+    ],
+    "size_hint": [
+     87,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 50,
+    "style_head": "color: #e4b030; font-weight: 600; font-size: 11px;",
+    "text": "Flow: 267.29ms"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     45,
+     18
+    ],
+    "size_hint": [
+     45,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 32,
+    "style_head": "color: #4f565c; font-size: 11px;",
+    "text": "Tools: 7"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     87,
+     18
+    ],
+    "size_hint": [
+     111,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 32,
+    "style_head": "color: #a78bfa; font-size: 11px;",
+    "text": "Algorithm: 267.24ms"
+   },
+   {
+    "class": "QLabel",
+    "object": "flyoutCategoryHeader",
+    "size": [
+     640,
+     480
+    ],
+    "size_hint": [
+     98,
+     33
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "text": "Acquisition"
+   },
+   {
+    "class": "QLabel",
+    "object": "flyoutHint",
+    "size": [
+     640,
+     480
+    ],
+    "size_hint": [
+     234,
+     41
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Double-click or drag a module onto the f"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     640,
+     480
+    ],
+    "size_hint": [
+     6,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 15,
+    "style_head": "color: #414850;",
+    "text": ""
+   },
+   {
+    "class": "QLabel",
+    "object": "resultCaption",
+    "size": [
+     562,
+     38
+    ],
+    "size_hint": [
+     162,
+     70
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "<b>01_ImageAcquisition</b> &middot; Imag"
+   },
+   {
+    "class": "QLabel",
+    "object": "imageSourceLabel",
+    "size": [
+     303,
+     24
+    ],
+    "size_hint": [
+     189,
+     16
+    ],
+    "min_size": [
+     60,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "text": "01_ImageAcquisition.Output Image"
+   },
+   {
+    "class": "QLabel",
+    "object": "imageStatusId",
+    "size": [
+     187,
+     22
+    ],
+    "size_hint": [
+     187,
+     16
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "Segoe UI",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "01_ImageAcquisition.Output Image"
+   },
+   {
+    "class": "QLabel",
+    "object": "imageStatusCoords",
+    "size": [
+     315,
+     22
+    ],
+    "size_hint": [
+     315,
+     14
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "Consolas",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "800 * 600 | X,---- Y,---- | R:--- G:--- "
+   },
+   {
+    "class": "QLabel",
+    "object": "imageStripLabel",
+    "size": [
+     132,
+     26
+    ],
+    "size_hint": [
+     133,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "text": "pcb_sample.png (1/2)"
+   },
+   {
+    "class": "QLabel",
+    "object": "imageStripCaption",
+    "size": [
+     63,
+     26
+    ],
+    "size_hint": [
+     63,
+     16
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Auto switch"
+   },
+   {
+    "class": "QLabel",
+    "object": "statusLeading",
+    "size": [
+     190,
+     20
+    ],
+    "size_hint": [
+     190,
+     20
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Component Config Completed"
+   },
+   {
+    "class": "QLabel",
+    "object": "statusMessage",
+    "size": [
+     756,
+     20
+    ],
+    "size_hint": [
+     61,
+     20
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Ready"
+   },
+   {
+    "class": "QLabel",
+    "object": "statusSegment",
+    "size": [
+     103,
+     20
+    ],
+    "size_hint": [
+     103,
+     20
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Flow 267.29ms"
+   },
+   {
+    "class": "QLabel",
+    "object": "statusSegment",
+    "size": [
+     66,
+     20
+    ],
+    "size_hint": [
+     66,
+     20
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Tools  7"
+   },
+   {
+    "class": "QLabel",
+    "object": "statusSegment",
+    "size": [
+     132,
+     20
+    ],
+    "size_hint": [
+     132,
+     20
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Algorithm 267.24ms"
+   },
+   {
+    "class": "QLabel",
+    "object": "statusVersion",
+    "size": [
+     101,
+     20
+    ],
+    "size_hint": [
+     101,
+     14
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "V4.3.0 Build20230510"
+   }
+  ],
+  "QTabBar": [
+   {
+    "class": "QTabBar",
+    "object": "flowTabBar",
+    "size": [
+     147,
+     29
+    ],
+    "size_hint": [
+     147,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     1143,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QTabBar",
+    "object": "qt_tabwidget_tabbar",
+    "size": [
+     790,
+     23
+    ],
+    "size_hint": [
+     340,
+     23
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QTabBar",
+    "object": "qt_tabwidget_tabbar",
+    "size": [
+     562,
+     25
+    ],
+    "size_hint": [
+     231,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QTabBar",
+    "object": "qt_tabwidget_tabbar",
+    "size": [
+     562,
+     25
+    ],
+    "size_hint": [
+     125,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QTabWidget": [
+   {
+    "class": "QTabWidget",
+    "object": "workspaceTabs",
+    "size": [
+     790,
+     617
+    ],
+    "size_hint": [
+     978,
+     537
+    ],
+    "min_size": [
+     320,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QTabWidget",
+    "object": "resultTabs",
+    "size": [
+     562,
+     242
+    ],
+    "size_hint": [
+     262,
+     293
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QTabWidget",
+    "object": "displayTabs",
+    "size": [
+     562,
+     369
+    ],
+    "size_hint": [
+     569,
+     171
+    ],
+    "min_size": [
+     0,
+     96
+    ],
+    "max_size": [
+     16777215,
+     369
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QScrollArea": [
+   {
+    "class": "QScrollArea",
+    "object": "",
+    "size": [
+     640,
+     480
+    ],
+    "size_hint": [
+     441,
+     408
+    ],
+    "min_size": [
+     0,
+     150
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QScrollArea",
+    "object": "",
+    "size": [
+     640,
+     480
+    ],
+    "size_hint": [
+     6,
+     17
+    ],
+    "min_size": [
+     0,
+     60
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QCheckBox": [
+   {
+    "class": "QCheckBox",
+    "object": "",
+    "size": [
+     624,
+     24
+    ],
+    "size_hint": [
+     89,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "All Overlays",
+    "checked": true
+   },
+   {
+    "class": "QCheckBox",
+    "object": "",
+    "size": [
+     624,
+     24
+    ],
+    "size_hint": [
+     131,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "ROIs & Defect Boxes",
+    "checked": true
+   },
+   {
+    "class": "QCheckBox",
+    "object": "",
+    "size": [
+     624,
+     24
+    ],
+    "size_hint": [
+     152,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Measurements & Labels",
+    "checked": true
+   },
+   {
+    "class": "QCheckBox",
+    "object": "",
+    "size": [
+     624,
+     24
+    ],
+    "size_hint": [
+     128,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Datum & Crosshairs",
+    "checked": true
+   },
+   {
+    "class": "QCheckBox",
+    "object": "",
+    "size": [
+     624,
+     24
+    ],
+    "size_hint": [
+     187,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Coordinate Reticle Crosshair",
+    "checked": true
+   },
+   {
+    "class": "QCheckBox",
+    "object": "",
+    "size": [
+     624,
+     24
+    ],
+    "size_hint": [
+     164,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Intensity Histogram HUD",
+    "checked": false
+   },
+   {
+    "class": "QCheckBox",
+    "object": "",
+    "size": [
+     624,
+     24
+    ],
+    "size_hint": [
+     183,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Flow Canvas Alignment Grid",
+    "checked": true
+   }
+  ],
+  "QDockWidget": [
+   {
+    "class": "QDockWidget",
+    "object": "toolBoxDock",
+    "size": [
+     42,
+     617
+    ],
+    "size_hint": [
+     42,
+     573
+    ],
+    "min_size": [
+     42,
+     573
+    ],
+    "max_size": [
+     42,
+     524287
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": true,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "margins": [
+     9,
+     9,
+     9,
+     9
+    ],
+    "spacing": 6
+   },
+   {
+    "class": "QDockWidget",
+    "object": "imageResultDock",
+    "size": [
+     562,
+     617
+    ],
+    "size_hint": [
+     569,
+     463
+    ],
+    "min_size": [
+     306,
+     174
+    ],
+    "max_size": [
+     524287,
+     524287
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "margins": [
+     9,
+     9,
+     9,
+     9
+    ],
+    "spacing": 6
+   },
+   {
+    "class": "QDockWidget",
+    "object": "moduleLogDock",
+    "size": [
+     100,
+     120
+    ],
+    "size_hint": [
+     256,
+     219
+    ],
+    "min_size": [
+     0,
+     120
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "margins": [
+     9,
+     9,
+     9,
+     9
+    ],
+    "spacing": 6
+   }
+  ],
+  "QLineEdit": [
+   {
+    "class": "QLineEdit",
+    "object": "toolSearch",
+    "size": [
+     640,
+     480
+    ],
+    "size_hint": [
+     129,
+     26
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": ""
+   }
+  ],
+  "QSplitter": [
+   {
+    "class": "QSplitter",
+    "object": "",
+    "size": [
+     562,
+     614
+    ],
+    "size_hint": [
+     569,
+     464
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     614
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QTableWidget": [
+   {
+    "class": "QTableWidget",
+    "object": "historyGrid",
+    "size": [
+     640,
+     480
+    ],
+    "size_hint": [
+     256,
+     192
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QTableWidget",
+    "object": "moduleLogGrid",
+    "size": [
+     640,
+     480
+    ],
+    "size_hint": [
+     256,
+     192
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QHeaderView": [
+   {
+    "class": "QHeaderView",
+    "object": "",
+    "size": [
+     32,
+     433
+    ],
+    "size_hint": [
+     32,
+     36
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QHeaderView",
+    "object": "",
+    "size": [
+     608,
+     36
+    ],
+    "size_hint": [
+     113,
+     36
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QHeaderView",
+    "object": "",
+    "size": [
+     32,
+     142
+    ],
+    "size_hint": [
+     32,
+     36
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QHeaderView",
+    "object": "",
+    "size": [
+     530,
+     36
+    ],
+    "size_hint": [
+     88,
+     36
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QHeaderView",
+    "object": "",
+    "size": [
+     640,
+     36
+    ],
+    "size_hint": [
+     113,
+     36
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QHeaderView",
+    "object": "",
+    "size": [
+     32,
+     444
+    ],
+    "size_hint": [
+     32,
+     36
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QHeaderView",
+    "object": "",
+    "size": [
+     608,
+     36
+    ],
+    "size_hint": [
+     135,
+     36
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QPushButton": [
+   {
+    "class": "QPushButton",
+    "object": "stripPlayButton",
+    "size": [
+     81,
+     28
+    ],
+    "size_hint": [
+     66,
+     28
+    ],
+    "min_size": [
+     81,
+     28
+    ],
+    "max_size": [
+     16777215,
+     26
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "text": " Run",
+    "checked": false
+   }
+  ],
+  "QListWidget": [
+   {
+    "class": "QListWidget",
+    "object": "imageStrip",
+    "size": [
+     510,
+     50
+    ],
+    "size_hint": [
+     256,
+     192
+    ],
+    "min_size": [
+     0,
+     50
+    ],
+    "max_size": [
+     16777215,
+     50
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": true,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QStatusBar": [
+   {
+    "class": "QStatusBar",
+    "object": "",
+    "size": [
+     1400,
+     25
+    ],
+    "size_hint": [
+     705,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": true,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "margins": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "spacing": 6
+   }
+  ]
+ },
+ "dialog:new_solution": {
+  "QLabel": [
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     500,
+     21
+    ],
+    "size_hint": [
+     215,
+     21
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 700,
+     "bold": true
+    },
+    "style_len": 51,
+    "style_head": "font-size: 16px; font-weight: bold; color: #1a2024;",
+    "text": "Create New Solution Project"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     500,
+     16
+    ],
+    "size_hint": [
+     369,
+     16
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 32,
+    "style_head": "font-size: 12px; color: #5a6168;",
+    "text": "Configure solution name, destination dir"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     500,
+     17
+    ],
+    "size_hint": [
+     87,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 50,
+    "style_head": "font-weight: 600; color: #1a2024; font-size: 13px;",
+    "text": "Project Name:"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     500,
+     17
+    ],
+    "size_hint": [
+     89,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 50,
+    "style_head": "font-weight: 600; color: #1a2024; font-size: 13px;",
+    "text": "Save Location:"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     500,
+     17
+    ],
+    "size_hint": [
+     117,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 50,
+    "style_head": "font-weight: 600; color: #1a2024; font-size: 13px;",
+    "text": "Solution Template:"
+   }
+  ],
+  "QLineEdit": [
+   {
+    "class": "QLineEdit",
+    "object": "",
+    "size": [
+     500,
+     33
+    ],
+    "size_hint": [
+     128,
+     33
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 350,
+    "style_head": "QLineEdit { background: #f8fafb; border: 1px solid #5a6069; border-radius: 4px; padding: 6px 10px; font-size: 13px; color: #1a2024; } QLineEdit:focus ",
+    "text": "VisionProject_31"
+   },
+   {
+    "class": "QLineEdit",
+    "object": "",
+    "size": [
+     413,
+     33
+    ],
+    "size_hint": [
+     128,
+     33
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 350,
+    "style_head": "QLineEdit { background: #f8fafb; border: 1px solid #5a6069; border-radius: 4px; padding: 6px 10px; font-size: 13px; color: #1a2024; } QLineEdit:focus ",
+    "text": "C:\\Users\\winch\\Downloads\\VMClone\\project"
+   }
+  ],
+  "QPushButton": [
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     77,
+     31
+    ],
+    "size_hint": [
+     77,
+     31
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 348,
+    "style_head": "QPushButton { background: #e4e7ea; border: 1px solid #5a6069; border-radius: 4px; padding: 6px 12px; font-size: 13px; color: #1a2024; } QPushButton:ho",
+    "text": "Browse...",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     72,
+     31
+    ],
+    "size_hint": [
+     72,
+     31
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 348,
+    "style_head": "QPushButton { background: #e4e7ea; border: 1px solid #5a6069; border-radius: 4px; padding: 6px 16px; font-size: 13px; color: #414850; } QPushButton:ho",
+    "text": "Cancel",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     122,
+     29
+    ],
+    "size_hint": [
+     122,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 369,
+    "style_head": "QPushButton { background: #0078b0; color: #1a2024; border: none; border-radius: 4px; padding: 6px 18px; font-size: 13px; font-weight: 600; } QPushButt",
+    "text": "Create Project",
+    "checked": false
+   }
+  ],
+  "QComboBox": [
+   {
+    "class": "QComboBox",
+    "object": "",
+    "size": [
+     500,
+     33
+    ],
+    "size_hint": [
+     293,
+     33
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 371,
+    "style_head": "QComboBox { background: #f8fafb; border: 1px solid #5a6069; border-radius: 4px; padding: 6px 10px; font-size: 13px; color: #1a2024; } QComboBox::drop-"
+   }
+  ]
+ },
+ "dialog:load_image": {},
+ "dialog:global_variables": {
+  "QLabel": [
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     572,
+     16
+    ],
+    "size_hint": [
+     473,
+     16
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 50,
+    "style_head": "color: #1a2024; font-weight: 600; font-size: 12px;",
+    "text": "Solution Global Variables (Shared across"
+   }
+  ],
+  "QTableWidget": [
+   {
+    "class": "QTableWidget",
+    "object": "",
+    "size": [
+     572,
+     294
+    ],
+    "size_hint": [
+     256,
+     192
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QHeaderView": [
+   {
+    "class": "QHeaderView",
+    "object": "",
+    "size": [
+     32,
+     258
+    ],
+    "size_hint": [
+     32,
+     36
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QHeaderView",
+    "object": "",
+    "size": [
+     540,
+     36
+    ],
+    "size_hint": [
+     115,
+     36
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QLineEdit": [
+   {
+    "class": "QLineEdit",
+    "object": "",
+    "size": [
+     172,
+     27
+    ],
+    "size_hint": [
+     120,
+     27
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": ""
+   },
+   {
+    "class": "QLineEdit",
+    "object": "",
+    "size": [
+     172,
+     27
+    ],
+    "size_hint": [
+     120,
+     27
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": ""
+   }
+  ],
+  "QComboBox": [
+   {
+    "class": "QComboBox",
+    "object": "",
+    "size": [
+     86,
+     25
+    ],
+    "size_hint": [
+     75,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QPushButton": [
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     112,
+     25
+    ],
+    "size_hint": [
+     112,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 56,
+    "style_head": "border-color: #0078b0; color: #0078b0; font-weight: 600;",
+    "text": "+ Add Variable",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     110,
+     25
+    ],
+    "size_hint": [
+     110,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Delete Selected",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     52,
+     25
+    ],
+    "size_hint": [
+     52,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Close",
+    "checked": false
+   }
+  ]
+ },
+ "dialog:communication_config": {},
+ "dialog:lens_calibration": {
+  "QLabel": [
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     92,
+     215
+    ],
+    "size_hint": [
+     92,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 33,
+    "style_head": "font-weight: 600; color: #1a2024;",
+    "text": "Target Pattern:"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     61,
+     215
+    ],
+    "size_hint": [
+     61,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Inner Cols:"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     67,
+     215
+    ],
+    "size_hint": [
+     67,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Inner Rows:"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     71,
+     215
+    ],
+    "size_hint": [
+     71,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Square Size:"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     268,
+     16
+    ],
+    "size_hint": [
+     105,
+     16
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 50,
+    "style_head": "font-weight: 600; color: #1a2024; font-size: 12px;",
+    "text": "Calibration Solution"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     268,
+     29
+    ],
+    "size_hint": [
+     120,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 94,
+    "style_head": "background-color: #fcfcfc; color: #4f565c; font-weight: 600; padding: 6px; border-radius: 3px;",
+    "text": "NOT CALIBRATED"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     64,
+     17
+    ],
+    "size_hint": [
+     64,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "RMS Error:"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     116,
+     17
+    ],
+    "size_hint": [
+     10,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "--"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     68,
+     17
+    ],
+    "size_hint": [
+     68,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Valid Views:"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     116,
+     17
+    ],
+    "size_hint": [
+     7,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "0"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     115,
+     17
+    ],
+    "size_hint": [
+     115,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Focal Length (fx, fy):"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     116,
+     17
+    ],
+    "size_hint": [
+     10,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "--"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     128,
+     17
+    ],
+    "size_hint": [
+     128,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Principal Point (cx, cy):"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     116,
+     17
+    ],
+    "size_hint": [
+     10,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "--"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     104,
+     17
+    ],
+    "size_hint": [
+     104,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Radial (k1, k2, k3):"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     116,
+     17
+    ],
+    "size_hint": [
+     10,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "--"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     111,
+     17
+    ],
+    "size_hint": [
+     111,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Tangential (p1, p2):"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     116,
+     17
+    ],
+    "size_hint": [
+     10,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "--"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     69,
+     24
+    ],
+    "size_hint": [
+     69,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "View Mode:"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     548,
+     380
+    ],
+    "size_hint": [
+     460,
+     380
+    ],
+    "min_size": [
+     460,
+     380
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 73,
+    "style_head": "background-color: #e4e7ea; border: 1px solid #fcfcfc; border-radius: 4px;",
+    "text": ""
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     548,
+     16
+    ],
+    "size_hint": [
+     92,
+     16
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 32,
+    "style_head": "color: #4f565c; font-size: 12px;",
+    "text": "No view selected."
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     296,
+     16
+    ],
+    "size_hint": [
+     118,
+     16
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 50,
+    "style_head": "font-weight: 600; color: #1a2024; font-size: 12px;",
+    "text": "Calibration Views Pool"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     425,
+     25
+    ],
+    "size_hint": [
+     425,
+     16
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 32,
+    "style_head": "color: #5a6168; font-size: 12px;",
+    "text": "Tip: 3 to 10 angled chessboard frames pr"
+   }
+  ],
+  "QComboBox": [
+   {
+    "class": "QComboBox",
+    "object": "",
+    "size": [
+     138,
+     25
+    ],
+    "size_hint": [
+     138,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QSpinBox": [
+   {
+    "class": "QSpinBox",
+    "object": "",
+    "size": [
+     108,
+     29
+    ],
+    "size_hint": [
+     108,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "9"
+   },
+   {
+    "class": "QSpinBox",
+    "object": "",
+    "size": [
+     108,
+     29
+    ],
+    "size_hint": [
+     108,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "6"
+   }
+  ],
+  "QLineEdit": [
+   {
+    "class": "QLineEdit",
+    "object": "qt_spinbox_lineedit",
+    "size": [
+     71,
+     23
+    ],
+    "size_hint": [
+     106,
+     19
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "9"
+   },
+   {
+    "class": "QLineEdit",
+    "object": "qt_spinbox_lineedit",
+    "size": [
+     71,
+     23
+    ],
+    "size_hint": [
+     106,
+     19
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "6"
+   },
+   {
+    "class": "QLineEdit",
+    "object": "qt_spinbox_lineedit",
+    "size": [
+     128,
+     23
+    ],
+    "size_hint": [
+     106,
+     19
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "25.00 mm"
+   }
+  ],
+  "QDoubleSpinBox": [
+   {
+    "class": "QDoubleSpinBox",
+    "object": "",
+    "size": [
+     165,
+     29
+    ],
+    "size_hint": [
+     165,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "25.00 mm"
+   }
+  ],
+  "QSplitter": [
+   {
+    "class": "QSplitter",
+    "object": "",
+    "size": [
+     1126,
+     432
+    ],
+    "size_hint": [
+     947,
+     432
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QGroupBox": [
+   {
+    "class": "QGroupBox",
+    "object": "",
+    "size": [
+     268,
+     169
+    ],
+    "size_hint": [
+     162,
+     169
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "margins": [
+     9,
+     9,
+     9,
+     9
+    ],
+    "spacing": 6,
+    "checked": false
+   }
+  ],
+  "QPushButton": [
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     268,
+     33
+    ],
+    "size_hint": [
+     176,
+     33
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 94,
+    "style_head": "background-color: #0078b0; color: #1a2024; font-weight: 600; padding: 7px; border-radius: 3px;",
+    "text": "Compute Lens Calibration",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     268,
+     25
+    ],
+    "size_hint": [
+     171,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Save Profile (*.calib.json)...",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     268,
+     25
+    ],
+    "size_hint": [
+     99,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Load Profile...",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     268,
+     31
+    ],
+    "size_hint": [
+     142,
+     31
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 94,
+    "style_head": "background-color: #10b981; color: #1a2024; font-weight: 600; padding: 6px; border-radius: 3px;",
+    "text": "Apply to Active Flow",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     145,
+     25
+    ],
+    "size_hint": [
+     82,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Add Files...",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     145,
+     25
+    ],
+    "size_hint": [
+     92,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Capture Live",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     128,
+     25
+    ],
+    "size_hint": [
+     128,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Generate Synthetic",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     78,
+     25
+    ],
+    "size_hint": [
+     67,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Remove",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     78,
+     25
+    ],
+    "size_hint": [
+     50,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Clear",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     52,
+     25
+    ],
+    "size_hint": [
+     52,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Close",
+    "checked": false
+   }
+  ],
+  "QRadioButton": [
+   {
+    "class": "QRadioButton",
+    "object": "",
+    "size": [
+     134,
+     24
+    ],
+    "size_hint": [
+     134,
+     24
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Detected Corners",
+    "checked": true
+   },
+   {
+    "class": "QRadioButton",
+    "object": "",
+    "size": [
+     122,
+     24
+    ],
+    "size_hint": [
+     122,
+     24
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Distorted (Raw)",
+    "checked": false
+   },
+   {
+    "class": "QRadioButton",
+    "object": "",
+    "size": [
+     163,
+     24
+    ],
+    "size_hint": [
+     163,
+     24
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Undistorted (Rectified)",
+    "checked": false
+   }
+  ],
+  "QListWidget": [
+   {
+    "class": "QListWidget",
+    "object": "",
+    "size": [
+     296,
+     348
+    ],
+    "size_hint": [
+     256,
+     192
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ]
+ },
+ "dialog:npoint_calibration": {
+  "QLabel": [
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     798,
+     17
+    ],
+    "size_hint": [
+     332,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "<b>Flow Diagnostics:</b> 2 finding(s) &m"
+   }
+  ],
+  "QTableWidget": [
+   {
+    "class": "QTableWidget",
+    "object": "",
+    "size": [
+     798,
+     304
+    ],
+    "size_hint": [
+     256,
+     192
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QHeaderView": [
+   {
+    "class": "QHeaderView",
+    "object": "",
+    "size": [
+     32,
+     268
+    ],
+    "size_hint": [
+     32,
+     36
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QHeaderView",
+    "object": "",
+    "size": [
+     766,
+     36
+    ],
+    "size_hint": [
+     148,
+     36
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QPushButton": [
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     52,
+     25
+    ],
+    "size_hint": [
+     52,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Close",
+    "checked": false
+   }
+  ]
+ },
+ "dialog:calibration_target": {},
+ "dialog:camera_set": {
+  "QLabel": [
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     507,
+     32
+    ],
+    "size_hint": [
+     424,
+     32
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 32,
+    "style_head": "color: #414850; font-size: 12px;",
+    "text": "Configure GigE Vision, USB3 Vision, Hikr"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     339,
+     32
+    ],
+    "size_hint": [
+     339,
+     24
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "style_len": 115,
+    "style_head": "background-color: #f8fafb; color: #e4b030; font-weight: 600; padding: 4px 8px; border-radius: 3px; font-size: 12px;",
+    "text": "Hikrobot MVS C SDK: Not Installed (Emula"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     326,
+     413
+    ],
+    "size_hint": [
+     320,
+     240
+    ],
+    "min_size": [
+     320,
+     240
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 115,
+    "style_head": "background-color: #201c20; color: #e8eaec; border: 1px solid #5a6069;",
+    "text": "Select a camera to start preview"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     225,
+     25
+    ],
+    "size_hint": [
+     80,
+     15
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 32,
+    "style_head": "color: #0078b0; font-size: 11px;",
+    "text": "Status: Standby"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     89,
+     29
+    ],
+    "size_hint": [
+     89,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Exposure Time:"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     116,
+     29
+    ],
+    "size_hint": [
+     116,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Analog/Digital Gain:"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     84,
+     25
+    ],
+    "size_hint": [
+     84,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Trigger Mode:"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     74,
+     25
+    ],
+    "size_hint": [
+     74,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Pixel Format:"
+   },
+   {
+    "class": "QLabel",
+    "object": "",
+    "size": [
+     72,
+     26
+    ],
+    "size_hint": [
+     72,
+     17
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "MVS Config:"
+   }
+  ],
+  "QSplitter": [
+   {
+    "class": "QSplitter",
+    "object": "",
+    "size": [
+     856,
+     479
+    ],
+    "size_hint": [
+     834,
+     426
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QGroupBox": [
+   {
+    "class": "QGroupBox",
+    "object": "",
+    "size": [
+     342,
+     479
+    ],
+    "size_hint": [
+     336,
+     306
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "margins": [
+     8,
+     8,
+     8,
+     8
+    ],
+    "spacing": 6,
+    "checked": false
+   },
+   {
+    "class": "QGroupBox",
+    "object": "",
+    "size": [
+     511,
+     193
+    ],
+    "size_hint": [
+     498,
+     193
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 600,
+     "bold": true
+    },
+    "margins": [
+     8,
+     8,
+     8,
+     8
+    ],
+    "spacing": 6,
+    "checked": false
+   }
+  ],
+  "QPushButton": [
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     95,
+     25
+    ],
+    "size_hint": [
+     95,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Start Preview",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     252,
+     25
+    ],
+    "size_hint": [
+     152,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Scan / Refresh Devices",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     251,
+     25
+    ],
+    "size_hint": [
+     130,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Add RTSP Stream...",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     195,
+     26
+    ],
+    "size_hint": [
+     195,
+     26
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 73,
+    "style_head": "background-color: #0078b0; color: #1a2024; font-size: 12px; padding: 4px;",
+    "text": "Import MVS Config (*.mvs, *.xml)...",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     172,
+     26
+    ],
+    "size_hint": [
+     159,
+     26
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 73,
+    "style_head": "background-color: #5a6069; color: #1a2024; font-size: 12px; padding: 4px;",
+    "text": "Export MVS Config (*.mvs)...",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     167,
+     25
+    ],
+    "size_hint": [
+     167,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 500,
+     "bold": false
+    },
+    "style_len": 60,
+    "style_head": "background-color: #0078b0; color: #1a2024; font-weight: 500;",
+    "text": "Lens Calibration Wizard...",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     38,
+     25
+    ],
+    "size_hint": [
+     38,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "OK",
+    "checked": false
+   },
+   {
+    "class": "QPushButton",
+    "object": "",
+    "size": [
+     58,
+     25
+    ],
+    "size_hint": [
+     58,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "Cancel",
+    "checked": false
+   }
+  ],
+  "QTableWidget": [
+   {
+    "class": "QTableWidget",
+    "object": "",
+    "size": [
+     511,
+     245
+    ],
+    "size_hint": [
+     256,
+     192
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "style_len": 406,
+    "style_head": "QTableWidget { background-color: #c0c4c8; gridline-color: #5f666d; color: #1a2024; border: 1px solid #5a6069; } QHeaderView::section { background-colo"
+   }
+  ],
+  "QHeaderView": [
+   {
+    "class": "QHeaderView",
+    "object": "",
+    "size": [
+     25,
+     208
+    ],
+    "size_hint": [
+     25,
+     35
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QHeaderView",
+    "object": "",
+    "size": [
+     484,
+     35
+    ],
+    "size_hint": [
+     107,
+     35
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ],
+  "QDoubleSpinBox": [
+   {
+    "class": "QDoubleSpinBox",
+    "object": "",
+    "size": [
+     373,
+     29
+    ],
+    "size_hint": [
+     177,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "20000.00 us"
+   },
+   {
+    "class": "QDoubleSpinBox",
+    "object": "",
+    "size": [
+     373,
+     29
+    ],
+    "size_hint": [
+     135,
+     29
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "1.00 x"
+   }
+  ],
+  "QLineEdit": [
+   {
+    "class": "QLineEdit",
+    "object": "qt_spinbox_lineedit",
+    "size": [
+     336,
+     23
+    ],
+    "size_hint": [
+     106,
+     19
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "20000.00 us"
+   },
+   {
+    "class": "QLineEdit",
+    "object": "qt_spinbox_lineedit",
+    "size": [
+     336,
+     23
+    ],
+    "size_hint": [
+     106,
+     19
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    },
+    "text": "1.00 x"
+   }
+  ],
+  "QComboBox": [
+   {
+    "class": "QComboBox",
+    "object": "",
+    "size": [
+     373,
+     25
+    ],
+    "size_hint": [
+     173,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   },
+   {
+    "class": "QComboBox",
+    "object": "",
+    "size": [
+     373,
+     25
+    ],
+    "size_hint": [
+     138,
+     25
+    ],
+    "min_size": [
+     0,
+     0
+    ],
+    "max_size": [
+     16777215,
+     16777215
+    ],
+    "enabled": true,
+    "visible": false,
+    "fixed_width": false,
+    "fixed_height": false,
+    "font": {
+     "family": "-apple-system",
+     "size": -1,
+     "weight": 400,
+     "bold": false
+    }
+   }
+  ]
+ },
+ "dialog:controller_management": {}
+}

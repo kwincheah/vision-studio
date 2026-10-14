@@ -36,18 +36,27 @@ class L2LMeasureTool(VisionToolBase):
         }
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
-        l1 = context.get("Line1") or self.get_param("default_l1")
-        l2 = context.get("Line2") or self.get_param("default_l2")
+        l1_raw = context.get("Line1") or self.get_param("default_l1")
+        l2_raw = context.get("Line2") or self.get_param("default_l2")
 
-        if isinstance(l1, dict):
-            x1_a, y1_a, x2_a, y2_a = l1["x1"], l1["y1"], l1["x2"], l1["y2"]
-        else:
-            x1_a, y1_a, x2_a, y2_a = l1
+        # Both lines must be well formed before anything is computed.  A search
+        # module that finds no edge emits `None`, and a partial mapping or a short
+        # sequence is equally reachable from the canvas, so each input is validated
+        # instead of unpacked: unpacking raised, and the operator only ever saw the
+        # pipeline's generic "Exception: ..." with no indication of which port.
+        l1 = self.as_line(l1_raw)
+        if l1 is None:
+            return ToolExecutionResult(
+                status=ToolStatus.ERROR,
+                message=f"Line1 is not a valid line (need x1,y1,x2,y2): {l1_raw!r:.80}")
+        l2 = self.as_line(l2_raw)
+        if l2 is None:
+            return ToolExecutionResult(
+                status=ToolStatus.ERROR,
+                message=f"Line2 is not a valid line (need x1,y1,x2,y2): {l2_raw!r:.80}")
 
-        if isinstance(l2, dict):
-            x1_b, y1_b, x2_b, y2_b = l2["x1"], l2["y1"], l2["x2"], l2["y2"]
-        else:
-            x1_b, y1_b, x2_b, y2_b = l2
+        x1_a, y1_a, x2_a, y2_a = l1
+        x1_b, y1_b, x2_b, y2_b = l2
 
         mid1 = ((x1_a + x2_a) / 2.0, (y1_a + y2_a) / 2.0)
         mid2 = ((x1_b + x2_b) / 2.0, (y1_b + y2_b) / 2.0)
@@ -103,22 +112,25 @@ class P2PMeasureTool(VisionToolBase):
         }
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
-        p1 = context.get("Point1") or self.get_param("default_p1")
-        p2 = context.get("Point2") or self.get_param("default_p2")
+        p1_raw = context.get("Point1")
+        p2_raw = context.get("Point2")
 
-        if isinstance(p1, (list, tuple)):
-            x1, y1 = p1[0], p1[1]
-        elif isinstance(p1, dict):
-            x1, y1 = p1.get("cx", p1.get("x", 0)), p1.get("cy", p1.get("y", 0))
-        else:
-            x1, y1 = 0, 0
+        # A malformed point used to be silently coerced to (0, 0), which produced a
+        # confident but meaningless distance; a short tuple raised instead.  Both
+        # now report which port was unusable.
+        p1 = self.as_point(p1_raw if p1_raw is not None else self.get_param("default_p1"))
+        if p1 is None:
+            return ToolExecutionResult(
+                status=ToolStatus.ERROR,
+                message=f"Point1 is not a valid point (need x,y): {p1_raw!r:.80}")
+        p2 = self.as_point(p2_raw if p2_raw is not None else self.get_param("default_p2"))
+        if p2 is None:
+            return ToolExecutionResult(
+                status=ToolStatus.ERROR,
+                message=f"Point2 is not a valid point (need x,y): {p2_raw!r:.80}")
 
-        if isinstance(p2, (list, tuple)):
-            x2, y2 = p2[0], p2[1]
-        elif isinstance(p2, dict):
-            x2, y2 = p2.get("cx", p2.get("x", 0)), p2.get("cy", p2.get("y", 0))
-        else:
-            x2, y2 = 0, 0
+        x1, y1 = p1
+        x2, y2 = p2
 
         dx = float(abs(x2 - x1))
         dy = float(abs(y2 - y1))

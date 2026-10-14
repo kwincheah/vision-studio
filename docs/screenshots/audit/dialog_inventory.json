@@ -1,0 +1,259 @@
+[
+ {
+  "menu": "File",
+  "action": "New Solution...",
+  "name": "new_solution",
+  "class": "NewProjectDialog",
+  "outcome": "ok",
+  "title": "Create New Project",
+  "size": [
+   540,
+   367
+  ],
+  "shot": "C_new_solution_NewProjectDialog.png"
+ },
+ {
+  "menu": "File",
+  "action": "New Solution...",
+  "name": "new_solution"
+ },
+ {
+  "menu": "File",
+  "action": "Load Image File...",
+  "name": "load_image",
+  "class": "QFileDialog",
+  "outcome": "native dialog (not capturable offscreen)"
+ },
+ {
+  "menu": "File",
+  "action": "Load Image File...",
+  "name": "load_image"
+ },
+ {
+  "menu": "Settings",
+  "action": "Global Variables...",
+  "name": "global_variables",
+  "class": "GlobalVariablesDialog",
+  "outcome": "ok",
+  "title": "Global Variables - Apex Industrial Vision Studio",
+  "size": [
+   600,
+   420
+  ],
+  "shot": "C_global_variables_GlobalVariablesDialog.png"
+ },
+ {
+  "menu": "Settings",
+  "action": "Global Variables...",
+  "name": "global_variables"
+ },
+ {
+  "menu": "Settings",
+  "action": "Communication Configuration",
+  "name": "communication_config",
+  "class": "QMessageBox",
+  "outcome": "ok",
+  "title": "Communication Management",
+  "size": [
+   446,
+   153
+  ],
+  "shot": "C_communication_config_QMessageBox.png"
+ },
+ {
+  "menu": "Settings",
+  "action": "Communication Configuration",
+  "name": "communication_config"
+ },
+ {
+  "menu": "Tools",
+  "action": "Camera Lens Distortion Calibration Wizard...",
+  "name": "lens_calibration",
+  "class": "CameraCalibrationDialog",
+  "outcome": "ok",
+  "title": "Camera Lens Distortion Calibration Wizard - Apex Studio",
+  "size": [
+   1150,
+   720
+  ],
+  "shot": "C_lens_calibration_CameraCalibrationDialog.png"
+ },
+ {
+  "menu": "Tools",
+  "action": "Camera Lens Distortion Calibration Wizard...",
+  "name": "lens_calibration"
+ },
+ {
+  "menu": "Tools",
+  "action": "N-Point Spatial Calibration Wizard",
+  "name": "npoint_calibration",
+  "class": "FlowValidationDialog",
+  "outcome": "ok",
+  "title": "Calibration Wizard",
+  "size": [
+   820,
+   380
+  ],
+  "shot": "C_npoint_calibration_FlowValidationDialog.png"
+ },
+ {
+  "menu": "Tools",
+  "action": "N-Point Spatial Calibration Wizard",
+  "name": "npoint_calibration"
+ },
+ {
+  "menu": "Tools",
+  "action": "Calibration Target Generator",
+  "name": "calibration_target",
+  "class": "QMessageBox",
+  "outcome": "ok",
+  "title": "Calibration Target Generator",
+  "size": [
+   387,
+   102
+  ],
+  "shot": "C_calibration_target_QMessageBox.png"
+ },
+ {
+  "menu": "Tools",
+  "action": "Calibration Target Generator",
+  "name": "calibration_target"
+ },
+ {
+  "menu": "System",
+  "action": "Camera Set",
+  "name": "camera_set",
+  "class": "CameraManagementDialog",
+  "outcome": "ok",
+  "title": "Camera Management - Industrial & Hikrobot MVS Cameras",
+  "size": [
+   880,
+   580
+  ],
+  "shot": "C_camera_set_CameraManagementDialog.png"
+ },
+ {
+  "menu": "System",
+  "action": "Camera Set",
+  "name": "camera_set"
+ },
+ {
+  "menu": "System",
+  "action": "Controller Management",
+  "name": "controller_management",
+  "class": "QMessageBox",
+  "outcome": "ok",
+  "title": "Controller Management",
+  "size": [
+   464,
+   136
+  ],
+  "shot": "C_controller_management_QMessageBox.png"
+ },
+ {
+  "menu": "System",
+  "action": "Controller Management",
+  "name": "controller_management"
+ },
+ {
+  "menu": "System",
+  "action": "Log Viewer",
+  "name": "log_viewer",
+  "outcome": "NO DIALOG"
+ },
+ {
+  "menu": "System",
+  "action": "Log Viewer",
+  "name": "log_viewer"
+ },
+ {
+  "menu": "System",
+  "action": "Performance Options",
+  "name": "performance_options",
+  "class": "QMessageBox",
+  "outcome": "ok",
+  "title": "Performance Options",
+  "size": [
+   500,
+   153
+  ],
+  "shot": "C_performance_options_QMessageBox.png"
+ },
+ {
+  "menu": "System",
+  "action": "Performance Options",
+  "name": "performance_options"
+ },
+ {
+  "menu": "Help",
+  "action": "User Manual",
+  "name": "user_manual",
+  "class": "QMessageBox",
+  "outcome": "ok",
+  "title": "User Manual",
+  "size": [
+   500,
+   221
+  ],
+  "shot": "C_user_manual_QMessageBox.png"
+ },
+ {
+  "menu": "Help",
+  "action": "User Manual",
+  "name": "user_manual"
+ },
+ {
+  "menu": "Help",
+  "action": "Keyboard Shortcuts",
+  "name": "keyboard_shortcuts",
+  "class": "QMessageBox",
+  "outcome": "ok",
+  "title": "Keyboard Shortcuts",
+  "size": [
+   397,
+   187
+  ],
+  "shot": "C_keyboard_shortcuts_QMessageBox.png"
+ },
+ {
+  "menu": "Help",
+  "action": "Keyboard Shortcuts",
+  "name": "keyboard_shortcuts"
+ },
+ {
+  "menu": "Help",
+  "action": "Version Information",
+  "name": "version_information",
+  "class": "QMessageBox",
+  "outcome": "ok",
+  "title": "Version Information",
+  "size": [
+   412,
+   136
+  ],
+  "shot": "C_version_information_QMessageBox.png"
+ },
+ {
+  "menu": "Help",
+  "action": "Version Information",
+  "name": "version_information"
+ },
+ {
+  "menu": "Help",
+  "action": "About Apex Industrial Vision Studio",
+  "name": "about",
+  "class": "QMessageBox",
+  "outcome": "ok",
+  "title": "About Apex Industrial Vision Studio",
+  "size": [
+   500,
+   193
+  ],
+  "shot": "C_about_QMessageBox.png"
+ },
+ {
+  "menu": "Help",
+  "action": "About Apex Industrial Vision Studio",
+  "name": "about"
+ }
+]

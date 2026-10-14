@@ -13,6 +13,7 @@ Designed following HikRobot Vision Master Camera Management (Manual Chapter 4 & 
 import os
 import sys
 import time
+import ctypes
 import logging
 from typing import Dict, List, Any, Optional, Tuple
 import cv2
@@ -32,7 +33,8 @@ class CameraDeviceInfo:
         serial_number: str = "",
         ip_address: str = "",
         interface_name: str = "",
-        is_available: bool = True
+        is_available: bool = True,
+        stream_url: Optional[str] = None
     ):
         self.device_id = device_id
         self.name = name
@@ -42,6 +44,7 @@ class CameraDeviceInfo:
         self.ip_address = ip_address
         self.interface_name = interface_name
         self.is_available = is_available
+        self.stream_url = stream_url
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -354,13 +357,33 @@ class CameraManager:
 
     def __init__(self):
         self._devices: Dict[str, CameraDeviceInfo] = {}
+        self._user_streams: Dict[str, CameraDeviceInfo] = {}
         self._active_drivers: Dict[str, CameraDriverBase] = {}
         self.default_camera_id: str = "virtual_gige_0"
         self.refresh_devices()
 
+    def add_network_stream(self, stream_url: str, name: Optional[str] = None) -> CameraDeviceInfo:
+        """Register a persistent user-configured RTSP/HTTP network stream."""
+        clean_url = stream_url.strip()
+        dev_id = f"rtsp_{abs(hash(clean_url)) % 10000000}"
+        display_name = name or f"Network Stream ({clean_url})"
+        info = CameraDeviceInfo(
+            device_id=dev_id,
+            name=display_name,
+            camera_type="IP/RTSP Stream",
+            interface_name="RTSP/HTTP Stream",
+            stream_url=clean_url
+        )
+        self._user_streams[dev_id] = info
+        self._devices[dev_id] = info
+        return info
+
     def refresh_devices(self) -> List[CameraDeviceInfo]:
         """Scans the host system and discovers all available standard, industrial, and MVS cameras."""
         self._devices.clear()
+        # Re-populate user-defined streams
+        for dev_id, dev_info in self._user_streams.items():
+            self._devices[dev_id] = dev_info
 
         # 1. Hikrobot MVS Camera Integration (Native C SDK or High-Fidelity MVS Emulation)
         from vm_clone.core.mvs_sdk import MvsSdkLoader, MvsCameraDriver
@@ -408,7 +431,7 @@ class CameraManager:
                                 cam_info._mvs_c_dev_ptr = dev_ptr
                                 self._devices[m_id] = cam_info
             except Exception as e:
-                logger.warning(f"Error enumerating native MVS cameras: {e}")
+                logger.warning(f"Error enumerating native MVS cameras: {e}", exc_info=True)
 
         # Hikrobot MVS Virtual / Target Cameras (Guaranteed offline & development availability)
         mvs_gige = CameraDeviceInfo(
@@ -504,7 +527,11 @@ class CameraManager:
     ) -> Optional[CameraDriverBase]:
         """Returns or instantiates a driver for the specified device ID."""
         if device_id in self._active_drivers:
-            return self._active_drivers[device_id]
+            existing = self._active_drivers[device_id]
+            if isinstance(existing, StreamCameraDriver) and stream_url and existing.stream_url != stream_url:
+                existing.close()
+                existing.stream_url = stream_url
+            return existing
 
         info = self.get_device(device_id)
         if not info:
@@ -537,7 +564,7 @@ class CameraManager:
                     idx = 0
             driver = OpenCVCameraDriver(info, camera_index=idx)
         elif info.camera_type == "IP/RTSP Stream":
-            url = stream_url or "rtsp://192.168.1.64:554/ch1/main"
+            url = stream_url or getattr(info, "stream_url", None) or "rtsp://192.168.1.64:554/ch1/main"
             driver = StreamCameraDriver(info, stream_url=url)
         else:
             # Industrial GigE or USB3
@@ -576,6 +603,6 @@ class CameraManager:
         for d in self._active_drivers.values():
             try:
                 d.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Error releasing camera driver %s: %s", d, e)
         self._active_drivers.clear()

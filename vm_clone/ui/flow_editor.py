@@ -175,7 +175,7 @@ class PortItem(QGraphicsRectItem):
 
         # Color port by type using standard functional colors
         if data_type == "Image":
-            self.base_color = QColor("#3b82f6")      # Blue (image stream)
+            self.base_color = QColor(THEME['border_focus'])      # Blue (image stream)
         elif data_type in ("Value", "Point", "Circle", "Line", "Region"):
             self.base_color = QColor("#f59e0b")      # Amber (geometry / numeric)
         elif data_type == "Boolean":
@@ -187,7 +187,7 @@ class PortItem(QGraphicsRectItem):
             self.base_color = QColor("#22c55e")      # Green (generic)
 
         self.setBrush(QBrush(self.base_color))
-        self.setPen(QPen(QColor("#ffffff"), 1.0))
+        self.setPen(QPen(QColor(THEME['text_primary']), 1.0))
         self.setZValue(3)
         self.setAcceptHoverEvents(True)
         self.setCursor(Qt.CursorShape.CrossCursor)
@@ -434,7 +434,7 @@ class ConnectionItem(QGraphicsPathItem):
 
         dtype = self.from_port.data_type
         if dtype == "Image":
-            base_col = QColor(THEME["accent_primary"]) if self.isSelected() else QColor("#3b82f6")
+            base_col = QColor(THEME['accent_primary']) if self.isSelected() else QColor(THEME['border_focus'])
         elif dtype in ("Value", "Point", "Circle", "Line", "Region"):
             base_col = QColor(THEME["vm_accent_hover"]) if self.isSelected() else QColor("#f59e0b")
         elif dtype == "Boolean":
@@ -565,18 +565,18 @@ class FlowNodeItem(QGraphicsItem):
 
     def _status_style(self):
         if not self.tool.enabled:
-            return QColor("#9aa0a6"), "BYPASS"
+            return QColor(THEME['vm_node_text_dim']), "BYPASS"
         if self.status == ToolStatus.OK:
             return QColor("#22c55e"), "PASS"
         if self.status == ToolStatus.NG:
             return QColor("#ef4444"), "FAIL"
         if self.status == ToolStatus.RUNNING:
-            return QColor("#38bdf8"), "RUN"
+            return QColor(THEME['vm_accent']), "RUN"
         if self.status == ToolStatus.TIMEOUT:
             return QColor("#f59e0b"), "TIME"
         if self.status == ToolStatus.ERROR:
             return QColor("#ef4444"), "ERR"
-        return QColor("#b9bec6"), "IDLE"
+        return QColor(THEME['text_secondary']), "IDLE"
 
     def paint(self, painter: QPainter, option, widget=None):
         """Paint the module card in the reference's pill style.
@@ -603,7 +603,7 @@ class FlowNodeItem(QGraphicsItem):
         if self.isSelected():
             border_col, border_w = QColor(THEME["vm_accent"]), 2.0
         elif not self.tool.enabled:
-            border_col, border_w = QColor("#475569"), 1.2
+            border_col, border_w = QColor(THEME['text_secondary']), 1.2
         elif self.status == ToolStatus.READY:
             border_col, border_w = QColor(THEME["vm_node_border"]), 1.2
         else:
@@ -615,7 +615,7 @@ class FlowNodeItem(QGraphicsItem):
         painter.save()
         painter.setClipPath(self._card_clip_path(card, radius))
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor("#242c3b"))
+        painter.setBrush(QColor(THEME['bg_surface_alt']))
         painter.drawRect(QRectF(0, 0, self.WIDTH, self.HEADER_H))
         painter.restore()
 
@@ -633,13 +633,13 @@ class FlowNodeItem(QGraphicsItem):
         badge_w = badge_h + 7.0
         badge = QRectF(-badge_w / 2.0 + 1.0, (self.HEADER_H - badge_h) / 2.0,
                        badge_w, badge_h)
-        badge_border = QColor(THEME["vm_accent"]) if self.isSelected() else QColor("#334155")
-        badge_bg = QColor(THEME["vm_accent_dim"]) if self.isSelected() else QColor("#141a24")
+        badge_border = QColor(THEME['vm_accent']) if self.isSelected() else QColor(THEME['border_control'])
+        badge_bg = QColor(THEME['vm_accent_dim']) if self.isSelected() else QColor(THEME['bg_surface'])
         painter.setPen(QPen(badge_border, 1.2))
         painter.setBrush(badge_bg)
         painter.drawRoundedRect(badge, badge_h / 2.0, badge_h / 2.0)
         glyph_icon = get_tool_icon(self.tool.tool_name, 13,
-                                   QColor(THEME["vm_accent"]) if self.isSelected() else QColor("#38bdf8"))
+                                   QColor(THEME['vm_accent']) if self.isSelected() else QColor(THEME['vm_accent']))
         glyph_icon.paint(painter, badge.adjusted(4.5, 3.5, -3.5, -3.5).toRect())
 
         # --- module name, with the execution index in the accent colour ------
@@ -692,7 +692,7 @@ class FlowNodeItem(QGraphicsItem):
 
         # --- footer strip: verdict + latency, right aligned ------------------
         footer_y = self.height - self.FOOTER_H
-        painter.setPen(QPen(QColor("#2b3547"), 1.0))
+        painter.setPen(QPen(QColor(THEME['bg_control']), 1.0))
         painter.drawLine(QPointF(6, footer_y), QPointF(self.WIDTH - 6, footer_y))
 
         painter.setFont(QFont("Segoe UI", 8, QFont.Weight.Bold))
@@ -1110,6 +1110,10 @@ class FlowZoomTool(QWidget):
         super().__init__(parent or view)
         self.view = view
         self.setObjectName("flowZoomTool")
+        # A QWidget subclass does not paint its `#objectName` background from
+        # the stylesheet unless it is told to; without this it falls back to
+        # the global light `QWidget` background.
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setFixedSize(112, 24)
         self.setToolTip("Flow canvas zoom")
 
@@ -1169,32 +1173,52 @@ class FlowTelemetryBar(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("flowTelemetryBar")
-        self.setFixedHeight(22)
+        self.setFixedHeight(THEME["h_compact"])
         row = QHBoxLayout(self)
-        row.setContentsMargins(6, 2, 6, 2)
-        row.setSpacing(10)
+        row.setContentsMargins(THEME["sp_snug"], THEME["sp_hair"],
+                               THEME["sp_snug"], THEME["sp_hair"])
+        row.setSpacing(THEME["sp_base"])
 
+        # The three readouts share a narrow strip under the canvas, so each is held at
+        # the width its own longest value needs.  Without a floor the layout squeezed
+        # the last one and "Algorithm: 148.64ms" rendered clipped to "Algorithm: 148.6".
         self.lbl_flow = QLabel("Flow: 0.00ms")
-        self.lbl_flow.setStyleSheet("color: #38bdf8; font-weight: 600; font-size: 11px;")
+        self.lbl_flow.setStyleSheet(
+            f"color: {THEME['vm_accent']}; font-weight: {THEME['fw_demibold']}; "
+            f"font-size: {THEME['fs_caption']}px;")
         row.addWidget(self.lbl_flow)
 
         self.lbl_tools = QLabel("Tools: 0")
-        self.lbl_tools.setStyleSheet("color: #94a3b8; font-size: 11px;")
+        self.lbl_tools.setStyleSheet(
+            f"color: {THEME['vm_node_text_dim']}; font-size: {THEME['fs_caption']}px;")
         row.addWidget(self.lbl_tools)
 
-        self.lbl_algo = QLabel("Algorithm: 0.00ms")
-        self.lbl_algo.setStyleSheet("color: #a78bfa; font-size: 11px;")
+        # Abbreviated because the full word does not fit the measured strip width at
+        # the reference window size, and this bar is read at a glance.
+        self.lbl_algo = QLabel("Algo: 0.00ms")
+        self.lbl_algo.setStyleSheet(
+            f"color: {THEME['vm_node_text_dim']}; font-size: {THEME['fs_caption']}px;")
         row.addWidget(self.lbl_algo)
+
+        for label, sample in ((self.lbl_flow, "Flow: 000.00ms"),
+                              (self.lbl_tools, "Tools: 00"),
+                              (self.lbl_algo, "Algo: 000.00ms")):
+            label.setMinimumWidth(
+                QFontMetrics(label.font()).horizontalAdvance(sample) +
+                2 * THEME["sp_hair"])
 
         self.setStyleSheet(
             f"background-color: {THEME['bg_surface']}; "
-            f"border: 1px solid {THEME['border_subtle']}; border-radius: 2px;"
+            f"border: {THEME['bw_hair']}px solid {THEME['border_subtle']}; "
+            f"border-radius: {THEME['r_control']}px;"
         )
 
     def update_telemetry(self, flow_ms: float, tool_count: int, algo_ms: float):
         self.lbl_flow.setText(f"Flow: {flow_ms:.2f}ms")
         self.lbl_tools.setText(f"Tools: {tool_count}")
-        self.lbl_algo.setText(f"Algorithm: {algo_ms:.2f}ms")
+        # Abbreviated to match the label's initial text and its reserved width: the
+        # full word does not fit this strip at the reference window size.
+        self.lbl_algo.setText(f"Algo: {algo_ms:.2f}ms")
 
     def reposition(self):
         parent = self.parentWidget()

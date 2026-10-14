@@ -55,7 +55,7 @@ def _view_icon(glyph: str, size: int = 18) -> QIcon:
     p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
     if size != 16:
         p.scale(size / 16.0, size / 16.0)
-    pen = QPen(QColor("#d5d8dd"), 1.3)
+    pen = QPen(QColor(THEME['text_secondary']), 1.3)
     pen.setCapStyle(Qt.PenCapStyle.RoundCap)
     pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
     p.setPen(pen)
@@ -132,17 +132,17 @@ class ToggleSwitch(QToolButton):
         w, h = float(self.width()), float(self.height())
         rect = QRectF(0.0, 0.0, w, h)
         if self.isChecked():
-            track_color = QColor("#e8792b")
+            track_color = QColor(THEME['vm_accent'])
             knob_x = w - h + 2.0
         else:
-            track_color = QColor("#464a50")
+            track_color = QColor(THEME['text_muted'])
             knob_x = 2.0
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(track_color)
         p.drawRoundedRect(rect, h / 2.0, h / 2.0)
 
         knob_dia = h - 4.0
-        p.setBrush(QColor("#ffffff") if self.isChecked() else QColor("#d0d3d8"))
+        p.setBrush(QColor(THEME['text_primary']) if self.isChecked() else QColor(THEME['text_secondary']))
         p.drawEllipse(QRectF(knob_x, 2.0, knob_dia, knob_dia))
         p.end()
 
@@ -159,6 +159,10 @@ class ImageDisplayArea(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("imageDisplayArea")
+        # A QWidget subclass does not paint its `#objectName` background from
+        # the stylesheet unless it is told to; without this it falls back to
+        # the global light `QWidget` background.
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         # The header row (source name + 8 view controls) must not pin the right
         # column wider than the measured floor; the name label elides instead.
         self.setMinimumWidth(LM.MIN_RIGHT_COL_W)
@@ -277,6 +281,12 @@ class ImageDisplayArea(QWidget):
         self.cbo_run_scope.addItems(["Run all", "Run selected", "Single step"])
         self.cbo_run_scope.setToolTip("Flow execution scope")
         self.cbo_run_scope.setFixedHeight(26)
+        # Size to the longest entry plus the drop-down arrow, so the row can shrink
+        # without clipping the label down to "Ru".
+        metrics = self.cbo_run_scope.fontMetrics()
+        widest = max(metrics.horizontalAdvance(t) for t in
+                     ("Run all", "Run selected", "Single step"))
+        self.cbo_run_scope.setMinimumWidth(widest + 34)
         self.lbl_run_scope = self.cbo_run_scope
         setattr(self.cbo_run_scope, "text", lambda: self.cbo_run_scope.currentText())
         sl.addWidget(self.cbo_run_scope)
@@ -286,6 +296,10 @@ class ImageDisplayArea(QWidget):
         self.btn_play.setIcon(get_action_icon("run_once", 16))
         self.btn_play.setIconSize(QSize(16, 16))
         self.btn_play.setFixedHeight(26)
+        # Let the button take the width its icon + label need.  At the reference
+        # window size this row is tight enough that a squeezed button clipped its
+        # label to "Ru".
+        self.btn_play.setMinimumWidth(self.btn_play.sizeHint().width())
         self.btn_play.setToolTip("Execute flow according to selected scope (Run all / selected / step)")
         self.btn_play.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_play.clicked.connect(self.run_requested.emit)
@@ -363,12 +377,12 @@ class ImageDisplayArea(QWidget):
             item.setToolTip(label)
             item.setSizeHint(QSize(62, 46))
             ph = QPixmap(56, 40)
-            ph.fill(QColor("#1e2024"))
+            ph.fill(QColor(THEME['vm_viewport']))
             p = QPainter(ph)
             p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
-            p.setPen(QPen(QColor("#383c44"), 1))
+            p.setPen(QPen(QColor(THEME['border_control']), 1))
             p.drawRect(0, 0, 55, 39)
-            p.setPen(QPen(QColor("#5a5f6a"), 1))
+            p.setPen(QPen(QColor(THEME['text_muted']), 1))
             p.drawRoundedRect(QRectF(16, 11, 24, 18), 2, 2)
             p.drawEllipse(QRectF(24, 16, 8, 8))
             p.end()
@@ -410,7 +424,7 @@ class ImageDisplayArea(QWidget):
             thumb = pix.scaled(56, 40, Qt.AspectRatioMode.KeepAspectRatio,
                                   Qt.TransformationMode.SmoothTransformation)
             card = QPixmap(56, 40)
-            card.fill(QColor("#1e2024"))
+            card.fill(QColor(THEME['vm_viewport']))
             p = QPainter(card)
             ox = (56 - thumb.width()) // 2
             oy = (40 - thumb.height()) // 2

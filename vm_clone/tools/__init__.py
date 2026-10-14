@@ -41,6 +41,12 @@ from vm_clone.tools.color_processing import (
     ColorExtractionTool,
     ColorMeasurementTool
 )
+# PCB-specific inspection node.  Defined under `samples` because it is paired with the
+# synthetic dataset generator and the reference detector it wraps; importing it here is
+# what registers it on the toolbox like any other node.
+from vm_clone.samples.pcb_defect_tool import (
+    PCBBoardLayoutTool, PCBDefectDetectionTool,
+)
 from vm_clone.tools.calibration import (
     NPointCalibrationTool
 )
@@ -98,6 +104,8 @@ ALL_TOOLS = [
     # Defect Detection
     DefectDetectionTool,
     LinearEdgeDefectTool,
+    PCBBoardLayoutTool,
+    PCBDefectDetectionTool,
     # Calibration
     NPointCalibrationTool,
     # Communication

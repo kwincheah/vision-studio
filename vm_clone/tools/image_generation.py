@@ -31,13 +31,22 @@ class GeometryFitTool(VisionToolBase):
         }
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
-        pts_in = context.get("Point_Set") or self.get_param("default_points")
+        pts_in = context.get("Point_Set")
+        if pts_in is None:
+            pts_in = self.get_param("default_points")
         fit_t = self.get_param("fit_type", "Circle Fit")
 
-        if not pts_in or len(pts_in) < 3:
-            return ToolExecutionResult(status=ToolStatus.NG, message="At least 3 points required for geometry fitting")
+        # The point set must be an (N, 2) numeric array.  The previous guard only
+        # counted rows, so a ragged or 3-column input became an array whose column 1
+        # was read as the y coordinate - a silently wrong fit rather than an error.
+        pts = self.as_point_list(pts_in, minimum=3)
+        if pts is None:
+            return ToolExecutionResult(
+                status=ToolStatus.NG,
+                message=f"At least 3 valid (x, y) points required for geometry "
+                        f"fitting: {pts_in!r:.80}")
 
-        pts = np.array(pts_in, dtype=np.float32)
+        pts = pts.astype(np.float32)
 
         if fit_t == "Circle Fit":
             mx = np.mean(pts[:, 0])
@@ -119,11 +128,15 @@ class GeometryGenerationTool(VisionToolBase):
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
         gtype = self.get_param("geom_type", "Datum Cross")
-        cx = float(self.get_param("center_x", 400.0))
-        cy = float(self.get_param("center_y", 300.0))
-        r = float(self.get_param("radius", 50.0))
-        p1 = self.get_param("line_p1", [100.0, 300.0])
-        p2 = self.get_param("line_p2", [700.0, 300.0])
+        # Every geometry parameter is operator-editable and arrives from a spin box or
+        # a canvas handle, so each is coerced to a finite number rather than passed to
+        # `float()`: a blank or non-finite value used to raise straight out of the
+        # tool and surface as the pipeline's generic "Exception: ...".
+        cx = self.as_float(self.get_param("center_x", 400.0), 400.0)
+        cy = self.as_float(self.get_param("center_y", 300.0), 300.0)
+        r = abs(self.as_float(self.get_param("radius", 50.0), 50.0))
+        p1 = self.as_point(self.get_param("line_p1", [100.0, 300.0])) or (100.0, 300.0)
+        p2 = self.as_point(self.get_param("line_p2", [700.0, 300.0])) or (700.0, 300.0)
 
         overlays = []
         if gtype == "Datum Cross":

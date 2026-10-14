@@ -66,7 +66,7 @@ class CameraCalibrationDialog(QDialog):
         bar_layout.setSpacing(12)
 
         lbl_pattern = QLabel("Target Pattern:")
-        lbl_pattern.setStyleSheet("font-weight: 600; color: #f1f5f9;")
+        lbl_pattern.setStyleSheet(f"font-weight: 600; color: {THEME['text_primary']};")
         self.combo_pattern = QComboBox()
         self.combo_pattern.addItems(["Chessboard", "Circles Grid", "Asymmetric Circles"])
 
@@ -111,7 +111,7 @@ class CameraCalibrationDialog(QDialog):
         left_layout.setSpacing(6)
 
         lbl_frames = QLabel("Calibration Views Pool")
-        lbl_frames.setStyleSheet("font-weight: 600; color: #e2e8f0; font-size: 12px;")
+        lbl_frames.setStyleSheet(f"font-weight: 600; color: {THEME['text_primary']}; font-size: 12px;")
         left_layout.addWidget(lbl_frames)
 
         self.list_views = QListWidget()
@@ -166,13 +166,13 @@ class CameraCalibrationDialog(QDialog):
 
         self.lbl_image = QLabel()
         self.lbl_image.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_image.setStyleSheet("background-color: #0b0e14; border: 1px solid #1e2634; border-radius: 4px;")
+        self.lbl_image.setStyleSheet(f"background-color: {THEME['bg_app']}; border: 1px solid {THEME['vm_card']}; border-radius: 4px;")
         self.lbl_image.setMinimumSize(460, 380)
         self.lbl_image.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         center_layout.addWidget(self.lbl_image)
 
         self.lbl_view_caption = QLabel("Select or add an image to inspect detected pattern corners.")
-        self.lbl_view_caption.setStyleSheet("color: #94a3b8; font-size: 12px;")
+        self.lbl_view_caption.setStyleSheet(f"color: {THEME['vm_node_text_dim']}; font-size: 12px;")
         center_layout.addWidget(self.lbl_view_caption)
 
         splitter.addWidget(center_panel)
@@ -184,13 +184,13 @@ class CameraCalibrationDialog(QDialog):
         right_layout.setSpacing(8)
 
         lbl_results_title = QLabel("Calibration Solution")
-        lbl_results_title.setStyleSheet("font-weight: 600; color: #e2e8f0; font-size: 12px;")
+        lbl_results_title.setStyleSheet(f"font-weight: 600; color: {THEME['text_primary']}; font-size: 12px;")
         right_layout.addWidget(lbl_results_title)
 
         self.lbl_status_badge = QLabel("NOT CALIBRATED")
         self.lbl_status_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_status_badge.setStyleSheet(
-            "background-color: #1e2532; color: #94a3b8; font-weight: 600; padding: 6px; border-radius: 3px;"
+            "background-color: #fcfcfc; color: #4f565c; font-weight: 600; padding: 6px; border-radius: 3px;"
         )
         right_layout.addWidget(self.lbl_status_badge)
 
@@ -218,7 +218,7 @@ class CameraCalibrationDialog(QDialog):
         # Calibration Actions
         self.btn_calibrate = QPushButton("Compute Lens Calibration")
         self.btn_calibrate.setStyleSheet(
-            "background-color: #0284c7; color: #ffffff; font-weight: 600; padding: 7px; border-radius: 3px;"
+            "background-color: #0078b0; color: #1a2024; font-weight: 600; padding: {THEME['sp_base']}px; border-radius: 3px;"
         )
         self.btn_calibrate.clicked.connect(self._on_compute_calibration)
         right_layout.addWidget(self.btn_calibrate)
@@ -233,7 +233,7 @@ class CameraCalibrationDialog(QDialog):
 
         self.btn_apply = QPushButton("Apply to Active Flow")
         self.btn_apply.setStyleSheet(
-            "background-color: #10b981; color: #ffffff; font-weight: 600; padding: 6px; border-radius: 3px;"
+            "background-color: #10b981; color: #1a2024; font-weight: 600; padding: 6px; border-radius: 3px;"
         )
         self.btn_apply.clicked.connect(self._on_apply_to_flow)
         right_layout.addWidget(self.btn_apply)
@@ -249,7 +249,7 @@ class CameraCalibrationDialog(QDialog):
         # ---------------------------------------------------------------------
         bottom_bar = QHBoxLayout()
         lbl_hint = QLabel("Tip: 3 to 10 angled chessboard frames produce optimal sub-pixel lens correction.")
-        lbl_hint.setStyleSheet("color: #64748b; font-size: 12px;")
+        lbl_hint.setStyleSheet(f"color: {THEME['text_muted']}; font-size: 12px;")
         bottom_bar.addWidget(lbl_hint)
         bottom_bar.addStretch()
 
@@ -266,17 +266,17 @@ class CameraCalibrationDialog(QDialog):
             }}
             QFrame#calibTopBar {{
                 background-color: {THEME['vm_panel_header']};
-                border: 1px solid #202735;
+                border: 1px solid THEME['bg_control'];
                 border-radius: 3px;
             }}
             QGroupBox {{
                 background-color: {THEME['vm_panel']};
-                border: 1px solid #232c3b;
+                border: 1px solid THEME['border_subtle'];
                 border-radius: 3px;
                 margin-top: 8px;
                 padding-top: 8px;
                 font-weight: 600;
-                color: #e2e8f0;
+                color: THEME['text_primary'];
             }}
             QGroupBox::title {{
                 subcontrol-origin: margin;
@@ -284,37 +284,37 @@ class CameraCalibrationDialog(QDialog):
                 padding: 0 4px;
             }}
             QListWidget {{
-                background-color: #11141b;
-                border: 1px solid #202735;
-                color: #f1f5f9;
+                background-color: THEME['vm_chrome'];
+                border: 1px solid THEME['bg_control'];
+                color: THEME['text_primary'];
                 font-size: 12px;
-                border-radius: 2px;
+                border-radius: {THEME['r_control']}px;
             }}
             QListWidget::item {{
                 padding: 4px 6px;
-                border-bottom: 1px solid #171d27;
+                border-bottom: 1px solid THEME['bg_surface_alt'];
             }}
             QListWidget::item:selected {{
                 background-color: {THEME['vm_accent_dim']};
-                color: #ffffff;
+                color: THEME['text_primary'];
             }}
             QPushButton {{
-                background-color: #222938;
-                color: #e2e8f0;
-                border: 1px solid #334155;
+                background-color: THEME['vm_rail_hover'];
+                color: THEME['text_primary'];
+                border: 1px solid THEME['border_control'];
                 padding: 4px 8px;
-                border-radius: 2px;
+                border-radius: {THEME['r_control']}px;
             }}
             QPushButton:hover {{
-                background-color: #2a3447;
-                border-color: #475569;
+                background-color: THEME['border_control'];
+                border-color: THEME['text_secondary'];
             }}
             QComboBox, QSpinBox, QDoubleSpinBox {{
-                background-color: #181e28;
-                border: 1px solid #2c3749;
-                color: #f1f5f9;
+                background-color: THEME['bg_header'];
+                border: 1px solid THEME['border_control'];
+                color: THEME['text_primary'];
                 padding: 2px 4px;
-                border-radius: 2px;
+                border-radius: {THEME['r_control']}px;
             }}
         """)
 

@@ -33,8 +33,8 @@ class ProjectManager:
             self.default_projects_dir = os.path.join(self.workspace_root, "projects")
             self.cache_dir = os.path.join(self.workspace_root, ".vm_config")
             if os.path.abspath(workspace_root) != os.path.abspath("."):
-                h = abs(hash(os.path.abspath(workspace_root))) % 1000000
-                self.settings = QSettings("ApexVision", f"VisionMasterStudio_Test_{h}")
+                ini_path = os.path.join(self.cache_dir, "test_settings.ini")
+                self.settings = QSettings(ini_path, QSettings.Format.IniFormat)
             else:
                 self.settings = QSettings("ApexVision", "VisionMasterStudio")
         else:
@@ -61,6 +61,8 @@ class ProjectManager:
 
     def get_recent_projects(self) -> List[Dict[str, Any]]:
         """Retrieve recent projects list with live file existence and metadata checks."""
+        import logging
+        logger = logging.getLogger(__name__)
         raw_list = []
 
         # 1. Try workspace local cache file first
@@ -68,7 +70,8 @@ class ProjectManager:
             try:
                 with open(self.cache_file, "r", encoding="utf-8") as f:
                     raw_list = json.load(f)
-            except Exception:
+            except Exception as e:
+                logger.warning("Failed to read recent_projects.json cache: %s", e)
                 raw_list = []
 
         # 2. Fallback to QSettings
@@ -78,7 +81,8 @@ class ProjectManager:
                 if isinstance(val, str):
                     try:
                         raw_list = json.loads(val)
-                    except Exception:
+                    except Exception as e:
+                        logger.warning("Failed to decode QSettings recent_projects: %s", e)
                         raw_list = []
                 elif isinstance(val, list):
                     raw_list = val
@@ -88,16 +92,20 @@ class ProjectManager:
         for item in raw_list:
             if not isinstance(item, dict) or "path" not in item:
                 continue
-            path = os.path.normpath(item["path"])
+            item_path = item["path"]
+            if not isinstance(item_path, str):
+                continue
+            path = os.path.normpath(item_path)
             exists = os.path.exists(path)
-            size_bytes = os.path.getsize(path) if exists else 0
+            size_bytes = 0
             mtime = ""
             if exists:
                 try:
+                    size_bytes = os.path.getsize(path)
                     dt = datetime.fromtimestamp(os.path.getmtime(path))
                     mtime = dt.strftime("%Y-%m-%d %H:%M")
-                except Exception:
-                    pass
+                except OSError:
+                    exists = False
 
             entry = {
                 "name": item.get("name") or os.path.splitext(os.path.basename(path))[0],
@@ -114,20 +122,23 @@ class ProjectManager:
 
     def _save_recent_projects(self, projects: List[Dict[str, Any]]):
         """Persist recent projects to both QSettings and local cache file."""
+        import logging
+        from vm_clone.core.fileio import atomic_write_text
+        logger = logging.getLogger(__name__)
+
         # Cap at 30 items
         trimmed = projects[:30]
         json_str = json.dumps(trimmed, indent=2)
 
         try:
             self.settings.setValue(self.SETTINGS_KEY, json_str)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to write recent projects to QSettings: %s", e)
 
         try:
-            with open(self.cache_file, "w", encoding="utf-8") as f:
-                f.write(json_str)
-        except Exception:
-            pass
+            atomic_write_text(self.cache_file, json_str)
+        except Exception as e:
+            logger.warning("Failed to write recent projects cache file atomically: %s", e)
 
     def add_recent_project(self, path: str, name: Optional[str] = None, template: str = "Custom", flow_count: int = 1):
         """Add or bump a project to the top of the recent list."""
