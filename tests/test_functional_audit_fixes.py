@@ -403,6 +403,12 @@ def test_every_sample_flow_executes_without_error():
     assert factories, "no sample solution factories found"
 
     for name, factory in factories:
+        if name == "create_object_detection_solution":
+            try:
+                import ultralytics  # noqa: F401
+            except ImportError:
+                continue  # Skip optional neural detector solution when ultralytics is not installed
+
         pipeline = factory()
         results = pipeline.execute_flow()
         errors = [f"{pipeline.nodes[n].name}: {r.message}"

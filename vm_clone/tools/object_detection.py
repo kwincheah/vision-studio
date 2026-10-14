@@ -24,7 +24,12 @@ def _get_yolo_model(model_path: str):
     """Retrieve or load YOLO model from cache."""
     path_key = (model_path or "yolo11n.pt").strip()
     if path_key not in _YOLO_MODEL_CACHE:
-        from ultralytics import YOLO
+        try:
+            from ultralytics import YOLO
+        except ImportError as e:
+            raise ImportError(
+                "YOLO inference requires 'ultralytics'. Install via 'pip install ultralytics'."
+            ) from e
         _YOLO_MODEL_CACHE[path_key] = YOLO(path_key)
     return _YOLO_MODEL_CACHE[path_key]
 

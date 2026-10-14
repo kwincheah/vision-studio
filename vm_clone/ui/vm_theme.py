@@ -289,6 +289,12 @@ QListWidget#toolGrid {{
     border: none;
     outline: none;
     color: {T['text_primary']};
+    /* The cell label size.  Without this the cells resolve the 13 px `QLabel` size from
+       this sheet's generic rules, and a long tool name ("Linear Edge Defect") wraps onto
+       three lines that run past the bottom of the 84 px cell - measured: 91 px needed.
+       At 11 px the longest name needs 71 px.  A rule is used rather than `setFont`,
+       because a widget font set in code is overridden by this stylesheet. */
+    font-size: {T['fs_caption']}px;
 }}
 QListWidget#toolGrid::item {{
     border: 1px solid transparent;

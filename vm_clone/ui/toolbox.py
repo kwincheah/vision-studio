@@ -225,6 +225,13 @@ class ToolGridWidget(QListWidget):
     ICON_PX = 30
     CELL_W = 76
     CELL_H = 84
+    #: The label's own size, set explicitly rather than inherited.  The cells were
+    #: picking up the 13 px label size from the stylesheet cascade, which made
+    #: 'Linear Edge Defect' wrap onto three lines and run past the bottom of the 84 px
+    #: cell (`scripts/audit_tool_cell.py` measured 91 px needed).  At 11 px a long
+    #: name wraps to two lines and needs 71 px, which fits with room to spare.  Setting
+    #: it here also stops the printed text `image_canvas` uses from drifting from it.
+    LABEL_PX = 11
 
     tool_activated = pyqtSignal(str)
 
@@ -240,6 +247,13 @@ class ToolGridWidget(QListWidget):
         self.setGridSize(QSize(self.CELL_W, self.CELL_H))
         self.setSpacing(0)
         self.setWordWrap(True)
+        # The cell label size, set on the view.  Without this the view resolves its font
+        # through the stylesheet cascade to the 13 px label size, and a long tool name
+        # ("Linear Edge Defect") wraps onto three lines that run past the bottom of the
+        # cell.  At 11 px the longest name needs 71 px of an 84 px cell.
+        cell_font = QFont(THEME.get("font_family", "Segoe UI"))
+        cell_font.setPixelSize(self.LABEL_PX)
+        self.setFont(cell_font)
         self.setDragEnabled(True)
         self.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)

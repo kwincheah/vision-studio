@@ -20,6 +20,16 @@ from vm_clone.core.base_tool import ToolStatus, DataType
 from vm_clone.core.pipeline import VisionPipeline
 from vm_clone.tools.object_detection import ObjectDetectionTool, _get_yolo_model
 
+try:
+    import ultralytics
+    HAS_ULTRALYTICS = True
+except ImportError:
+    HAS_ULTRALYTICS = False
+
+requires_ultralytics = pytest.mark.skipif(
+    not HAS_ULTRALYTICS, reason="ultralytics not installed in environment"
+)
+
 
 def test_object_detection_registered():
     """Verify ObjectDetectionTool is registered under Recognition category."""
@@ -101,6 +111,7 @@ def test_parse_classes_helper():
     assert res_unknown == [0]
 
 
+@requires_ultralytics
 def test_yolo_model_cache():
     """Verify that model loading caches model instance."""
     m1 = _get_yolo_model("yolo11n.pt")
@@ -108,6 +119,7 @@ def test_yolo_model_cache():
     assert m1 is m2
 
 
+@requires_ultralytics
 def test_inference_on_synthetic_image():
     """Verify YOLOv11 inference runs successfully on an image."""
     tool = create_tool_instance("Object Detection", "det_infer")
@@ -126,6 +138,7 @@ def test_inference_on_synthetic_image():
     assert "Image" in result.outputs
 
 
+@requires_ultralytics
 def test_inference_with_roi():
     """Verify YOLOv11 inference with ROI offset mapping."""
     tool = create_tool_instance("Object Detection", "det_roi")
@@ -138,6 +151,7 @@ def test_inference_with_roi():
     assert result.outputs["Count"] >= 0
 
 
+@requires_ultralytics
 def test_pipeline_and_xml_serialization():
     """Verify Object Detection tool in a VisionPipeline and XML export/import roundtrip."""
     pipeline = VisionPipeline(name="TestDLFlow")

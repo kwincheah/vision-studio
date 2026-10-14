@@ -89,6 +89,12 @@ def test_tools_out_of_bounds_rois():
     ]
 
     for name in roi_tools:
+        if name == "Object Detection":
+            try:
+                import ultralytics  # noqa: F401
+            except ImportError:
+                continue
+
         tool = create_tool_instance(name, f"roi_{name}")
         for roi in oob_rois:
             tool.set_param("roi", roi)
