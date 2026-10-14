@@ -43,6 +43,9 @@ def _win(qapp, size=(1600, 950)) -> VisionMasterMainWindow:
     win.show()
     for _ in range(6):
         qapp.processEvents()
+    win._apply_responsive_chrome()
+    for _ in range(4):
+        qapp.processEvents()
     return win
 
 
