@@ -192,6 +192,14 @@ class VisionMasterMainWindow(QMainWindow):
     #: The flow tab bar grows with its tabs up to this width, then scrolls.  Chosen to fit
     #: one long tab label comfortably while leaving the run/add buttons beside it in place.
     FLOW_TAB_BAR_MAX_W = 420
+    #: The width one tab may occupy when the bar has no room to spare.  The flow name is
+    #: elided to fit whatever is left after the state dot, verdict and cycle time, so those
+    #: are never truncated.
+    FLOW_TAB_MAX_W = 260
+    #: What a tab spends on its close button plus the gap Qt leaves before it.
+    FLOW_TAB_CHROME_W = 28
+    #: What the bar itself spends on margins and its scroll buttons.
+    FLOW_TAB_BAR_OVERHEAD = 12
 
     def __init__(self):
         super().__init__()
@@ -593,7 +601,14 @@ class VisionMasterMainWindow(QMainWindow):
         self.flow_tab_bar.setObjectName("flowTabBar")
         self.flow_tab_bar.setDrawBase(False)
         self.flow_tab_bar.setTabsClosable(True)
-        self.flow_tab_bar.setExpanding(False)
+        # Expanding is what makes a tab fill the bar it has been given.  Without it Qt
+        # sizes each tab from its own `tabSizeHint`, which is computed before the
+        # stylesheet applies the font - measured: it asks for 203 px while the styled
+        # content needs 222 px, so the cycle time was elided to "PCB_AOI_Solution FAIL 1…".
+        # Only four of the eleven tab metrics Qt uses can be reached through a stylesheet,
+        # which is why matching the hint exactly is not possible; expanding the tab to the
+        # bar sidesteps it.
+        self.flow_tab_bar.setExpanding(True)
         self.flow_tab_bar.setElideMode(Qt.TextElideMode.ElideRight)
         self.flow_tab_bar.setUsesScrollButtons(True)
         self.flow_tab_bar.setMaximumWidth(self.FLOW_TAB_BAR_MAX_W)
@@ -1419,31 +1434,40 @@ class VisionMasterMainWindow(QMainWindow):
     def _flow_tab_text(self, flow_name: str, verdict: str, ms: float) -> str:
         """Compact flow tab label: state dot, name, verdict, cycle time.
 
-        The name is elided in the middle to a *measured* budget rather than a character
-        count, so the verdict and cycle time always survive.  A fixed limit cannot work:
-        the tab's width depends on the font the stylesheet applies, and
-        'PCB_AOI_Solution' at a 16-character limit still overflowed the tab and lost the
-        cycle time to Qt's own elision.
+        The name is elided in the middle to a *measured* budget, so the verdict and cycle
+        time always survive.  The budget is the wider of the per-tab floor and whatever
+        room the bar currently has, so a long name is only truncated when there is
+        genuinely nowhere to put it.  A fixed character limit cannot work: the tab's width
+        depends on the font the stylesheet applies, and a 16-character limit still
+        overflowed the tab and lost the cycle time to Qt's own elision.
         """
-        metrics = QFontMetrics(self.flow_tab_bar.font())
+        bar = self.flow_tab_bar
+        metrics = QFontMetrics(bar.font())
         suffix = f"  {verdict}  {ms:.0f}ms"
-        #: what the tab spends on anything other than the name
+        #: what the tab spends on anything other than the name: the state dot, the
+        #: verdict, the cycle time, the stylesheet's padding and the close button
         chrome = (metrics.horizontalAdvance("● ") + metrics.horizontalAdvance(suffix)
-                  + 2 * THEME["sp_snug"] + 8 + 4)
-        budget = max(48, self.FLOW_TAB_MAX_W - chrome)
+                  + 2 * THEME["sp_snug"] + self.FLOW_TAB_CHROME_W)
+        available = max(self.FLOW_TAB_MAX_W,
+                        bar.width() - self.FLOW_TAB_BAR_OVERHEAD)
+        budget = max(48, available - chrome)
         name = metrics.elidedText(flow_name, Qt.TextElideMode.ElideMiddle, budget)
         return f"● {name}{suffix}"
 
     def _size_flow_tab_bar(self) -> None:
-        """Widen the flow tab bar so its tabs are never elided.
+        """Size the flow tab bar so its tabs have room for the whole label.
 
-        `QTabBar.sizeHint` and `tabSizeHint` are computed with the widget's font *before*
-        the stylesheet applies, so both report the width the tabs need at the unstyled
-        size (measured: 145 px for a tab that actually needs 218 px).  With a long flow
-        name the bar therefore overflowed the width it had chosen for itself and Qt
-        elided the cycle time - the "PCB_AOI_Solution PASS …" tab.  Qt's hint cannot be
-        trusted here, so the width is measured from the font the tab renders at, plus
-        Qt's own tab overlap and a gap for the close button.
+        Qt sizes each tab from `tabSizeHint`, which is computed from the widget's font
+        *before* the stylesheet applies - measured for a tab whose styled text advances
+        188 px with a 16 px close button: Qt asks for 203 px while the content needs
+        222 px, so the cycle time was elided to "PCB_AOI_Solution FAIL 1…".  Only four of
+        the eleven tab metrics Qt uses can be set through a stylesheet, so the hint cannot
+        be matched exactly - hence `setExpanding(True)` on the bar, which makes the tab
+        take the width the bar has instead.
+
+        This method supplies that width: it measures the label at the font the tab renders
+        at, adds the stylesheet's padding, the close button and Qt's tab overlap, and asks
+        for the total (clamped to the bar's ceiling, above which it scrolls).
         """
         bar = self.flow_tab_bar
         metrics = QFontMetrics(bar.font())
@@ -1452,18 +1476,15 @@ class VisionMasterMainWindow(QMainWindow):
 
         needed = 0
         for i in range(bar.count()):
-            # the label, the stylesheet's horizontal padding both sides, and the close
-            # button with the gap Qt leaves before it
-            width = metrics.horizontalAdvance(bar.tabText(i)) + 2 * THEME["sp_snug"]
+            slot = metrics.horizontalAdvance(bar.tabText(i)) + 2 * THEME["sp_snug"]
             button = bar.tabButton(i, QTabBar.ButtonPosition.RightSide)
             if button is not None:
-                width += button.sizeHint().width() + 8
-            needed += width + max(0, overlap)
+                # the close button and the gap Qt leaves before it
+                slot += button.sizeHint().width() + 8
+            needed += slot + max(0, overlap)
 
         bar.setMinimumWidth(min(max(needed, 120), self.FLOW_TAB_BAR_MAX_W))
         bar.updateGeometry()
-        if bar.width() < bar.minimumWidth():
-            bar.resize(bar.minimumWidth(), bar.height())
 
     # =====================================================================
     # Resource toolbar slots (manual p.70)

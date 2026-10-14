@@ -224,12 +224,17 @@ class ToolGridWidget(QListWidget):
 
     ICON_PX = 30
     CELL_W = 76
-    CELL_H = 84
+    #: 92 rather than 84.  The longest tool name, "Lens Distortion Calibration", wraps to
+    #: three lines at the 11 px label size and needs 85 px of content height, so at 84 the
+    #: final line touched the cell's bottom edge.  Measured by
+    #: `tests/test_ui_alignment.py`, which sweeps every category rather than the handful a
+    #: spot check would pick.
+    CELL_H = 92
     #: The label's own size, set explicitly rather than inherited.  The cells were
     #: picking up the 13 px label size from the stylesheet cascade, which made
     #: 'Linear Edge Defect' wrap onto three lines and run past the bottom of the 84 px
     #: cell (`scripts/audit_tool_cell.py` measured 91 px needed).  At 11 px a long
-    #: name wraps to two lines and needs 71 px, which fits with room to spare.  Setting
+    #: name wraps to two lines and needs 70 px.  Setting
     #: it here also stops the printed text `image_canvas` uses from drifting from it.
     LABEL_PX = 11
 

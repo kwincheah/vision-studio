@@ -164,7 +164,12 @@ QTabBar#flowTabBar::tab {{
     border: 1px solid {T['bg_control_hover']};
     border-bottom: none;
     min-height: {T['h_icon_md']}px;
-    font-size: {T['fs_body']}px;
+    /* One step below the body size.  The tab carries a state dot, the flow name, the
+       verdict, the cycle time *and* a close button, and at the body size a normal flow
+       name ("PCB_AOI_Solution FAIL 177ms") overran the width Qt allocates and lost the
+       cycle time to elision.  At the caption size the longest realistic label fits with
+       room for the close button.  It is a token, not a one-off size. */
+    font-size: {T['fs_caption']}px;
 }}
 QTabBar#flowTabBar::scroller {{
     width: 18px;
