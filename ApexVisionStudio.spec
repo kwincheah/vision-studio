@@ -37,6 +37,7 @@ hidden_imports = [
 datas = [
     ('vm_clone/samples/*.png', 'vm_clone/samples'),
     ('plugins', 'plugins'),
+    ('vm_clone/assets', 'vm_clone/assets'),            # application icon
     ('qml', 'qml'),                                    # the Qt Quick interface (main.py starts it)
     ('vm_clone/flowgen/reference', 'vm_clone/flowgen/reference'),   # AI Gen reference the assistant reads
     ('vm_clone/flowgen/recipes', 'vm_clone/flowgen/recipes'),
@@ -116,7 +117,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    # icon='vm_clone/assets/app_icon.ico',  # Provide an .ico path here if available
+    icon='vm_clone/assets/app_icon.ico',
 )
 
 coll = COLLECT(

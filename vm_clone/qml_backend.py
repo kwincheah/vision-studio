@@ -341,9 +341,9 @@ class AppBackend(QObject):
                 "status": status,
                 "ms": float(res.elapsed_ms) if res is not None else 0.0,
                 "x": x, "y": y,
-                "inputs": [{"name": n, "type": _PORT_KIND.get(p.data_type, "region")}
+                "inputs": [{"name": n, "type": _PORT_KIND.get(p.data_type, "region"), "dtype": p.data_type.name}
                            for n, p in node.inputs.items()],
-                "outputs": [{"name": n, "type": _PORT_KIND.get(p.data_type, "region")}
+                "outputs": [{"name": n, "type": _PORT_KIND.get(p.data_type, "region"), "dtype": p.data_type.name}
                             for n, p in node.outputs.items()],
             })
         return out
@@ -645,6 +645,57 @@ class AppBackend(QObject):
         self._selected = tool.instance_id
         self._notify(f"Inserted module: {tool_name}")
         self._rerun()
+
+    @pyqtSlot(str, int, str, int, result=str)
+    def canConnect(self, from_id, from_index, to_id, to_index):  # noqa: N802
+        """'' when the wire is allowed, else the reason (type mismatch, loop, same module ...)."""
+        pipe = self._pipeline
+        src, dst = pipe.nodes.get(from_id), pipe.nodes.get(to_id)
+        if src is None or dst is None:
+            return "That module no longer exists."
+        if from_id == to_id:
+            return "Cannot connect a module to itself."
+        try:
+            from_port, to_port = list(src.outputs)[from_index], list(dst.inputs)[to_index]
+        except IndexError:
+            return "That port does not exist."
+        ok, reason = pipe.can_connect(from_id, from_port, to_id, to_port)
+        return "" if ok else reason
+
+    @pyqtSlot(str, int, str, int, str, int, result=bool)
+    def reconnect(self, from_id, from_index, old_to_id, old_to_index, new_to_id, new_to_index):  # noqa: N802
+        """Move the end of a wire to another input (or drop it when ``new_to_id`` is empty) as ONE undo step."""
+        pipe = self._pipeline
+        src, old = pipe.nodes.get(from_id), pipe.nodes.get(old_to_id)
+        if src is None or old is None or not self._editable():
+            return False
+        try:
+            old_port = list(old.inputs)[old_to_index]
+        except IndexError:
+            return False
+        if new_to_id == "":
+            self._push_undo()
+            pipe.disconnect(old_to_id, old_port)
+            self._notify(f"Disconnected {old.name}.{old_port}")
+            self._rerun()
+            return True
+        if new_to_id == old_to_id and new_to_index == old_to_index:
+            return True
+        reason = self.canConnect(from_id, from_index, new_to_id, new_to_index)
+        if reason:
+            self._notify(reason)
+            return False
+        self._push_undo()
+        pipe.disconnect(old_to_id, old_port)
+        dst = pipe.nodes[new_to_id]
+        ok, why = connect_ports(pipe, from_id, list(src.outputs)[from_index], new_to_id, list(dst.inputs)[new_to_index])
+        if not ok:
+            self._undo.pop()
+            self._notify(why or "Connection rejected")
+            return False
+        self._notify(f"Moved the wire to {dst.name}.{list(dst.inputs)[new_to_index]}")
+        self._rerun()
+        return True
 
     @pyqtSlot(str, int, str, int, result=bool)
     def connectPorts(self, from_id, from_index, to_id, to_index):  # noqa: N802

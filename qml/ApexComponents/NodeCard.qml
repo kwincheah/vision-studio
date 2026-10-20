@@ -14,6 +14,9 @@ Rectangle {
     property bool selected: false
     property var inputs: []              // [{name, type}]
     property var outputs: []             // [{name, type}]
+    property var inputState: []          // per input while a wire is dragged: "" | "ok" (can take it) | "dim" | "hot" (snapped target)
+    property var outputState: []         // same for outputs (when a wire is dragged backwards from an input)
+    property var inputLinked: []         // per input: is a wire attached (changes the tooltip)
     readonly property int headerHeight: 26
     readonly property int rowHeight: 14
     readonly property int rowCount: Math.max(inputs.length, outputs.length, 1)
@@ -22,6 +25,9 @@ Rectangle {
     signal moved()
     signal dragStarted()                  // the card began to move (one undo step per drag)
     signal wireStarted(int index)          // drag from output port #index began
+    signal inputWireStarted(int index)     // drag from input port #index began (moves its wire, or starts one backwards)
+    signal inputWireMoved(point p)
+    signal inputWireDropped(point p)
     signal wireMoved(point p)              // pointer, in the parent's coordinates
     signal wireDropped(point p)
     signal inputCleared(int index)         // right-click on a connected input port
@@ -51,12 +57,23 @@ Rectangle {
         model: root.inputs
         delegate: Item {
             x: -5; z: 5; y: root.headerHeight + 4 + index * root.rowHeight
-            PortDot { dataType: modelData.type }
+            PortDot { id: dotIn; dataType: modelData.type; dtype: modelData.dtype || ""
+                hot: inArea.containsMouse || root.inputState[index] === "hot"; dim: root.inputState[index] === "dim" }
             MouseArea {
-                x: -6; y: -6; width: 24; height: 22; z: 3
-                acceptedButtons: Qt.RightButton
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.inputCleared(index)
+                id: inArea
+                x: -10; y: -8; width: 28; height: 25; z: 3
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                hoverEnabled: true
+                preventStealing: true
+                cursorShape: Qt.CrossCursor
+                onPressed: function (m) { if (m.button === Qt.LeftButton) root.inputWireStarted(index) }
+                onPositionChanged: function (m) { if (pressed) root.inputWireMoved(mapToItem(root.parent, m.x, m.y)) }
+                onReleased: function (m) { if (m.button === Qt.LeftButton) root.inputWireDropped(mapToItem(root.parent, m.x, m.y)) }
+                onClicked: function (m) { if (m.button === Qt.RightButton) root.inputCleared(index) }
+                ToolTip.visible: containsMouse && !pressed
+                ToolTip.delay: 400
+                ToolTip.text: modelData.name + "  \u00b7  " + (modelData.dtype || modelData.type).toLowerCase()
+                              + (root.inputLinked[index] ? "\nDrag to move the wire, right-click to disconnect" : "\nDrag out to link backwards from here")
             }
             Text {
                 x: 14; y: -3
@@ -71,11 +88,17 @@ Rectangle {
         model: root.outputs
         delegate: Item {
             x: root.width - 4; z: 5; y: root.headerHeight + 4 + index * root.rowHeight
-            PortDot { dataType: modelData.type }
+            PortDot { dataType: modelData.type; dtype: modelData.dtype || ""
+                hot: outArea.containsMouse || root.outputState[index] === "hot"; dim: root.outputState[index] === "dim" }
             MouseArea {
-                x: -8; y: -7; width: 24; height: 22; z: 3
+                id: outArea
+                x: -10; y: -8; width: 28; height: 25; z: 3
+                hoverEnabled: true
                 cursorShape: Qt.CrossCursor
                 preventStealing: true
+                ToolTip.visible: containsMouse && !pressed
+                ToolTip.delay: 400
+                ToolTip.text: modelData.name + "  \u00b7  " + (modelData.dtype || modelData.type).toLowerCase() + "\nDrag to an input to link"
                 onPressed: root.wireStarted(index)
                 onPositionChanged: function (m) { if (pressed) root.wireMoved(mapToItem(root.parent, m.x, m.y)) }
                 onReleased: function (m) { root.wireDropped(mapToItem(root.parent, m.x, m.y)) }

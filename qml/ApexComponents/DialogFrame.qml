@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Window 2.15
+import QtQuick.Controls 2.15
 import ApexTheme 1.0
 
 /*
@@ -47,7 +48,7 @@ Item {
         return out
     }
     function inside(item) {
-        for (var p = item; p; p = p.parent) if (p === root) return true
+        for (var p = item; p; p = p.parent) if (p === root || (Overlay.overlay && p === Overlay.overlay)) return true     // popups opened from the dialog belong to it
         return false
     }
     Connections {

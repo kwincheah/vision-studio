@@ -5,11 +5,16 @@ import ApexTheme 1.0
 Rectangle {
     id: root
     property string dataType: "value"
+    property string dtype: ""            // exact engine type (IMAGE, VALUE, POINT ...): drives colour and compatibility
+    property bool hot: false             // pointer over the port, or it is the snapped target of a wire
+    property bool dim: false             // a wire is being dragged and this port cannot take it
     width: 9
     height: 9
     radius: 2
-    color: "#ffffff"
+    color: hot ? border.color : "#ffffff"
+    scale: hot ? 1.45 : 1
+    opacity: dim ? 0.35 : 1
+    Behavior on scale { NumberAnimation { duration: 90 } }
     border.width: 2
-    border.color: dataType === "image" ? "#2b7bb9" : dataType === "value" ? "#e4a020"
-                : dataType === "string" ? "#8a5bd0" : "#2f9e5a"
+    border.color: Theme.portColor(dtype, dataType)
 }

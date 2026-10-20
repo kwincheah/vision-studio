@@ -98,7 +98,20 @@ def key_problem(provider_id: str, key: str) -> str:
     return ""
 
 
-def fetch_models(provider_id: str, key: str, base_url: str = "", http_client: Any = None, timeout: float = 15.0) -> List[str]:
+# ids of models that cannot hold a conversation (embeddings, speech, images, moderation ...)
+_NOT_CHAT = ("embed", "whisper", "tts", "dall-e", "moderation", "audio", "realtime", "image", "imagen", "veo", "transcribe",
+             "davinci", "babbage", "search", "computer-use", "aqa", "rerank", "guard", "speech")
+
+
+def is_chat_model(provider_id: str, model_id: str) -> bool:
+    if provider_id in ("ollama", "lmstudio", "custom"):          # local / unknown servers: show everything they list
+        return True
+    low = model_id.lower()
+    return not any(word in low for word in _NOT_CHAT)
+
+
+def fetch_models(provider_id: str, key: str, base_url: str = "", http_client: Any = None, timeout: float = 15.0,
+                 chat_only: bool = True) -> List[str]:
     """Ask the provider which models this key can use.  Raises on failure with a readable message."""
     import httpx
     p = get(provider_id)
@@ -125,4 +138,4 @@ def fetch_models(provider_id: str, key: str, base_url: str = "", http_client: An
     data = resp.json()
     items = data.get("data", data.get("models", []))
     ids = [(i.get("id") or i.get("name") or "").removeprefix("models/") for i in items if isinstance(i, dict)]
-    return sorted({i for i in ids if i})
+    return sorted({i for i in ids if i and (not chat_only or is_chat_model(provider_id, i))})

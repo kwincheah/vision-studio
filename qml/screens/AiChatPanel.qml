@@ -34,7 +34,7 @@ Rectangle {
     Rectangle {
         id: bar
         width: parent.width
-        height: 40
+        height: 46
         color: Theme.panelHeader
         Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.fieldBorder }
         MouseArea {
@@ -55,8 +55,23 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 Text { text: "AI Gen"
                     font.family: Theme.fontFamily; font.pixelSize: Theme.fontLabel; font.weight: Font.DemiBold; color: Theme.textPrimary }
-                Text { objectName: "aiSubtitle"; text: root.svc ? root.svc.subtitle : "Claude · claude-sonnet-5-5"; width: 250; elide: Text.ElideRight
-                    font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption; color: Theme.textSecondary }
+                Item {                  // provider and model: click to switch the model without opening the settings
+                    id: modelChip
+                    objectName: "aiModelChip"
+                    width: Math.min(250, chipRow.width + 8); height: 24
+                    activeFocusOnTab: true
+                    Keys.onPressed: function (e) { var act = e.key === Qt.Key_Space || e.key === Qt.Key_Return; if (act) root.openQuickPicker(); e.accepted = act }
+                    Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: chipMouse.containsMouse || quick.visible ? "#c8ccd0" : "transparent"
+                        border.width: modelChip.activeFocus ? 2 : 0; border.color: Theme.primary }
+                    Row { id: chipRow; x: 4; anchors.verticalCenter: parent.verticalCenter; spacing: 3
+                        Text { objectName: "aiSubtitle"; text: root.svc ? root.svc.subtitle : "Claude \· claude-sonnet-5-5"
+                            width: Math.min(implicitWidth, 215); elide: Text.ElideRight
+                            font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption; color: Theme.textSecondary }
+                        Icon { name: "chevron"; size: 10; anchors.verticalCenter: parent.verticalCenter }
+                    }
+                    MouseArea { id: chipMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openQuickPicker() }
+                    ToolTip.visible: chipMouse.containsMouse && !quick.visible; ToolTip.delay: 500; ToolTip.text: "Switch model"
+                }
             }
         }
         Row {
@@ -112,6 +127,54 @@ Rectangle {
             if (key === "settings") root.settingsOpen = true
             else if (key === "new") { if (root.svc) root.svc.newChat() }
             else if (key === "clearkey") { if (root.svc) root.svc.removeKey(root.svc.provider) }
+        }
+    }
+
+    // ---- quick model picker (header): pick or type a model for the current provider, nothing else
+    function openQuickPicker() {
+        if (!root.svc || !root.svc.ready) return
+        root.svc.fetchModels(root.svc.provider, root.svc.baseUrl, "")
+        quick.open()
+        quickPicker.setText(root.svc.model)
+    }
+    Popup {
+        id: quick
+        objectName: "aiQuickPicker"
+        x: Theme.spBase; y: bar.height + 2
+        width: root.width - 2 * Theme.spBase
+        padding: Theme.spLoose
+        modal: false
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        background: Rectangle { color: Theme.panelAlt; border.width: 1; border.color: Theme.fieldBorder; radius: Theme.radiusPanel }
+        contentItem: Column {
+            spacing: Theme.spSnug
+            Text { text: "Model"
+                font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; font.weight: Font.DemiBold; color: Theme.textPrimary }
+            ModelPicker {
+                id: quickPicker
+                width: quick.availableWidth
+                alwaysOpen: true
+                value: root.svc ? root.svc.model : ""
+                choices: root.svc ? (root.svc.modelsVersion >= 0 ? root.svc.modelsFor(root.svc.provider) : []) : []
+                loading: !!(root.svc && root.svc.fetching)
+                onAccepted: function (modelId) { if (root.svc) root.svc.setModel(modelId); quick.close() }
+                onRefreshRequested: if (root.svc) root.svc.fetchModels(root.svc.provider, root.svc.baseUrl, "")
+            }
+            Text {
+                visible: !!(root.svc && root.svc.modelWarning(root.svc.provider, quickPicker.typed) !== "")
+                width: quick.availableWidth
+                text: root.svc ? root.svc.modelWarning(root.svc.provider, quickPicker.typed) : ""
+                wrapMode: Text.WordWrap
+                font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption; color: Theme.warnText
+            }
+            Text {
+                readonly property string link: "<a href=\"settings\" style=\"color:" + Theme.primaryText + "\">Change provider or API key...</a>"
+                text: link; textFormat: Text.RichText; height: 24; verticalAlignment: Text.AlignVCenter
+                font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption
+                onLinkActivated: { quick.close(); root.settingsOpen = true }
+                MouseArea { anchors.fill: parent; acceptedButtons: Qt.NoButton; cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor }
+            }
         }
     }
 

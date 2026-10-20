@@ -275,3 +275,12 @@ def test_keys_are_stored_per_provider_and_removed_independently(monkeypatch):
     keystore.forget("openai")
     assert keystore.load_saved("openai") == "" and keystore.load_saved("anthropic")
     assert keystore.mask("sk-openai-1234567") == "sk-open...4567"
+
+
+def test_fetched_lists_keep_only_chat_models_for_hosted_providers_and_everything_for_local_ones():
+    data = {"data": [{"id": "gpt-4.1"}, {"id": "text-embedding-3-small"}, {"id": "whisper-1"}, {"id": "dall-e-3"},
+                     {"id": "gpt-4o-mini-tts"}, {"id": "omni-moderation-latest"}, {"id": "o4-mini"}]}
+    client = client_for(lambda r: httpx.Response(200, json=data))
+    assert providers.fetch_models("openai", "sk-abcdefgh", http_client=client) == ["gpt-4.1", "o4-mini"]
+    assert len(providers.fetch_models("ollama", "", http_client=client)) == 7
+    assert len(providers.fetch_models("openai", "sk-abcdefgh", http_client=client, chat_only=False)) == 7

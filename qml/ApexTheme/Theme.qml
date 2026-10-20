@@ -90,4 +90,19 @@ QtObject {
     readonly property int heightTabBar: 34
     readonly property int railWidth: 42
     readonly property int statusBarHeight: 24
+
+    // ---- data-type colours: ports and the wires leaving them share one colour per type ---------
+    function portColor(dtype, kind) {
+        switch (dtype) {
+        case "IMAGE": return "#2b7bb9"
+        case "VALUE": case "BOOLEAN": return "#e4a020"
+        case "STRING": return "#8a5bd0"
+        case "POINT": return "#d6537a"
+        case "LINE": return "#17a2b8"
+        case "CIRCLE": return "#7cb342"
+        case "REGION": return "#2f9e5a"
+        case "ANY": case "DICT": return "#6b7780"
+        }
+        return kind === "image" ? "#2b7bb9" : kind === "value" ? "#e4a020" : kind === "string" ? "#8a5bd0" : "#2f9e5a"
+    }
 }

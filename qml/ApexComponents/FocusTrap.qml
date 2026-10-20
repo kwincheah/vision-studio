@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Window 2.15
+import QtQuick.Controls 2.15
 
 /*
  * Keeps keyboard focus inside `scope` while `active`: Tab past the last control wraps to the first,
@@ -23,7 +24,8 @@ Item {
         return out
     }
     function inside(item) {
-        for (var p = item; p; p = p.parent) if (p === scope) return true
+        // popups and menus opened from the panel live in the window overlay: they belong to the panel too
+        for (var p = item; p; p = p.parent) if (p === scope || (Overlay.overlay && p === Overlay.overlay)) return true
         return false
     }
     function focusFirst() {

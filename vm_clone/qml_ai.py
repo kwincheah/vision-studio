@@ -38,8 +38,12 @@ class AIGenService(QObject):
         self._agent = None
         self._carry = None
         self._thread: Optional[threading.Thread] = None
-        self._fetched: List[str] = []
+        self._fetched: Dict[str, List[str]] = {}          # provider -> model ids the account can use
         self._fetching = False
+        self._models_version = 0
+        self._models_provider = ""
+        self._models_state = ""
+        self._models_message = ""
         self._test_state = ""
         self._test_message = ""
         self.client_factory = None                       # tests inject a fake client for every provider
@@ -108,9 +112,51 @@ class AIGenService(QObject):
     def busy(self):
         return self._busy
 
-    @pyqtProperty("QStringList", notify=changed)
-    def fetchedModels(self):  # noqa: N802
-        return self._fetched
+    @pyqtProperty(int, notify=changed)
+    def modelsVersion(self):  # noqa: N802
+        return self._models_version                   # bumps whenever a provider's model list changes (re-evaluates bindings)
+
+    @pyqtProperty(str, notify=changed)
+    def modelsProvider(self):  # noqa: N802
+        return self._models_provider
+
+    @pyqtProperty(str, notify=changed)
+    def modelsState(self):  # noqa: N802
+        return self._models_state                     # "", "loading", "ok", "error" for the last list request
+
+    @pyqtProperty(str, notify=changed)
+    def modelsMessage(self):  # noqa: N802
+        return self._models_message
+
+    @pyqtSlot(str, result="QVariantList")
+    def modelsFor(self, provider):  # noqa: N802
+        """Suggestions for the model field: the account's real list once loaded (with friendly names where known),
+        otherwise the curated defaults."""
+        curated = {m[0]: m[1] for m in self._providers.get(provider)["models"]}
+        ids = self._fetched.get(provider)
+        if ids:
+            return [{"id": i, "label": curated.get(i, "")} for i in ids]
+        return [{"id": i, "label": label} for i, label in curated.items()]
+
+    @pyqtSlot(str, str, result=str)
+    def modelWarning(self, provider, model):  # noqa: N802
+        ids = self._fetched.get(provider)
+        if ids and model.strip() and model.strip() not in ids and provider not in ("openrouter", "custom"):
+            return "This model is not in the list the account can use. It may fail."
+        return ""
+
+    @pyqtSlot(str)
+    def setModel(self, model_id):  # noqa: N802
+        """Switch the model of the current provider (the header's quick picker)."""
+        model_id = model_id.strip()
+        if not model_id:
+            return
+        s = self._settings
+        s.models[s.provider] = model_id
+        s.save()
+        if self._agent is not None:
+            self._agent.model = model_id
+        self.changed.emit()
 
     @pyqtProperty(bool, notify=changed)
     def fetching(self):
@@ -218,7 +264,10 @@ class AIGenService(QObject):
     @pyqtSlot(str, str, str)
     def fetchModels(self, provider, base_url, key):  # noqa: N802
         key = key.strip() or self._key(provider)
+        if self._providers.get(provider)["needs_key"] and not key:
+            return                                       # nothing to ask yet: the curated suggestions stay
         self._fetching = True
+        self._models_provider, self._models_state, self._models_message = provider, "loading", "Loading models..."
         self.changed.emit()
 
         def work():
@@ -318,11 +367,14 @@ class AIGenService(QObject):
         kind = ev.get("type")
         if kind == "models":
             self._fetching = False
+            self._models_provider = ev["provider"]
             if ev.get("error"):
-                self._test_state, self._test_message = "error", ev["error"]
+                self._models_state, self._models_message = "error", ev["error"]
             else:
-                self._fetched = ev["ids"]
-                self._test_state, self._test_message = "ok", f"{len(ev['ids'])} models found."
+                self._fetched[ev["provider"]] = ev["ids"]
+                self._models_version += 1
+                self._models_state = "ok"
+                self._models_message = f"{len(ev['ids'])} models available." if ev["ids"] else "The account lists no models."
             self.changed.emit()
             return
         if kind == "test":

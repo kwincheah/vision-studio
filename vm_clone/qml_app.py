@@ -25,6 +25,8 @@ def run(argv: Optional[List[str]] = None) -> int:
     app = QGuiApplication(argv)
     app.setApplicationName("Apex Industrial Vision Studio")
     app.setOrganizationName("ApexVision")
+    from vm_clone.app_icon import install as install_icon
+    install_icon(app)
 
     engine = QQmlApplicationEngine()
     provider = FrameProvider()

@@ -18,6 +18,16 @@ file. **Remove key** (the key icon in the chat title bar) deletes the saved copy
 Anthropic account; the chat shows the tokens used. Pick the model in the same panel: Sonnet 5.5 (default),
 Opus 5.5 (most capable) or Haiku 5.5 (fastest and cheapest).
 
+## Choosing the provider and model
+
+The first time AI Gen opens, a settings pop-up asks for the provider, the API key (not needed for local models)
+and the model. The model is a single editable field: type any model id, or open the suggestions and pick one.
+Once the key is known the account's real model list loads by itself (chat models only); the refresh button
+beside the field reloads it. A model that is not in the account's list is flagged but can still be used.
+
+To switch model later, click the **provider · model** text in the chat's title bar, pick or type a model and
+you are done. To change the provider or key, use the three-dot menu > Settings (or the link in that picker).
+
 ## What it does
 
 The assistant works like an engineer with the manual open:

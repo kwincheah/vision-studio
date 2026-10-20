@@ -42,6 +42,8 @@ def run_widgets(argv) -> int:
     app = QApplication(argv)
     app.setApplicationName("Apex Industrial Vision Studio")
     app.setOrganizationName("ApexVision")
+    from vm_clone.app_icon import install as install_icon
+    install_icon(app)
 
     # Load system fonts cleanly
     initialize_app_fonts(app)

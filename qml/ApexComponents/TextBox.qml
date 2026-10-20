@@ -9,6 +9,7 @@ Rectangle {
     property bool readOnly: false
     property int echoMode: TextInput.Normal     // TextInput.Password for secrets
     signal accepted()
+    signal edited()                             // the user typed (not a programmatic change)
     signal editingFinished()                    // Enter pressed or focus left the field
 
     implicitHeight: Theme.heightButton
@@ -31,6 +32,7 @@ Rectangle {
         echoMode: root.echoMode
         onAccepted: root.accepted()
         onEditingFinished: root.editingFinished()
+        onTextEdited: root.edited()
         selectByMouse: true
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBody

@@ -68,7 +68,16 @@ Rectangle {
     property real zoom: 1.0
     property real panX: 0
     property real panY: 0
-    property var wireDrag: ({ active: false, from: "", index: 0, x: 0, y: 0 })
+    // a wire being dragged: anchored at (from, index) - an output for a normal drag, an input when `reverse`;
+    // `relink` is the existing wire being moved; `target` the port it would snap to ({id, index, x, y, ok, reason})
+    property var wireDrag: ({ active: false, from: "", index: 0, x: 0, y: 0, reverse: false, relink: null, target: null })
+    property var portStates: ({})            // node id -> {inputs: [...], outputs: [...]} of "ok" | "dim" | "hot" while a wire is dragged
+    property var wireRings: []               // halos drawn around the ports that can take the dragged wire
+    property var hiddenLink: null            // the wire that is being moved (not drawn while it moves)
+    property var hoverLink: null
+    property real wireCx: 0                  // pointer position in canvas coordinates (auto-pan)
+    property real wireCy: 0
+    readonly property real snapRadius: 26
     readonly property var roi: backend ? backend.selectedRoi : [300, 250, 200, 100]
 
     function zoomAt(cx, cy, factor) {
@@ -104,18 +113,185 @@ Rectangle {
         var cx = ax + t * dx, cy = ay + t * dy
         return Math.sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy))
     }
-    // the wire under scene point (x, y), or null; the wire is the same 3-segment path that is drawn
+    // wires are cubic curves that leave an output to the right and enter an input from the left (as in NodeGraphQt)
+    function wireDx(a, b) { return Math.max(50, Math.abs(b.x - a.x) * 0.5) }
+    function bezierPoint(a, b, t) {
+        var dx = wireDx(a, b), u = 1 - t
+        var c1x = a.x + dx, c2x = b.x - dx
+        return Qt.point(u * u * u * a.x + 3 * u * u * t * c1x + 3 * u * t * t * c2x + t * t * t * b.x,
+                        u * u * u * a.y + 3 * u * u * t * a.y + 3 * u * t * t * b.y + t * t * t * b.y)
+    }
+    function distToWire(x, y, a, b) {
+        var best = 1e9, prev = a
+        for (var i = 1; i <= 28; i++) {
+            var q = bezierPoint(a, b, i / 28)
+            best = Math.min(best, distToSegment(x, y, prev.x, prev.y, q.x, q.y))
+            prev = q
+        }
+        return best
+    }
+    // the wire under scene point (x, y), or null
     function linkAt(x, y) {
         var tol = 7 / zoom, best = null, bestD = tol
         for (var i = 0; i < connections.length; i++) {
             var c = connections[i]
-            var a = portPoint(c.from, c.fromPort, true), b = portPoint(c.to, c.toPort, false)
-            var mx = (a.x + b.x) / 2
-            var d = Math.min(distToSegment(x, y, a.x, a.y, mx, a.y), distToSegment(x, y, mx, a.y, mx, b.y), distToSegment(x, y, mx, b.y, b.x, b.y))
+            if (sameLink(c, hiddenLink)) continue
+            var d = distToWire(x, y, portPoint(c.from, c.fromPort, true), portPoint(c.to, c.toPort, false))
             if (d <= bestD) { bestD = d; best = c }
         }
         return best
     }
+    function portDtype(id, index, output) {
+        var n = nodeById(id)
+        if (!n) return ""
+        var l = output ? n.outputs : n.inputs
+        return index >= 0 && index < l.length ? (l[index].dtype || "") : ""
+    }
+    function wireColor(c) { return Theme.portColor(portDtype(c.from, c.fromPort, true), "value") }
+    // same rule as the engine: ANY fits everything, equal types fit, VALUE and BOOLEAN are interchangeable
+    function typesFit(srcDtype, dstDtype) {
+        if (srcDtype === "" || dstDtype === "" || srcDtype === "ANY" || dstDtype === "ANY" || srcDtype === dstDtype) return true
+        return (srcDtype === "VALUE" || srcDtype === "BOOLEAN") && (dstDtype === "VALUE" || dstDtype === "BOOLEAN")
+    }
+    function linkedInputs(id) {
+        var out = []
+        for (var i = 0; i < connections.length; i++) if (connections[i].to === id) out[connections[i].toPort] = true
+        return out
+    }
+
+    // ---- dragging a wire with the mouse -------------------------------------------------------
+    //  from an output: moves to an input.   from a connected input: picks the wire up and moves its end.
+    //  from a free input: links backwards to an output.  Ports that fit are ringed, the nearest one snaps.
+    function beginWire(id, index, fromOutput, relink) {
+        canvas.forceActiveFocus()
+        var anchor = portPoint(id, index, fromOutput)
+        hiddenLink = relink
+        wireDrag = { active: true, from: id, index: index, x: anchor.x, y: anchor.y, reverse: !fromOutput, relink: relink, target: null }
+        selectedLink = null
+        refreshPortStates()
+    }
+    function refreshPortStates() {
+        var d = wireDrag
+        if (!d.active) { portStates = {}; wireRings = []; return }
+        var dt = portDtype(d.from, d.index, !d.reverse), st = {}, rings = []
+        for (var i = 0; i < nodes.length; i++) {
+            var n = nodes[i]
+            if (n.id === d.from) continue
+            var ins = [], outs = []
+            var list = d.reverse ? n.outputs : n.inputs
+            for (var k = 0; k < list.length; k++) {
+                var fits = d.reverse ? typesFit(list[k].dtype || "", dt) : typesFit(dt, list[k].dtype || "")
+                var hot = d.target && d.target.id === n.id && d.target.index === k
+                var state = hot && d.target.ok ? "hot" : (fits ? "ok" : "dim")
+                var q = portPoint(n.id, k, d.reverse)
+                if (hot) rings.push({ x: q.x, y: q.y, state: d.target.ok ? "hot" : "bad" })
+                else if (fits) rings.push({ x: q.x, y: q.y, state: "cand" })
+                if (d.reverse) outs[k] = state; else ins[k] = state
+            }
+            st[n.id] = { inputs: ins, outputs: outs }
+        }
+        portStates = st
+        wireRings = rings
+    }
+    function targetReason(d, id, index) {
+        if (!backend) return ""
+        return d.reverse ? backend.canConnect(id, index, d.from, d.index) : backend.canConnect(d.from, d.index, id, index)
+    }
+    function updateWireTarget(p) {
+        var d = wireDrag
+        if (!d.active) return
+        var best = null, bestDist = snapRadius / Math.max(0.6, zoom)
+        for (var i = 0; i < nodes.length; i++) {
+            if (nodes[i].id === d.from) continue
+            var list = d.reverse ? nodes[i].outputs : nodes[i].inputs
+            for (var k = 0; k < list.length; k++) {
+                var q = portPoint(nodes[i].id, k, d.reverse)
+                var dist = Math.sqrt((q.x - p.x) * (q.x - p.x) + (q.y - p.y) * (q.y - p.y))
+                if (dist < bestDist) { bestDist = dist; best = { id: nodes[i].id, index: k, x: q.x, y: q.y } }
+            }
+        }
+        if (best === null) {                       // dropped on the body of a module: use its first port that fits (free ones first)
+            var dt = portDtype(d.from, d.index, !d.reverse)
+            for (var j = 0; j < nodes.length && best === null; j++) {
+                var c = cardOf(nodes[j].id)
+                if (nodes[j].id === d.from || !c || p.x < c.x || p.x > c.x + c.width || p.y < c.y || p.y > c.y + c.height) continue
+                var ports = d.reverse ? nodes[j].outputs : nodes[j].inputs
+                var taken = d.reverse ? [] : linkedInputs(nodes[j].id), pick = -1
+                for (var m = 0; m < ports.length; m++) {
+                    var fits = d.reverse ? typesFit(ports[m].dtype || "", dt) : typesFit(dt, ports[m].dtype || "")
+                    if (!fits) continue
+                    if (!taken[m]) { pick = m; break }
+                    if (pick < 0) pick = m
+                }
+                if (pick >= 0) {
+                    var qq = portPoint(nodes[j].id, pick, d.reverse)
+                    best = { id: nodes[j].id, index: pick, x: qq.x, y: qq.y }
+                }
+            }
+        }
+        if (best) {
+            var why = targetReason(d, best.id, best.index)
+            best.ok = why === ""
+            best.reason = why
+        }
+        var old = d.target
+        withWire({ target: best })
+        if ((old ? old.id + ":" + old.index + ":" + old.ok : "") !== (best ? best.id + ":" + best.index + ":" + best.ok : "")) refreshPortStates()
+    }
+    function withWire(changes) {                 // a NEW object each time: assigning the same object is not seen as a change
+        var d = {}
+        for (var k in wireDrag) d[k] = wireDrag[k]
+        for (var j in changes) d[j] = changes[j]
+        wireDrag = d
+    }
+    function moveWire(p) {
+        var d = wireDrag
+        if (!d.active) return
+        withWire({ x: p.x, y: p.y })
+        var c = scene.mapToItem(canvas, p.x, p.y)
+        wireCx = c.x; wireCy = c.y
+        updateWireTarget(p)
+    }
+    function resetWire() {
+        wireDrag = { active: false, from: "", index: 0, x: 0, y: 0, reverse: false, relink: null, target: null }
+        hiddenLink = null
+        refreshPortStates()
+    }
+    function cancelWire() { resetWire() }
+    function endWire(pt) {
+        var d = wireDrag
+        if (!d.active) return
+        var t = d.target
+        resetWire()
+        if (t && t.ok) {
+            if (!backend) { say("Connected (design-time preview)"); return }
+            if (d.reverse) backend.connectPorts(t.id, t.index, d.from, d.index)
+            else if (d.relink) backend.reconnect(d.from, d.index, d.relink.to, d.relink.toPort, t.id, t.index)
+            else backend.connectPorts(d.from, d.index, t.id, t.index)
+        } else if (t) {
+            say(t.reason || "That wire is not allowed")
+        } else if (d.relink) {
+            if (backend) backend.reconnect(d.from, d.index, d.relink.to, d.relink.toPort, "", 0)      // dropped on nothing: the wire is removed
+            say("Wire removed (Ctrl+Z restores it)")
+        } else {
+            say(d.reverse ? "Drop the wire on an output port (Esc cancels)" : "Drop the wire on an input port (Esc cancels)")
+        }
+    }
+    function finishWire(pt) { endWire(pt) }
+    Timer {                                  // dragging a wire to the edge of the canvas scrolls it
+        interval: 30
+        running: root.wireDrag.active
+        repeat: true
+        onTriggered: {
+            var m = 36, dx = 0, dy = 0
+            if (root.wireCx < m) dx = 12; else if (root.wireCx > canvas.width - m) dx = -12
+            if (root.wireCy < m) dy = 12; else if (root.wireCy > canvas.height - m) dy = -12
+            if (dx === 0 && dy === 0) return
+            root.panX += dx; root.panY += dy
+            root.moveWire(Qt.point((root.wireCx - root.panX) / root.zoom, (root.wireCy - root.panY) / root.zoom))
+        }
+    }
+
     onConnectionsChanged: {
         if (selectedLink == null) return
         for (var i = 0; i < connections.length; i++) if (sameLink(connections[i], selectedLink)) return
@@ -218,7 +394,8 @@ Rectangle {
         var ctrl = (e.modifiers & Qt.ControlModifier) !== 0, shift = (e.modifiers & Qt.ShiftModifier) !== 0, alt = (e.modifiers & Qt.AltModifier) !== 0
         var dir = e.key === Qt.Key_Left ? [-1, 0] : e.key === Qt.Key_Right ? [1, 0] : e.key === Qt.Key_Up ? [0, -1] : e.key === Qt.Key_Down ? [0, 1] : null
         if (e.key === Qt.Key_Escape) {
-            if (kbWire.active) { endKbWire(); say("Link cancelled") }
+            if (wireDrag.active && !kbWire.active) { cancelWire(); say("Link cancelled") }
+            else if (kbWire.active) { endKbWire(); say("Link cancelled") }
             else if (selectedLink != null) selectedLink = null
             else return false
             return true
@@ -271,22 +448,6 @@ Rectangle {
         return false
     }
 
-    function finishWire(pt) {
-        var d = wireDrag
-        wireDrag = { active: false, from: "", index: 0, x: 0, y: 0 }
-        var best = null, bestDist = 20
-        for (var i = 0; i < nodes.length; i++) {
-            if (nodes[i].id === d.from) continue
-            for (var k = 0; k < nodes[i].inputs.length; k++) {
-                var q = portPoint(nodes[i].id, k, false)
-                var dist = Math.sqrt((q.x - pt.x) * (q.x - pt.x) + (q.y - pt.y) * (q.y - pt.y))
-                if (dist < bestDist) { bestDist = dist; best = { id: nodes[i].id, index: k } }
-            }
-        }
-        if (best === null) { say("Drop the wire on an input port"); return }
-        if (backend) backend.connectPorts(d.from, d.index, best.id, best.index)
-        else say("Connected (design-time preview)")
-    }
     function renameSelected() {
         var n = nodeById(selectedNode)
         if (n) dialogs.showRename(n.id, n.title, n.tool || "")
@@ -364,7 +525,12 @@ Rectangle {
         case "shortcuts": dialogs.showInfo("Keyboard Shortcuts",
             "Ctrl+N New   Ctrl+O Open   Ctrl+S Save   Ctrl+Shift+S Save As\nCtrl+Z Undo   Ctrl+Y Redo   Ctrl+1/2/3 Switch workspace tab\nDelete Remove selected   F1 User Manual\n\nFlow canvas (click it, or Tab to it):\nArrows select the neighbouring module   Shift+Arrows move it (Alt = 1 px)\nEnter configure   F2 rename   K / Shift+K select next / previous link   Delete remove\nL link from the selected module: [ ] output, arrows target, 1-9 input, Enter connect, Esc cancel\n+ / - zoom   Ctrl+Arrows pan   Home fit
 
-Ctrl+G  AI Gen (describe a flow, get it built)"); break
+Ctrl+G  AI Gen (describe a flow, get it built)
+
+Linking with the mouse:
+Drag from an output to an input (ports that fit light up and snap); drop on a module body to use its first free matching input.
+Drag a connected input to move its wire; drop on empty canvas to remove it (Ctrl+Z restores).
+Drag from a free input to link backwards to an output.   Esc cancels.   Click a wire to select it; its x button or Del removes it."); break
         case "language": dialogs.showInfo("Language", "Chinese localisation resources are not bundled with this build. The interface stays in English."); break
         case "version": dialogs.showInfo("Version Information",
             "Apex Industrial Vision Studio v4.3\nEngine: Python / PyQt6 / OpenCV / NumPy\nUser interface: Qt Quick (QML)"); break
@@ -506,7 +672,7 @@ Ctrl+G  AI Gen (describe a flow, get it built)"); break
             spacing: 6
             Rectangle {      // brand mark
                 width: 30; height: 30; color: "transparent"
-                Text { anchors.centerIn: parent; text: "▲"; color: Theme.accent; font.pixelSize: 18 }
+                Image { anchors.centerIn: parent; width: 26; height: 26; source: "../images/app_icon.svg"; sourceSize: Qt.size(52, 52); smooth: true }
             }
             ChromeToolButton { icon: "save"; tooltip: "Save solution (Ctrl+S)"; onClicked: root.invoke("save") }
             ChromeToolButton { icon: "open"; tooltip: "Open solution (Ctrl+O)"; onClicked: root.invoke("openSolution") }
@@ -680,13 +846,20 @@ Ctrl+G  AI Gen (describe a flow, get it built)"); break
                     property real lastX: 0
                     property real lastY: 0
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
+                    hoverEnabled: true
+                    cursorShape: root.hoverLink != null ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onExited: root.hoverLink = null
                     onPressed: function (m) {
                         lastX = m.x; lastY = m.y; canvas.forceActiveFocus(); root.railCategory = -1
                         var hit = root.linkAt((m.x - root.panX) / root.zoom, (m.y - root.panY) / root.zoom)
                         root.selectedLink = hit
                         if (hit != null && m.button === Qt.RightButton) { linkMenu.x = m.x; linkMenu.y = m.y; linkMenu.open() }
                     }
-                    onPositionChanged: function (m) { if (pressedButtons & Qt.RightButton) return; root.panX += m.x - lastX; root.panY += m.y - lastY; lastX = m.x; lastY = m.y }
+                    onPositionChanged: function (m) {
+                        if (!pressed) { root.hoverLink = root.wireDrag.active ? null : root.linkAt((m.x - root.panX) / root.zoom, (m.y - root.panY) / root.zoom); return }
+                        if (pressedButtons & Qt.RightButton) return
+                        root.panX += m.x - lastX; root.panY += m.y - lastY; lastX = m.x; lastY = m.y
+                    }
                     onWheel: function (w) { root.zoomAt(w.x, w.y, w.angleDelta.y > 0 ? 1.15 : 1 / 1.15) }
                 }
 
@@ -705,34 +878,47 @@ Ctrl+G  AI Gen (describe a flow, get it built)"); break
                         delegate: Shape {
                             id: wire
                             anchors.fill: parent
+                            visible: !root.sameLink(modelData, root.hiddenLink)
+                            readonly property bool sel: root.sameLink(modelData, root.selectedLink)
+                            readonly property bool hov: root.sameLink(modelData, root.hoverLink)
                             property point a: root.portPoint(modelData.from, modelData.fromPort, true)
                             property point b: root.portPoint(modelData.to, modelData.toPort, false)
+                            property real dx: root.wireDx(a, b)
                             ShapePath {
-                                strokeColor: root.sameLink(modelData, root.selectedLink) ? Theme.accent : Theme.wire
-                                strokeWidth: root.sameLink(modelData, root.selectedLink) ? 4 : 2.5
+                                strokeColor: wire.sel ? Theme.accent : root.wireColor(modelData)
+                                strokeWidth: wire.sel ? 4.5 : (wire.hov ? 3.5 : 2.5)
                                 fillColor: "transparent"
                                 capStyle: ShapePath.RoundCap
                                 startX: wire.a.x; startY: wire.a.y
-                                PathLine { x: (wire.a.x + wire.b.x) / 2; y: wire.a.y }
-                                PathLine { x: (wire.a.x + wire.b.x) / 2; y: wire.b.y }
-                                PathLine { x: wire.b.x; y: wire.b.y }
+                                PathCubic { control1X: wire.a.x + wire.dx; control1Y: wire.a.y; control2X: wire.b.x - wire.dx; control2Y: wire.b.y; x: wire.b.x; y: wire.b.y }
                             }
                         }
                     }
 
-                    // the wire being dragged out of an output port
+                    // the wire being dragged: leaves the port it was picked up from, snaps to a port that fits
                     Shape {
                         id: tempWire
+                        objectName: "tempWire"
                         anchors.fill: parent
                         visible: root.wireDrag.active
-                        property point a: root.wireDrag.active ? root.portPoint(root.wireDrag.from, root.wireDrag.index, true) : Qt.point(0, 0)
+                        readonly property bool rev: !!root.wireDrag.reverse
+                        readonly property var tgt: root.wireDrag.target
+                        readonly property point anchorPt: root.wireDrag.active ? root.portPoint(root.wireDrag.from, root.wireDrag.index, !rev) : Qt.point(0, 0)
+                        readonly property point freePt: tgt ? Qt.point(tgt.x, tgt.y) : Qt.point(root.wireDrag.x, root.wireDrag.y)
+                        property point a: rev ? freePt : anchorPt          // always drawn output -> input
+                        property point b: rev ? anchorPt : freePt
+                        property real dx: root.wireDx(a, b)
                         ShapePath {
-                            strokeColor: Theme.accent
-                            strokeWidth: 2.5
-                            strokeStyle: ShapePath.DashLine
+                            strokeColor: tempWire.tgt && !tempWire.tgt.ok ? Theme.errorBorder
+                                         : Theme.portColor(root.wireDrag.active ? root.portDtype(root.wireDrag.from, root.wireDrag.index, !tempWire.rev) : "", "value")
+                            strokeWidth: 3
+                            strokeStyle: tempWire.tgt ? ShapePath.SolidLine : ShapePath.DashLine
+                            dashPattern: [4, 3]
                             fillColor: "transparent"
+                            capStyle: ShapePath.RoundCap
                             startX: tempWire.a.x; startY: tempWire.a.y
-                            PathLine { x: root.wireDrag.x; y: root.wireDrag.y }
+                            PathCubic { control1X: tempWire.a.x + tempWire.dx; control1Y: tempWire.a.y; control2X: tempWire.b.x - tempWire.dx; control2Y: tempWire.b.y
+                                        x: tempWire.b.x; y: tempWire.b.y }
                         }
                     }
 
@@ -764,13 +950,21 @@ Ctrl+G  AI Gen (describe a flow, get it built)"); break
                             Component.onCompleted: publish()
                             onDragStarted: if (root.backend) root.backend.beginMove()
                             onMoved: if (root.backend) root.backend.moveNode(modelData.id, x, y)
-                            onWireStarted: function (index) {
-                                root.selectedNode = modelData.id
-                                var q = root.portPoint(modelData.id, index, true)
-                                root.wireDrag = { active: true, from: modelData.id, index: index, x: q.x, y: q.y }
+                            inputState: (root.portStates[modelData.id] || { inputs: [] }).inputs
+                            outputState: (root.portStates[modelData.id] || { outputs: [] }).outputs
+                            inputLinked: root.linkedInputs(modelData.id)
+                            onWireStarted: function (index) { root.selectedNode = modelData.id; root.beginWire(modelData.id, index, true, null) }
+                            onWireMoved: function (p) { root.moveWire(p) }
+                            onWireDropped: function (p) { root.endWire(p) }
+                            onInputWireStarted: function (index) {
+                                var held = null
+                                for (var i = 0; i < root.connections.length; i++)
+                                    if (root.connections[i].to === modelData.id && root.connections[i].toPort === index) held = root.connections[i]
+                                if (held) root.beginWire(held.from, held.fromPort, true, held)       // pick the wire up by its end
+                                else root.beginWire(modelData.id, index, false, null)                // free input: link backwards
                             }
-                            onWireMoved: function (p) { var d = root.wireDrag; d.x = p.x; d.y = p.y; root.wireDrag = d }
-                            onWireDropped: function (p) { root.finishWire(p) }
+                            onInputWireMoved: function (p) { root.moveWire(p) }
+                            onInputWireDropped: function (p) { root.endWire(p) }
                             onInputCleared: function (index) {
                                 if (root.backend) root.backend.disconnectInput(modelData.id, index); else root.say("Input disconnected")
                             }
@@ -782,6 +976,38 @@ Ctrl+G  AI Gen (describe a flow, get it built)"); break
                             }
                         }
                     }
+                }
+
+                // halos on the ports that can take the dragged wire; the snapped one is solid
+                Repeater {
+                    model: root.wireRings
+                    delegate: Rectangle {
+                        z: 60
+                        x: root.panX + modelData.x * root.zoom - 10; y: root.panY + modelData.y * root.zoom - 10      // canvas coordinates
+                        width: 20; height: 20; radius: 10
+                        color: modelData.state === "hot" ? "#3322c55e" : (modelData.state === "bad" ? "#33dc2626" : "transparent")
+                        border.width: modelData.state === "cand" ? 1 : 2
+                        border.color: modelData.state === "hot" ? "#22c55e" : (modelData.state === "bad" ? Theme.errorBorder : Theme.portColor(root.portDtype(root.wireDrag.from, root.wireDrag.index, !root.wireDrag.reverse), "value"))
+                        opacity: modelData.state === "cand" ? 0.6 : 1
+                    }
+                }
+
+                // delete handle on the selected link
+                Rectangle {
+                    id: linkHandle
+                    objectName: "linkDelete"
+                    z: 60
+                    readonly property var l: root.selectedLink
+                    readonly property point pa: l ? root.portPoint(l.from, l.fromPort, true) : Qt.point(0, 0)
+                    readonly property point pb: l ? root.portPoint(l.to, l.toPort, false) : Qt.point(0, 0)
+                    visible: l != null && !root.wireDrag.active
+                    x: root.panX + (pa.x + pb.x) / 2 * root.zoom - 11; y: root.panY + (pa.y + pb.y) / 2 * root.zoom - 11
+                    width: 22; height: 22; radius: 11
+                    color: lhMouse.containsMouse ? Theme.errorBorder : Theme.errorBg
+                    border.width: 1; border.color: Theme.errorBorder
+                    Icon { anchors.centerIn: parent; name: "close"; size: 12; tone: lhMouse.containsMouse ? "white" : "dark" }
+                    MouseArea { id: lhMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.deleteSelected() }
+                    ToolTip.visible: lhMouse.containsMouse; ToolTip.delay: 400; ToolTip.text: "Delete this link (Del)"
                 }
 
                 DropMenu {

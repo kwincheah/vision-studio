@@ -17,6 +17,8 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
+SetupIconFile=vm_clone\assets\app_icon.ico
+UninstallDisplayIcon={app}\{#MyAppExeName}
 
 ; Installation Target Directory
 DefaultDirName={autopf}\{#MyAppName}

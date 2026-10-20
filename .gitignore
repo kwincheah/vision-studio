@@ -80,3 +80,14 @@ docs/FUNCTIONAL_AUDIT_REPORT.md
 docs/UI_POLISH_AUDIT.md
 docs/USABILITY_REPORT.md
 docs/audit/
+
+# Misc local junk
+out.txt
+o.txt
+*.tmp
+*.bak
+*.orig
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

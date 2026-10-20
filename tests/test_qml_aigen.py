@@ -53,7 +53,8 @@ def ai(ui, tmp_path):
     svc._session_keys, svc._sources, svc._error = {}, {}, ""
     svc._agent = svc._carry = None
     svc._messages, svc._flows, svc._busy = [], {}, False
-    svc._fetched, svc._test_state, svc._test_message = [], "", ""
+    svc._fetched, svc._test_state, svc._test_message = {}, "", ""
+    svc._models_provider = svc._models_state = svc._models_message = ""
     svc.client_factory = svc.http_client = None
     svc.changed.emit()
     pn = panel(ui)
@@ -188,7 +189,7 @@ def test_ctrl_g_and_the_tools_menu_open_the_chat(ui, ai):
 def test_the_chat_floats_it_can_be_dragged_and_resized(ui, ai):
     p = open_panel(ui)
     x0, y0, h0 = p.x(), p.y(), p.height()
-    top = ui.point_in(p, 150, 18)
+    top = ui.point_in(p, 300, 20)                            # empty part of the title bar (the model chip is to its left)
     ui.drag(top, QPoint(top.x() - 120, top.y() + 60))
     p = panel(ui)
     assert p.x() < x0 - 60 and p.y() > y0 + 30
@@ -298,17 +299,207 @@ def test_a_missing_server_address_is_reported(ui, ai):
     assert ai.settingsError == "Enter the server address." and not ai.ready
 
 
-def test_fetch_list_fills_the_model_dropdown_from_the_provider(ui, ai):
-    ai.http_client = httpx.Client(transport=httpx.MockTransport(
-        lambda r: httpx.Response(200, json={"data": [{"id": "gpt-5-preview"}, {"id": "gpt-4.1"}, {"id": "o9-mini"}]})))
+OPENAI_MODELS = {"data": [{"id": "gpt-5-preview"}, {"id": "gpt-4.1"}, {"id": "o9-mini"}, {"id": "text-embedding-3-large"},
+                          {"id": "whisper-1"}, {"id": "dall-e-3"}, {"id": "tts-1"}]}
+
+
+def models_http(calls=None):
+    def handler(req):
+        if calls is not None:
+            calls.append(str(req.url))
+        return httpx.Response(200, json=OPENAI_MODELS)
+    return httpx.Client(transport=httpx.MockTransport(handler))
+
+
+def model_field(ui):
+    return by_name(ui, "TextBox", "aiModelField")
+
+
+def options(ui):
+    return [t for t in ui.walk() if t.property("objectName") == "aiModelOption" and t.isVisible()]
+
+
+def option_texts(ui):
+    out = []
+    for o in options(ui):
+        out += [x.property("text") for x in ui.walk(o) if "QQuickText" in x.metaObject().className() and x.property("text")]
+    return out
+
+
+def test_the_model_is_one_editable_field_not_a_dropdown_plus_a_text_box(ui, ai):
+    open_panel(ui)
+    fields = [t for t in ui.walk() if t.property("objectName") == "aiModelField" and t.isVisible()]
+    assert len(fields) == 1, "exactly one control holds the model"
+    assert not [t for t in ui.of_type("SelectBox") if t.isVisible() and t.property("objectName") in ("aiModelList",)]
+    assert field_text(ui, "aiModelField") == "claude-sonnet-5-5"
+
+
+def test_typing_a_model_that_is_not_listed_keeps_exactly_what_was_typed(ui, ai):
+    open_panel(ui)
+    ui.click(ui.center(model_field(ui)))
+    ui.key(Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
+    type_text(ui, "my-own-model")
+    assert field_text(ui, "aiModelField") == "my-own-model", "the field must not jump back to a list entry"
+    click_field(ui, "aiKeyField")
+    type_text(ui, KEY)
+    press(ui, "aiSave")
+    assert ai.ready and ai.model == "my-own-model"
+
+
+def test_suggestions_open_with_the_chevron_and_filter_while_typing(ui, ai):
+    open_panel(ui)
+    ui.click(ui.center(by_name(ui, "Rectangle", "aiModelToggle")))
+    assert {"claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5"} <= {t for t in option_texts(ui)}
+    ui.click(ui.center(model_field(ui)))
+    ui.key(Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
+    type_text(ui, "opus")
+    texts = option_texts(ui)
+    assert "claude-opus-5-5" in texts and "claude-haiku-5-5" not in texts
+
+
+def test_picking_a_suggestion_fills_the_field(ui, ai):
+    open_panel(ui)
+    ui.click(ui.center(by_name(ui, "Rectangle", "aiModelToggle")))
+    haiku = next(o for o in options(ui) if "claude-haiku-5-5" in " ".join(
+        x.property("text") for x in ui.walk(o) if "QQuickText" in x.metaObject().className()))
+    ui.click(ui.center(haiku))
+    assert field_text(ui, "aiModelField") == "claude-haiku-5-5"
+    assert not options(ui), "the list closes after a choice"
+
+
+def test_the_account_model_list_loads_by_itself_once_the_key_is_known_and_hides_non_chat_models(ui, ai):
+    calls = []
+    ai.http_client = models_http(calls)
     open_panel(ui)
     choose(ui, "aiProvider", "OpenAI")
+    assert not calls, "no request is made before there is a key"
     click_field(ui, "aiKeyField")
     type_text(ui, OPENAI_KEY)
-    press(ui, "aiFetchModels")
-    assert wait_for(ui, lambda: ai.fetchedModels == ["gpt-4.1", "gpt-5-preview", "o9-mini"] or "gpt-5-preview" in ai.fetchedModels)
-    choose(ui, "aiModelList", "o9-mini")
-    assert field_text(ui, "aiModelField") == "o9-mini"
+    ui.key(Qt.Key.Key_Tab)                                              # leaving the key field loads the list
+    assert wait_for(ui, lambda: ai.modelsFor("openai") and ai.modelsFor("openai")[0]["id"] == "gpt-4.1")
+    ids = [m["id"] for m in ai.modelsFor("openai")]
+    assert ids == ["gpt-4.1", "gpt-5-preview", "o9-mini"], "embeddings, speech and image models are not offered"
+    assert calls and calls[0].endswith("/v1/models")
+    assert ui.texts("3 models available.")
+
+
+def test_the_refresh_button_reloads_and_a_list_is_kept_per_provider(ui, ai):
+    ai.http_client = models_http()
+    ai.saveSettings("anthropic", "", "claude-sonnet-5-5", KEY, False)
+    ai.fetchModels("openai", "", OPENAI_KEY)
+    assert wait_for(ui, lambda: len(ai.modelsFor("openai")) == 3)
+    ai.http_client = httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(200, json={"data": [{"id": "claude-x"}]})))
+    ai.fetchModels("anthropic", "", KEY)
+    assert wait_for(ui, lambda: [m["id"] for m in ai.modelsFor("anthropic")] == ["claude-x"])
+    assert [m["id"] for m in ai.modelsFor("openai")] == ["gpt-4.1", "gpt-5-preview", "o9-mini"], "the other provider's list is untouched"
+    assert [m["id"] for m in ai.modelsFor("mistral")][0] == "mistral-large-latest", "no request yet: curated defaults"
+    labelled = {m["id"]: m["label"] for m in ai.modelsFor("openai")}
+    assert labelled["gpt-4.1"] == "GPT-4.1"                              # friendly names survive where known
+
+
+def test_a_failed_list_request_is_explained_next_to_the_model_field_and_does_not_block_saving(ui, ai):
+    ai.http_client = httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(401, json={})))
+    open_panel(ui)
+    click_field(ui, "aiKeyField")
+    type_text(ui, KEY)
+    ui.key(Qt.Key.Key_Tab)
+    assert wait_for(ui, lambda: ai.modelsState == "error")
+    assert ui.texts("The server rejected the API key.")
+    assert [m["id"] for m in ai.modelsFor("anthropic")][0] == "claude-sonnet-5-5"          # suggestions still there
+    click_field(ui, "aiKeyField")
+    press(ui, "aiSave")
+    assert ai.ready
+
+
+def test_a_model_outside_the_accounts_list_gets_a_warning_but_can_be_saved(ui, ai):
+    ai.http_client = models_http()
+    ai.fetchModels("openai", "", OPENAI_KEY)
+    assert wait_for(ui, lambda: len(ai.modelsFor("openai")) == 3)
+    assert ai.modelWarning("openai", "gpt-4.1") == "" and "not in the list" in ai.modelWarning("openai", "gpt-nope")
+    assert ai.modelWarning("openrouter", "anything/at-all") == "" and ai.modelWarning("custom", "x") == ""
+    assert ai.saveSettings("openai", "https://api.openai.com/v1", "gpt-nope", OPENAI_KEY, False) and ai.model == "gpt-nope"
+
+
+# ---------------------------------------------------------------- the header model picker
+def chip(ui):
+    return by_name(ui, "Item", "aiModelChip")
+
+
+def open_quick(ui, ai):
+    ui.click(ui.center(chip(ui)))
+    ui.spin(40)
+    assert options(ui), "the quick picker did not open"
+
+
+def test_the_header_shows_provider_and_model_and_is_clickable(ui, ai):
+    configure(ui, ai)
+    assert ui.texts("Anthropic \u00b7 claude-sonnet-5-5") and chip(ui).isVisible()
+    open_quick(ui, ai)
+    assert {"claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5"} <= set(option_texts(ui))
+    assert ui.texts("Change provider or API key...") or any("Change provider" in (t.property("text") or "") for t in ui.of_type("QQuickText"))
+    ui.key(Qt.Key.Key_Escape)
+
+
+def test_picking_a_model_in_the_header_switches_it_at_once_and_remembers_it(ui, ai):
+    configure(ui, ai)
+    ai.client_factory = lambda k: FakeClient([[text("a")], [text("b")]])
+    open_quick(ui, ai)
+    opus = next(o for o in options(ui) if "claude-opus-5-5" in " ".join(
+        x.property("text") for x in ui.walk(o) if "QQuickText" in x.metaObject().className()))
+    ui.click(ui.center(opus))
+    ui.spin(30)
+    assert ai.model == "claude-opus-5-5" and ai.subtitle == "Anthropic \u00b7 claude-opus-5-5"
+    assert ui.texts("Anthropic \u00b7 claude-opus-5-5")
+    assert AISettings(ai._settings.path).model_for("anthropic") == "claude-opus-5-5"
+    assert not panel(ui).property("settingsOpen"), "no settings dialog is needed to switch model"
+    ai.send("hello")
+    wait_idle(ui, ai)
+    assert ai._agent.model == "claude-opus-5-5"
+
+
+def test_a_typed_model_in_the_header_picker_is_applied_with_enter_and_keeps_the_conversation(ui, ai):
+    configure(ui, ai)
+    ai.client_factory = lambda k: FakeClient([[text("first")], [text("second")]])
+    ai.send("hi")
+    wait_idle(ui, ai)
+    open_quick(ui, ai)
+    box = model_field(ui)
+    ui.click(ui.center(box))
+    ui.key(Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
+    type_text(ui, "claude-future-9")
+    ui.key(Qt.Key.Key_Return)
+    ui.spin(30)
+    assert ai.model == "claude-future-9" and len(ai.messages) == 2
+    ai.send("again")
+    wait_idle(ui, ai)
+    assert ai._agent.model == "claude-future-9" and ai.messages[-1]["text"] == "second"
+
+
+def test_the_header_picker_links_to_the_settings_for_provider_changes(ui, ai):
+    configure(ui, ai)
+    open_quick(ui, ai)
+    link = next(t for t in ui.of_type("QQuickText") if t.isVisible() and "Change provider" in (t.property("text") or ""))
+    ui.click(ui.center(link))
+    ui.spin(30)
+    assert panel(ui).property("settingsOpen") is True and ui.texts("AI Gen settings")
+    press(ui, "aiCancel")
+
+
+def test_the_header_picker_does_nothing_before_setup(ui, ai):
+    open_panel(ui)                                                       # first-run settings are showing
+    assert not ai.ready
+    panel(ui).metaObject()
+    ui.click(ui.center(chip(ui)))
+    ui.spin(30)
+    assert not options(ui), "no model list before a provider is set up"
+
+
+def test_a_local_provider_picker_works_without_any_key_and_lists_what_the_server_has(ui, ai):
+    ai.http_client = httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(200, json={"data": [{"id": "llama3.2"}, {"id": "nomic-embed-text"}]})))
+    configure(ui, ai, provider="ollama", key="")
+    assert wait_for(ui, lambda: len(ai.modelsFor("ollama")) == 2), "local servers: everything they list is shown"
+    open_quick(ui, ai)
+    assert {"llama3.2", "nomic-embed-text"} <= set(option_texts(ui))
 
 
 def test_test_connection_reports_success_and_failure_in_words(ui, ai):

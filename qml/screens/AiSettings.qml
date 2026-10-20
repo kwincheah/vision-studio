@@ -17,30 +17,26 @@ Rectangle {
     readonly property var providers: svc ? svc.providerList : SampleData.aiProviders
     property int pIndex: 0
     readonly property var cur: providers[Math.min(pIndex, providers.length - 1)]
-    property string fetchedFor: ""
-    readonly property var modelChoices: {
-        var ids = [], labels = []
-        for (var i = 0; i < cur.models.length; i++) { ids.push(cur.models[i].id); labels.push(cur.models[i].label) }
-        if (svc && fetchedFor === cur.id)
-            for (var j = 0; j < svc.fetchedModels.length; j++)
-                if (ids.indexOf(svc.fetchedModels[j]) < 0) { ids.push(svc.fetchedModels[j]); labels.push(svc.fetchedModels[j]) }
-        return { ids: ids, labels: labels }
-    }
-
     color: Theme.panel
 
     function load(providerId) {
         for (var i = 0; i < providers.length; i++) if (providers[i].id === providerId) pIndex = i
         baseUrlField.text = svc ? svc.savedBaseUrlFor(cur.id) : cur.baseUrl
-        modelField.text = svc ? svc.savedModelFor(cur.id) : (cur.models.length ? cur.models[0].id : "")
+        modelPicker.setText(svc ? svc.savedModelFor(cur.id) : (cur.models.length ? cur.models[0].id : ""))
         keyField.text = ""
         if (svc) svc.clearError()
+        autoLoad()
     }
-    onVisibleChanged: if (visible) { load(svc ? svc.provider : "anthropic"); fetchedFor = "" }
+    // ask the provider which models this account can use, as soon as it is possible (key known / local server)
+    function autoLoad() {
+        if (!svc) return
+        if (!cur.needsKey || keyField.text.trim() !== "" || svc.keyHintFor(cur.id) !== "") svc.fetchModels(cur.id, baseUrlField.text, keyField.text)
+    }
+    onVisibleChanged: if (visible) load(svc ? svc.provider : "anthropic")
 
     function save() {
         if (!svc) { done(true); return }
-        if (svc.saveSettings(cur.id, baseUrlField.text, modelField.text, keyField.text, rememberBox.checked)) done(true)
+        if (svc.saveSettings(cur.id, baseUrlField.text, modelPicker.typed, keyField.text, rememberBox.checked)) done(true)
     }
 
     Flickable {
@@ -78,7 +74,7 @@ Rectangle {
                 width: parent.width
                 model: root.providers.map(function (p) { return p.label })
                 currentIndex: root.pIndex
-                onActivated: function (i) { root.load(root.providers[i].id); root.fetchedFor = "" }
+                onActivated: function (i) { root.load(root.providers[i].id) }
             }
 
             Column {
@@ -86,7 +82,7 @@ Rectangle {
                 spacing: Theme.spTight
                 visible: root.cur.editableUrl
                 SectionLabel { width: parent.width; text: root.cur.id === "custom" ? "Server address (OpenAI-compatible)" : "Server address" }
-                TextBox { id: baseUrlField; objectName: "aiBaseUrl"; width: parent.width; placeholder: "https://host/v1" }
+                TextBox { id: baseUrlField; objectName: "aiBaseUrl"; width: parent.width; placeholder: "https://host/v1"; onEditingFinished: root.autoLoad() }
             }
 
             SectionLabel { width: parent.width; text: "API key" + (root.cur.needsKey ? "" : " (optional)") }
@@ -97,6 +93,7 @@ Rectangle {
                 placeholder: root.cur.keyPlaceholder
                 echoMode: showKey.checked ? TextInput.Normal : TextInput.Password
                 onAccepted: root.save()
+                onEditingFinished: root.autoLoad()
             }
             Row {
                 spacing: Theme.spLoose
@@ -137,27 +134,31 @@ Rectangle {
             }
 
             SectionLabel { width: parent.width; text: "Model" }
-            Row {
+            ModelPicker {
+                id: modelPicker
                 width: parent.width
-                spacing: Theme.spSnug
-                SelectBox {
-                    id: modelBox
-                    objectName: "aiModelList"
-                    width: parent.width - fetchBtn.width - Theme.spSnug
-                    model: root.modelChoices.labels.length ? root.modelChoices.labels : ["(type a model id below)"]
-                    currentIndex: Math.max(0, root.modelChoices.ids.indexOf(modelField.text))
-                    onActivated: function (i) { if (root.modelChoices.ids.length) modelField.text = root.modelChoices.ids[i] }
-                }
-                AppButton {
-                    id: fetchBtn
-                    objectName: "aiFetchModels"
-                    text: root.svc && root.svc.fetching ? "Loading..." : "Fetch list"
-                    width: 96
-                    enabledState: !!(root.svc && !root.svc.fetching)
-                    onClicked: { root.fetchedFor = root.cur.id; root.svc.fetchModels(root.cur.id, baseUrlField.text, keyField.text) }
-                }
+                value: root.svc ? root.svc.savedModelFor(root.cur.id) : ""
+                choices: root.svc ? (root.svc.modelsVersion >= 0 ? root.svc.modelsFor(root.cur.id) : []) : (root.cur.models || [])
+                loading: !!(root.svc && root.svc.fetching)
+                onRefreshRequested: root.autoLoad()
             }
-            TextBox { id: modelField; objectName: "aiModelField"; width: parent.width; placeholder: "or type any model id" }
+            Text {
+                readonly property bool mine: !!(root.svc && root.svc.modelsProvider === root.cur.id && root.svc.modelsState !== "")
+                visible: mine
+                width: parent.width
+                text: mine ? root.svc.modelsMessage : ""
+                wrapMode: Text.WordWrap
+                font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption
+                color: mine && root.svc.modelsState === "error" ? Theme.errorText : Theme.textMuted
+            }
+            Text {
+                readonly property string warning: root.svc ? (root.svc.modelsVersion >= 0 ? root.svc.modelWarning(root.cur.id, modelPicker.typed) : "") : ""
+                visible: warning !== ""
+                width: parent.width
+                text: warning
+                wrapMode: Text.WordWrap
+                font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption; color: Theme.warnText
+            }
 
             Row {
                 spacing: Theme.spBase
@@ -166,7 +167,7 @@ Rectangle {
                     text: "Test connection"
                     width: 130
                     enabledState: !!(root.svc && root.svc.testState !== "testing")
-                    onClicked: root.svc.testConnection(root.cur.id, baseUrlField.text, modelField.text, keyField.text)
+                    onClicked: root.svc.testConnection(root.cur.id, baseUrlField.text, modelPicker.typed, keyField.text)
                 }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter

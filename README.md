@@ -1,3 +1,5 @@
+<p align="center"><img src="vm_clone/assets/app_icon.png" alt="Apex Industrial Vision Studio" width="112"></p>
+
 # Apex Industrial Vision Studio
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)

@@ -209,5 +209,6 @@
         <file>screens/MainScreen.qml</file>
         <file>screens/StartScreen.qml</file>
         <file>screens/ToolFlyout.qml</file>
+        <file>images/app_icon.svg</file>
     </qresource>
 </RCC>
