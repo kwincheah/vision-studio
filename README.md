@@ -23,6 +23,8 @@ for the side-by-side.
 
 ## 🌟 Key Capabilities
 
+- **AI Gen** (toolbar, Ctrl+G): describe an inspection in plain words and an assistant builds the flow from the built-in module reference, validating its own work. Works with your own API key (Claude, OpenAI, Gemini, Mistral, DeepSeek, xAI, Groq, OpenRouter, or a local Ollama / LM Studio model); also available as an MCP server (`python main.py --mcp`). See [docs/AI_GEN.md](docs/AI_GEN.md).
+
 ### 1. Visual Flow Diagram Engine
 - **Node-Based DAG Orchestration:** Connect vision modules with typed ports (`Image`, `ROI`, `Number`, `String`, `Datum`) and orthogonal wire routing.
 - **Hierarchical Auto-Layout:** One-click automated graph layout for clean, legible multi-stage inspection topologies.
@@ -99,7 +101,7 @@ The codebase includes an extensive automated test suite covering algorithm corre
 # Install development & test dependencies
 pip install -r requirements-dev.txt
 
-# Run all 228 automated tests
+# Run all 1,300+ automated tests
 python -m pytest tests/ -v
 
 # Run secrets and security scan
@@ -156,14 +158,15 @@ See the full [Plugin Development Guide](docs/PLUGIN_DEVELOPMENT_GUIDE.md) for co
 │   ├── PLUGIN_DEVELOPMENT_GUIDE.md
 │   ├── RELEASE_NOTES_v4.3.0.md
 │   └── ...
+├── qml/                  # Qt Quick interface (what python main.py starts); open qml/ApexVision.qmlproject in Qt Design Studio
 ├── plugins/              # Bundled sample plugins (e.g. Sobel edge detector)
 ├── projects/             # Built-in solution templates (.vmp)
 ├── scripts/              # Verification, secret scanning, and UI measurement utilities
-├── tests/                # Automated pytest suite (228 tests across 24 modules)
+├── tests/                # Automated pytest suite (1,300+ tests across 58 files)
 ├── vm_clone/             # Core application package
 │   ├── core/             # DAG pipeline, registry, project manager, MVS camera SDK
 │   ├── sdk/              # Plugin SDK interfaces, manager, marketplace
-│   ├── tools/            # 38+ built-in vision tools across 11 categories
+│   ├── tools/            # 42 built-in vision tools across 11 categories
 │   └── ui/               # PyQt6 interface: main window, canvas, docks, themes
 ├── ApexVisionStudio.spec # PyInstaller standalone build configuration
 ├── installer_setup.iss   # Inno Setup Windows installer script

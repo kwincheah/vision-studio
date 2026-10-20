@@ -144,11 +144,12 @@ def cmd_run(args) -> int:
         return _fail(f"no images found in {args.input}")
 
     import cv2
+    from vm_clone.core.imageio import imread
 
     records: List[Dict[str, Any]] = []
     failures = 0
     for path in targets:
-        image = cv2.imread(path)
+        image = imread(path)
         if image is None:
             LOG.error("could not read %s", path)
             failures += 1

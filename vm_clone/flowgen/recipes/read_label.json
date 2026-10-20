@@ -1,0 +1,48 @@
+{
+ "title": "Read text and check it against a pattern",
+ "when": "The user wants to read a printed label / serial number and verify its content.",
+ "spec": {
+  "name": "Read_Label",
+  "modules": [
+   {
+    "id": "src",
+    "tool": "Image Source"
+   },
+   {
+    "id": "ocr",
+    "tool": "OCR Recognition",
+    "params": {
+     "roi": [
+      80,
+      490,
+      300,
+      60
+     ],
+     "expected_pattern": "SN-*"
+    }
+   },
+   {
+    "id": "match",
+    "tool": "Branch String",
+    "params": {
+     "target_text": "SN-",
+     "match_mode": "Contains"
+    }
+   }
+  ],
+  "links": [
+   {
+    "from": "src",
+    "from_port": "Image",
+    "to": "ocr",
+    "to_port": "Image"
+   },
+   {
+    "from": "ocr",
+    "from_port": "Text",
+    "to": "match",
+    "to_port": "Input_Text"
+   }
+  ]
+ }
+}

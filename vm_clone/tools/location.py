@@ -11,7 +11,7 @@ Implements HikRobot Vision Master Location modules:
 """
 import cv2
 import numpy as np
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Dict, Any, Tuple, Optional
 from vm_clone.core.base_tool import VisionToolBase, ToolExecutionResult, ToolStatus, ToolPort, DataType
 from vm_clone.core.registry import register_tool
 
@@ -572,10 +572,10 @@ class CaliperTool(VisionToolBase):
         profile = gray[ys_v.astype(int), xs_v.astype(int)].astype(np.float32)
         grad = np.gradient(profile)
 
-        pol = self.get_param("polarity", "Any")
-        if pol == "Dark to Light":
+        pol = str(self.get_param("polarity", "Any")).strip().lower()      # "Dark to light" in the editor, older files say "Dark to Light"
+        if pol == "dark to light":
             grad_filt = np.where(grad > 0, grad, 0.0)
-        elif pol == "Light to Dark":
+        elif pol == "light to dark":
             grad_filt = np.where(grad < 0, -grad, 0.0)
         else:
             grad_filt = np.abs(grad)

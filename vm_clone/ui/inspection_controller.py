@@ -15,12 +15,12 @@ import os
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
-from vm_clone.evaluation.annotations import Dataset, Detection, ImageRecord
+from vm_clone.evaluation.annotations import Dataset
 from vm_clone.evaluation.experiment import (
     Comparison, Experiment, ExperimentStore, compare,
 )
 from vm_clone.evaluation.matching import (
-    DUPLICATE, FP, FN, ImageMatchResult, match_image,
+    DUPLICATE, FP, FN, ImageMatchResult,
 )
 from vm_clone.evaluation.metrics import EvaluationResult
 from vm_clone.evaluation.runner import (

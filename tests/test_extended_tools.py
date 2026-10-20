@@ -88,3 +88,102 @@ def test_image_buffer():
     
     assert res.status == ToolStatus.OK
     assert res.outputs["Buffer_Count"] == 5
+
+
+# ---------------------------------------------------------------------------
+# OCR Recognition must read the pixels, never return a canned string
+# ---------------------------------------------------------------------------
+def _ocr_engine_available() -> bool:
+    from vm_clone.tools.recognition import _get_ocr_engine
+    return _get_ocr_engine() is not None
+
+
+def test_ocr_reports_engine_unavailable_instead_of_fabricating(monkeypatch):
+    import vm_clone.tools.recognition as rec
+    monkeypatch.setattr(rec, "_get_ocr_engine", lambda: None)
+    img = np.full((600, 800, 3), 255, dtype=np.uint8)
+    cv2.putText(img, "LOT-4711", (90, 530), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 0), 3)
+    tool = create_tool_instance("OCR Recognition", "ocr_noengine")
+    res = tool.execute({"Image": img})
+    assert res.status == ToolStatus.ERROR
+    assert res.outputs["Text"] == ""
+    assert "rapidocr" in res.message.lower()
+
+
+@pytest.mark.skipif(not _ocr_engine_available(), reason="rapidocr-onnxruntime not installed")
+def test_ocr_reads_actual_text_and_honours_pattern():
+    img = np.full((600, 800, 3), 255, dtype=np.uint8)
+    cv2.putText(img, "LOT-4711", (90, 530), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 0), 3)
+    tool = create_tool_instance("OCR Recognition", "ocr_real")
+    tool.set_param("char_polarity", "Dark on White")
+    tool.set_param("expected_pattern", "LOT-*")
+    res = tool.execute({"Image": img})
+    assert res.status == ToolStatus.OK, res.message
+    assert "4711" in res.outputs["Text"]
+    tool.set_param("expected_pattern", "SN-*")
+    assert tool.execute({"Image": img}).status == ToolStatus.NG
+    # A blank image must not yield text.
+    blank = tool.execute({"Image": np.full((600, 800, 3), 255, dtype=np.uint8)})
+    assert blank.status == ToolStatus.NG and blank.outputs["Text"] == ""
+
+
+def test_script_tool_functions_and_comprehensions_see_injected_names():
+    t = create_tool_instance("Script", "script_scope")
+    t.set_param("code", "vals = [np.sqrt(x) for x in (4, 9)]\n"
+                        "def total(a):\n    return float(np.sum(a))\n"
+                        "outputs['Result'] = total(vals)\n")
+    res = t.execute({})
+    assert res.status == ToolStatus.OK, res.message
+    assert res.outputs["Result"] == 5.0
+
+
+def test_calibration_target_is_detectable_by_opencv():
+    from vm_clone.core.target_generator import make_calibration_target, inner_pattern_size
+    img = make_calibration_target("Chessboard", 10, 7)
+    ok, _ = cv2.findChessboardCorners(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY),
+                                      inner_pattern_size("Chessboard", 10, 7))
+    assert ok
+    grid = make_calibration_target("Asymmetric Circles", 4, 11)
+    ok, _ = cv2.findCirclesGrid(cv2.cvtColor(grid, cv2.COLOR_BGR2GRAY), (4, 11),
+                                flags=cv2.CALIB_CB_ASYMMETRIC_GRID)
+    assert ok
+    with pytest.raises(ValueError):
+        make_calibration_target("Chessboard", 1, 7)
+
+
+def test_global_script_runs_persists_and_reports_errors(tmp_path):
+    from vm_clone.core.pipeline import SolutionManager
+    sol = SolutionManager(name="gs")
+    flow = sol.add_flow("Flow1")
+    flow.add_node(create_tool_instance("Image Source", "src", "01_Src"))
+    sol.active_flow_name = "Flow1"
+    sol.global_script = ("def process(context):\n"
+                         "    context.set_global('seen', sorted(context.results.items()))\n")
+    results = flow.execute_flow(global_vars=sol.global_variables)
+    assert sol.run_global_script(results) is None
+    assert sol.global_variables["seen"] == [("01_Src", "OK")]
+    path = str(tmp_path / "gs.vmp")
+    sol.save_to_file(path)
+    assert SolutionManager.load_from_file(path).global_script == sol.global_script
+    sol.global_script = "def process(context):\n    raise RuntimeError('boom')\n"
+    assert "boom" in sol.run_global_script(results)
+    sol.global_script = "x = 1"
+    assert "process" in sol.run_global_script(results)
+
+
+def test_imageio_round_trips_non_ascii_paths(tmp_path):
+    from vm_clone.core.imageio import imread, imwrite
+    folder = tmp_path / "ünï_目录"
+    folder.mkdir()
+    path = str(folder / "图像.png")
+    img = np.full((12, 16, 3), 123, np.uint8)
+    assert imwrite(path, img)
+    back = imread(path)
+    assert back is not None and back.shape == img.shape and int(back[0, 0, 0]) == 123
+    # failure modes return None / False rather than raising
+    assert imread(str(folder / "missing.png")) is None
+    (folder / "empty.png").write_bytes(b"")
+    assert imread(str(folder / "empty.png")) is None
+    (folder / "junk.png").write_bytes(b"not an image")
+    assert imread(str(folder / "junk.png")) is None
+    assert imwrite(str(folder / "no_such_dir" / "x.png"), img) is False

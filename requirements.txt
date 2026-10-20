@@ -5,3 +5,13 @@ numpy>=1.24.0
 
 # Optional Neural Detection (Install for YOLOv11 module)
 # ultralytics>=8.0.0
+
+# Optional OCR engine (OCR Recognition module; reports "engine unavailable" without it)
+# rapidocr-onnxruntime>=1.3.0
+
+# AI Gen (assistant that builds flows from a prompt)
+anthropic>=0.86.0
+# Optional: remember the API key in the OS credential store (Windows Credential Manager / Keychain)
+keyring>=24.0.0
+# Optional: run the flow tools as an MCP server (python main.py --mcp)
+mcp>=1.2.0

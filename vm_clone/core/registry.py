@@ -2,11 +2,17 @@
 Tool Registry and Factory for Vision Master Clone.
 Allows dynamic discovery, instancing, and registration of tools.
 """
+import uuid
 from typing import Dict, Type, List
 from vm_clone.core.base_tool import VisionToolBase
 
 _TOOL_REGISTRY: Dict[str, Type[VisionToolBase]] = {}
 _CATEGORIES: Dict[str, List[str]] = {}
+
+
+def new_instance_id(prefix: str = "node") -> str:
+    """A module instance id that cannot collide with an existing one."""
+    return f"{prefix}_{uuid.uuid4().hex[:10]}"
 
 
 def register_tool(cls: Type[VisionToolBase]):

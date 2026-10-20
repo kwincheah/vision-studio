@@ -10,10 +10,10 @@ flow, drag cards) rather than a static picture.
 from typing import Dict, List, Optional
 
 from PyQt6.QtCore import QRectF, QPointF, Qt, pyqtSignal, QObject
-from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QFont, QFontMetrics, QPainterPath
+from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QFont, QPainterPath
 from PyQt6.QtWidgets import (
     QGraphicsView, QGraphicsScene, QGraphicsItem, QMenu, QWidget, QVBoxLayout,
-    QHBoxLayout, QToolButton, QLabel, QSizePolicy
+    QHBoxLayout, QLabel
 )
 
 from vm_clone.core.base_tool import ToolStatus
@@ -378,7 +378,7 @@ class FlowOverviewWidget(QWidget):
         self.view.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         self.view.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
         self.view.setFrameShape(QGraphicsView.Shape.NoFrame)
-        self.view.setStyleSheet("background: transparent;")
+        self.view.setStyleSheet("QGraphicsView { background: transparent; }")
         root.addWidget(self.view, 1)
 
         self._flows: Dict[str, VisionPipeline] = {}

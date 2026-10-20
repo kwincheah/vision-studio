@@ -1,0 +1,52 @@
+{
+ "title": "Surface / PCB defect check with pass-fail verdict",
+ "when": "The user wants to find scratches, dirt or other anomalies in a region and decide OK/NG by the number of defects.",
+ "spec": {
+  "name": "Defect_Check",
+  "modules": [
+   {
+    "id": "src",
+    "tool": "Image Source",
+    "params": {
+     "source_type": "Synthetic",
+     "pattern_type": "PCB Inspection"
+    }
+   },
+   {
+    "id": "defect",
+    "tool": "Defect Detection",
+    "params": {
+     "roi": [
+      260,
+      240,
+      180,
+      120
+     ],
+     "sensitivity": 30
+    }
+   },
+   {
+    "id": "judge",
+    "tool": "Condition Branch",
+    "params": {
+     "operator": "==",
+     "threshold_low": 0.0
+    }
+   }
+  ],
+  "links": [
+   {
+    "from": "src",
+    "from_port": "Image",
+    "to": "defect",
+    "to_port": "Image"
+   },
+   {
+    "from": "defect",
+    "from_port": "Defect_Count",
+    "to": "judge",
+    "to_port": "Val_In"
+   }
+  ]
+ }
+}

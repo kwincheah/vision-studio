@@ -7,7 +7,6 @@ from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTableWidget,
     QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox
 )
-from PyQt6.QtCore import Qt
 from typing import Dict, Any
 
 

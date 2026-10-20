@@ -1,0 +1,42 @@
+{
+ "title": "Detect objects with a neural network and check the count",
+ "when": "The user wants to find and count objects of known classes (needs the ultralytics package and a model file).",
+ "spec": {
+  "name": "Detect_Objects",
+  "modules": [
+   {
+    "id": "src",
+    "tool": "Image Source"
+   },
+   {
+    "id": "det",
+    "tool": "Object Detection",
+    "params": {
+     "confidence": 0.25
+    }
+   },
+   {
+    "id": "count",
+    "tool": "Condition Branch",
+    "params": {
+     "operator": ">=",
+     "threshold_low": 1.0
+    }
+   }
+  ],
+  "links": [
+   {
+    "from": "src",
+    "from_port": "Image",
+    "to": "det",
+    "to_port": "Image"
+   },
+   {
+    "from": "det",
+    "from_port": "Count",
+    "to": "count",
+    "to_port": "Val_In"
+   }
+  ]
+ }
+}

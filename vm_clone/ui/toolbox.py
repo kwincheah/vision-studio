@@ -16,7 +16,7 @@ from typing import Dict, List, Optional
 
 from PyQt6.QtCore import Qt, QSize, QRectF, QMimeData, pyqtSignal
 from PyQt6.QtGui import (
-    QPainter, QColor, QPen, QDrag, QFont, QIcon, QFontMetrics
+    QPainter, QColor, QPen, QDrag, QFont, QIcon
 )
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QListWidgetItem, QLineEdit,
@@ -25,7 +25,7 @@ from PyQt6.QtWidgets import (
 
 from vm_clone.core.registry import list_categories, get_tool_class
 from vm_clone.ui.styles import THEME
-from vm_clone.ui.icons import get_category_icon, get_tool_icon, get_action_icon
+from vm_clone.ui.icons import get_tool_icon, get_action_icon
 from vm_clone.ui import layout_metrics as LM
 
 # VisionMaster orange accent applied to toolbox glyphs (manual p.74).
@@ -60,20 +60,6 @@ CATEGORY_GLYPH = {
     "Communication": "com",
     "Logic Tools": "lif",
 }
-
-
-def get_rail_icon(glyph: str, size: int = 24, color=None) -> QIcon:
-    """Render a category-rail glyph in a caller-chosen ink.
-
-    The rail sits on the dark chrome, so its glyphs must be light; the selected
-    item is re-inked in the dark body colour because its fill is light.  Without
-    this accessor the rail had no way to re-ink on selection, which left the
-    selected glyph invisible against its own fill.
-    """
-    category = next((c for c, g in CATEGORY_GLYPH.items() if g == glyph),
-                    glyph if glyph in CATEGORY_GLYPH else "Image Generation")
-    return get_category_icon(category, size,
-                             color or QColor(THEME["text_on_chrome"]))
 
 
 # =============================================================================
@@ -493,7 +479,6 @@ class ToolCategoryRail(QWidget):
 
     def _on_category_clicked(self, category: str):
         btn = self._buttons.get(category)
-        already = btn.isChecked() if btn else False
         for other in self._buttons.values():
             other.setChecked(False)
         if btn is not None:

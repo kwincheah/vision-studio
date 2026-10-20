@@ -18,13 +18,13 @@ two-column `Parameter | Value` presentation inside the same grid.
 The per-module execution trace this project needs for diagnostics is *not* a tab
 here (the vendor has no such tab); it lives in the hidden Module Log dock.
 """
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, List, Optional, Sequence, Tuple
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QTableWidget,
-    QTableWidgetItem, QHeaderView, QLabel, QPushButton, QScrollArea
+    QWidget, QVBoxLayout, QTabWidget, QTableWidget, QTableWidgetItem,
+    QHeaderView, QLabel, QScrollArea
 )
 
 from vm_clone.core.base_tool import ToolExecutionResult, ToolStatus

@@ -36,7 +36,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from vm_clone.evaluation.annotations import Annotation, Detection, box_area, iou
+from vm_clone.evaluation.annotations import Annotation, Detection
 from vm_clone.evaluation.matching import (
     DEFAULT_IOU_THRESHOLD, ImageMatchResult, match_image,
 )

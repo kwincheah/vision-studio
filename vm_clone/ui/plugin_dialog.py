@@ -8,18 +8,16 @@ Provides operators and third-party developers with:
 """
 import os
 import logging
-from typing import Optional, List
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QSplitter, QTableWidget, QTableWidgetItem,
     QHeaderView, QLabel, QPushButton, QGroupBox, QFileDialog, QMessageBox,
-    QDialogButtonBox, QTextEdit, QWidget, QTabWidget, QLineEdit, QComboBox,
-    QFormLayout
+    QTextEdit, QWidget, QTabWidget, QLineEdit, QComboBox, QFormLayout
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QUrl
 from PyQt6.QtGui import QColor, QDesktopServices
 
-from vm_clone.sdk.manager import PluginManager, PluginState, PluginRecord
-from vm_clone.sdk.marketplace import MarketplaceService, MarketplacePluginItem
+from vm_clone.sdk.manager import PluginManager, PluginState
+from vm_clone.sdk.marketplace import MarketplaceService
 from vm_clone.ui.styles import THEME
 
 logger = logging.getLogger("vm_clone.plugins_ui")
@@ -141,7 +139,7 @@ class PluginManagerDialog(QDialog):
         right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.setSpacing(6)
 
-        grp_details = QGroupBox("Plugin Details & Exported Tools")
+        grp_details = QGroupBox("Plugin Details && Exported Tools")
         grp_layout = QVBoxLayout(grp_details)
         grp_layout.setContentsMargins(8, 8, 8, 8)
 
@@ -547,7 +545,7 @@ Overview:
         form_layout.addRow("Branch / Ref:", self.txt_github_branch)
 
         btn_row = QHBoxLayout()
-        self.btn_github_install = QPushButton("Download, Validate & Install")
+        self.btn_github_install = QPushButton("Download, Validate && Install")
         self.btn_github_install.setStyleSheet(f"font-weight: bold; padding: 6px {THEME['sp_section']}px; background-color: {THEME['accent_primary']}; color: {THEME['text_primary']}; border-radius: 4px;")
         self.btn_github_install.clicked.connect(self._on_direct_github_install_clicked)
         btn_row.addWidget(self.btn_github_install)

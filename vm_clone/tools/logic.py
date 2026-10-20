@@ -2,7 +2,7 @@
 Logic and Control Tools: Condition Branch, Variable Calculation, Script.
 Matches HikRobot Vision Master Logic Tools category.
 """
-from typing import Dict, Any, List
+from typing import Dict, Any
 from vm_clone.core.base_tool import VisionToolBase, ToolExecutionResult, ToolStatus, ToolPort, DataType
 from vm_clone.core.registry import register_tool
 
@@ -309,7 +309,7 @@ class TriggerTool(VisionToolBase):
         if require_true and not sig:
             return ToolExecutionResult(
                 status=ToolStatus.OK,
-                message=f"Trigger skipped: signal is False",
+                message="Trigger skipped: signal is False",
                 outputs={"Status": "SKIPPED"}
             )
 

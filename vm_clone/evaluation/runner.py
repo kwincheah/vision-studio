@@ -18,16 +18,16 @@ it "latency" would let a slow disk be presented as a slow model.
 """
 from __future__ import annotations
 
-import os
 import time
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import cv2
+from vm_clone.core.imageio import imread
 import numpy as np
 
 from vm_clone.evaluation.annotations import (
-    Annotation, Dataset, Detection, ImageRecord,
+    Annotation, Dataset, Detection,
 )
 from vm_clone.evaluation.matching import DEFAULT_IOU_THRESHOLD
 from vm_clone.evaluation.metrics import EvaluationResult
@@ -145,7 +145,7 @@ def run_dataset(dataset: Dataset, predictor: Predictor,
         # --- stage: load ---------------------------------------------------
         t0 = time.perf_counter()
         try:
-            image = cv2.imread(resolved)
+            image = imread(resolved)
         except Exception as exc:                       # noqa: BLE001 - reported
             # `cv2.imread` returns None for an unreadable file, but Ultralytics patches
             # it to read through `np.fromfile`, which *raises* FileNotFoundError.  Both

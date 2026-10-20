@@ -1,0 +1,13 @@
+module ApexDialogs
+InfoDialog 1.0 InfoDialog.qml
+GlobalVariablesDialog 1.0 GlobalVariablesDialog.qml
+FlowSettingsDialog 1.0 FlowSettingsDialog.qml
+ValidationDialog 1.0 ValidationDialog.qml
+ModuleConfigDialog 1.0 ModuleConfigDialog.qml
+CameraSetDialog 1.0 CameraSetDialog.qml
+LensCalibrationDialog 1.0 LensCalibrationDialog.qml
+PluginManagerDialog 1.0 PluginManagerDialog.qml
+NewProjectDialog 1.0 NewProjectDialog.qml
+ConfirmDialog 1.0 ConfirmDialog.qml
+DialogHost 1.0 DialogHost.qml
+RenameDialog 1.0 RenameDialog.qml

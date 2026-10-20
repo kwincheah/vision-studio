@@ -3,12 +3,14 @@ Execution Engine & Multi-Flow Solution Manager for Vision Master Clone.
 Manages Multi-Flows, Connections, Execution Order, Global Variables, and Flow Run / Continuous Run.
 Matches HikRobot Vision Master Multi-Flow (Manual p. 93-97) and Global Variables (Manual p. 108-112).
 """
+import os
+import math
 import json
 import time
 import copy
 from typing import Dict, List, Any, Optional, Callable
 from vm_clone.core.base_tool import (
-    VisionToolBase, ToolExecutionResult, ToolStatus, is_compatible_type, DataType
+    VisionToolBase, ToolExecutionResult, ToolStatus, is_compatible_type
 )
 
 
@@ -46,6 +48,10 @@ class FlowConnection:
 
 
 
+#: characters that XML 1.0 forbids or that a parser rewrites (carriage return)
+_XML_UNSAFE_TEXT = __import__("re").compile("[\x00-\x08\x0b-\x1f\ufffe\uffff\ud800-\udfff]|\r")
+
+
 class VisionPipeline:
     """
     Represents a single execution flow graph in Vision Master.
@@ -64,6 +70,9 @@ class VisionPipeline:
         self.stop_on_ng: bool = False  # Stop Flow Executed NG (Manual p. 93)
         self.flow_timeout_ms: float = 5000.0  # Flow Timeout (Manual p. 93)
         self.execution_count: int = 0  # Executed count telemetry (Manual p. 95)
+        # Canvas placement (instance_id -> [x, y]); purely presentational but persisted so
+        # a saved diagram reopens exactly as the operator arranged it.
+        self.node_positions: Dict[str, List[float]] = {}
 
     def add_node(self, tool: VisionToolBase):
         self.nodes[tool.instance_id] = tool
@@ -76,6 +85,7 @@ class VisionPipeline:
                 c for c in self.connections
                 if c.from_node != instance_id and c.to_node != instance_id
             ]
+            self.node_positions.pop(instance_id, None)
             self._update_execution_order()
 
     def _has_path(self, start_node: str, target_node: str) -> bool:
@@ -258,13 +268,15 @@ class VisionPipeline:
         new_pipe.flow_timeout_ms = self.flow_timeout_ms
 
         id_map = {}
-        t_stamp = int(time.time() * 1000) % 100000
+        from vm_clone.core.registry import new_instance_id
         for nid, tool in self.nodes.items():
-            new_id = f"{nid}_copy_{t_stamp}"
+            new_id = new_instance_id(f"{nid}_copy")
             id_map[nid] = new_id
             cloned_tool = create_tool_instance(tool.tool_name, new_id, f"{tool.name}_Copy")
             cloned_tool.load_dict(tool.to_dict())
             new_pipe.add_node(cloned_tool)
+            if nid in self.node_positions:
+                new_pipe.node_positions[new_id] = list(self.node_positions[nid])
 
         for conn in self.connections:
             if conn.from_node in id_map and conn.to_node in id_map:
@@ -281,6 +293,8 @@ class VisionPipeline:
     @staticmethod
     def _encode_xml_value(val: Any) -> tuple[str, str]:
         """Encode a parameter value into (type_str, encoded_str)."""
+        if val is None:
+            return "null", ""
         if isinstance(val, bool):
             return "bool", "true" if val else "false"
         elif isinstance(val, int):
@@ -288,8 +302,12 @@ class VisionPipeline:
         elif isinstance(val, float):
             return "float", str(val)
         elif isinstance(val, str):
+            # XML 1.0 cannot carry most control characters and parsers normalise CR;
+            # such strings travel as a JSON string literal so they round-trip exactly.
+            if _XML_UNSAFE_TEXT.search(val):
+                return "jsonstr", json.dumps(val, ensure_ascii=True)
             return "str", val
-        elif isinstance(val, (list, dict)):
+        elif isinstance(val, (list, tuple, dict)):
             return "json", json.dumps(val, ensure_ascii=False)
         else:
             return "str", str(val)
@@ -299,6 +317,16 @@ class VisionPipeline:
         """Decode a parameter value from (type_str, text)."""
         text = text if text is not None else ""
         t = (type_str or "").lower().strip()
+        if t == "null":
+            return None
+        if t == "jsonstr":
+            try:
+                val = json.loads(text)
+            except Exception as e:
+                raise ValueError(f"Malformed XML string payload: {text!r}") from e
+            if not isinstance(val, str):
+                raise ValueError(f"Malformed XML string payload: {text!r}")
+            return val
         if t == "bool":
             return text.strip().lower() in ("true", "1", "yes")
         elif t == "int":
@@ -383,17 +411,39 @@ class VisionPipeline:
                 "to_port": str(conn.to_port)
             })
 
+        if self.node_positions:
+            layout_el = ET.SubElement(root, "Layout")
+            for nid, (x, y) in self.node_positions.items():
+                if nid in self.nodes:
+                    ET.SubElement(layout_el, "Position", attrib={
+                        "node": str(nid), "x": repr(float(x)), "y": repr(float(y))})
+
+        return self._flow_element_to_string(root)
+
+    def to_xml_element(self):
+        """The flow as an ElementTree element (used to embed flows in a solution file)."""
+        import xml.etree.ElementTree as ET
+        return ET.fromstring(self.to_xml().encode("utf-8"))
+
+    @staticmethod
+    def _flow_element_to_string(root) -> str:
+        import xml.etree.ElementTree as ET
         ET.indent(root, space="  ")
-        xml_bytes = ET.tostring(root, encoding="utf-8", xml_declaration=True)
-        return xml_bytes.decode("utf-8")
+        return ET.tostring(root, encoding="utf-8", xml_declaration=True).decode("utf-8")
 
     @classmethod
     def from_xml(cls, xml_str: str) -> "VisionPipeline":
         """Deserialize flow pipeline from standard XML string."""
         from vm_clone.core.xml_safe import safe_fromstring
+        return cls.from_xml_element(safe_fromstring(xml_str))
+
+    @classmethod
+    def from_xml_element(cls, root) -> "VisionPipeline":
+        """Build a flow from a parsed ``<VisionMasterFlow>`` element."""
         from vm_clone.core.registry import create_tool_instance
 
-        root = safe_fromstring(xml_str)
+        if root.tag != "VisionMasterFlow":
+            raise ValueError(f"Expected a <VisionMasterFlow> element, found <{root.tag}>")
         name = root.attrib.get("name", "ImportedFlow")
         pipe = cls(name=name)
 
@@ -449,6 +499,17 @@ class VisionPipeline:
                 if fn and fp and tn and tp:
                     pipe.connect(fn, fp, tn, tp, force=True)
 
+        layout_el = root.find("Layout")
+        if layout_el is not None:
+            for pos_el in layout_el.findall("Position"):
+                nid = pos_el.attrib.get("node")
+                try:
+                    x, y = float(pos_el.attrib["x"]), float(pos_el.attrib["y"])
+                except (KeyError, ValueError):
+                    continue
+                if nid in pipe.nodes and math.isfinite(x) and math.isfinite(y):
+                    pipe.node_positions[nid] = [x, y]
+
         return pipe
 
     def export_to_xml(self, filepath: str):
@@ -489,6 +550,16 @@ class VisionPipeline:
 
         for c_data in data.get("connections", []):
             pipe.connect(c_data["from_node"], c_data["from_port"], c_data["to_node"], c_data["to_port"], force=True)
+
+        raw_positions = data.get("positions")
+        if isinstance(raw_positions, dict):
+            for nid, xy in raw_positions.items():
+                try:
+                    x, y = float(xy[0]), float(xy[1])
+                except (TypeError, ValueError, IndexError, KeyError):
+                    continue
+                if nid in pipe.nodes and math.isfinite(x) and math.isfinite(y):
+                    pipe.node_positions[nid] = [x, y]
 
         return pipe
 
@@ -603,8 +674,24 @@ class VisionPipeline:
             "flow_timeout_ms": self.flow_timeout_ms,
             "execution_count": self.execution_count,
             "nodes": [node.to_dict() for node in self.nodes.values()],
-            "connections": [c.to_dict() for c in self.connections]
+            "connections": [c.to_dict() for c in self.connections],
+            "positions": {nid: list(xy) for nid, xy in self.node_positions.items()
+                          if nid in self.nodes},
         }
+
+
+class _GlobalScriptContext:
+    """Handle passed to the solution's global script."""
+
+    def __init__(self, solution: "SolutionManager", results: Dict[str, str]):
+        self._solution = solution
+        self.results = results
+
+    def get_global(self, name: str, default: Any = None) -> Any:
+        return self._solution.get_global(name, default)
+
+    def set_global(self, name: str, value: Any) -> None:
+        self._solution.set_global(name, value)
 
 
 class SolutionManager:
@@ -619,6 +706,8 @@ class SolutionManager:
         # Name of the flow that receives the dependency wires in the Multi-Flow
         # overview (Manual p. 95 - the converging "trigger" flow card).
         self.trigger_flow_name: str = "Flow1"
+        # Optional Python source defining process(context); run after every flow cycle.
+        self.global_script: str = ""
         self.global_variables: Dict[str, Any] = {
             "g_CountOK": 0,
             "g_CountNG": 0,
@@ -731,6 +820,33 @@ class SolutionManager:
     def set_global(self, name: str, value: Any):
         self.global_variables[name] = value
 
+    def run_global_script(self, results: Optional[Dict[str, ToolExecutionResult]] = None) -> Optional[str]:
+        """Run the solution's global script once; returns an error text, or None on success.
+
+        The script must define ``process(context)``; ``context`` offers ``get_global``,
+        ``set_global`` and ``results`` (module name -> verdict of the cycle just executed).
+        """
+        code = (self.global_script or "").strip()
+        if not code:
+            return None
+        results = results or {}
+        flow = self.flows.get(self.active_flow_name)
+        verdicts = {}
+        for nid, res in results.items():
+            node = flow.nodes.get(nid) if flow else None
+            verdicts[node.name if node else nid] = res.status.value
+        ctx = _GlobalScriptContext(self, verdicts)
+        env: Dict[str, Any] = {"__name__": "global_script"}
+        try:
+            exec(code, env)
+            process = env.get("process")
+            if not callable(process):
+                return "Global script must define process(context)"
+            process(ctx)
+        except Exception as exc:
+            return f"Global script error: {type(exc).__name__}: {exc}"
+        return None
+
     def get_global(self, name: str, default: Any = None) -> Any:
         return self.global_variables.get(name, default)
 
@@ -754,6 +870,7 @@ class SolutionManager:
             "active_flow": self.active_flow_name,
             "trigger_flow": self.trigger_flow_name,
             "global_variables": self.global_variables,
+            "global_script": self.global_script,
             "flows": [flow.to_dict() for flow in self.flows.values()]
         }
 
@@ -765,6 +882,9 @@ class SolutionManager:
         sol.trigger_flow_name = data.get("trigger_flow", sol.active_flow_name)
         if "global_variables" in data and isinstance(data["global_variables"], dict):
             sol.global_variables = copy.deepcopy(data["global_variables"])
+
+        if isinstance(data.get("global_script"), str):
+            sol.global_script = data["global_script"]
 
         flows_data = data.get("flows", [])
         if flows_data:
@@ -778,27 +898,107 @@ class SolutionManager:
             sol.trigger_flow_name = sol.active_flow_name
         return sol
 
+    def to_xml(self) -> str:
+        """The whole solution - flows, layout, global variables and script - as XML."""
+        import xml.etree.ElementTree as ET
+        root = ET.Element("VisionMasterSolution", attrib={
+            "version": "4.3", "name": self.name,
+            "active_flow": self.active_flow_name, "trigger_flow": self.trigger_flow_name})
+        vars_el = ET.SubElement(root, "GlobalVariables")
+        for key, val in self.global_variables.items():
+            vtype, enc = VisionPipeline._encode_xml_value(val)
+            ET.SubElement(vars_el, "Variable", attrib={"name": str(key), "type": vtype}).text = enc
+        if self.global_script:
+            stype, senc = VisionPipeline._encode_xml_value(self.global_script)
+            ET.SubElement(root, "GlobalScript", attrib={"type": stype}).text = senc
+        flows_el = ET.SubElement(root, "Flows")
+        for flow in self.flows.values():
+            flows_el.append(flow.to_xml_element())
+        return VisionPipeline._flow_element_to_string(root)
+
+    @classmethod
+    def from_xml(cls, xml_str: str) -> "SolutionManager":
+        """Parse a ``<VisionMasterSolution>`` (or a single ``<VisionMasterFlow>``) document."""
+        from vm_clone.core.xml_safe import safe_fromstring
+        return cls.from_xml_element(safe_fromstring(xml_str))
+
+    @classmethod
+    def from_xml_element(cls, root) -> "SolutionManager":
+        if root.tag == "VisionMasterFlow":
+            pipe = VisionPipeline.from_xml_element(root)
+            sol = cls(name=pipe.name)
+            sol.flows = {pipe.name: pipe}
+            sol.active_flow_name = pipe.name
+            sol.set_trigger_flow(pipe.name)
+            return sol
+        if root.tag != "VisionMasterSolution":
+            raise ValueError(f"Not a Vision Master document: root element is <{root.tag}>")
+        sol = cls(name=root.attrib.get("name", "Solution1"))
+        sol.active_flow_name = root.attrib.get("active_flow", "Flow1")
+        sol.trigger_flow_name = root.attrib.get("trigger_flow", sol.active_flow_name)
+        vars_el = root.find("GlobalVariables")
+        if vars_el is not None:
+            sol.global_variables = {}
+            for v_el in vars_el.findall("Variable"):
+                vname = v_el.attrib.get("name")
+                if vname:
+                    sol.global_variables[vname] = VisionPipeline._decode_xml_value(
+                        v_el.attrib.get("type"), v_el.text)
+        script_el = root.find("GlobalScript")
+        if script_el is not None:
+            sol.global_script = str(VisionPipeline._decode_xml_value(
+                script_el.attrib.get("type", "str"), script_el.text))
+        flows_el = root.find("Flows")
+        if flows_el is not None:
+            sol.flows.clear()
+            for f_el in flows_el.findall("VisionMasterFlow"):
+                flow = VisionPipeline.from_xml_element(f_el)
+                sol.flows[flow.name] = flow
+        if sol.active_flow_name not in sol.flows and sol.flows:
+            sol.active_flow_name = list(sol.flows.keys())[0]
+        if sol.trigger_flow_name not in sol.flows and sol.flows:
+            sol.trigger_flow_name = sol.active_flow_name
+        return sol
+
     def save_to_file(self, filepath: str):
-        """Save entire solution to .vmp / .sol / .json file."""
+        """Save the solution: XML for ``.xml``, JSON for everything else (.vmp / .sol / .json)."""
+        if filepath.lower().endswith(".xml"):
+            from vm_clone.core.fileio import atomic_write_text
+            atomic_write_text(filepath, self.to_xml())
+            return
         from vm_clone.core.fileio import atomic_write_json
         atomic_write_json(filepath, self.to_dict())
 
     @classmethod
     def load_from_file(cls, filepath: str) -> "SolutionManager":
-        """Load solution or flow file from .vmp, .sol, .json, or .xml."""
-        with open(filepath, "r", encoding="utf-8") as f:
-            content = f.read()
+        """Load solution or flow file from .vmp, .sol, .json, or .xml.
+
+        Raises ``ValueError`` with a readable message for corrupt or unrelated files.
+        """
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as f:
+                content = f.read()
+        except UnicodeDecodeError as exc:
+            raise ValueError(f"'{os.path.basename(filepath)}' is not a text solution file ({exc.reason})") from exc
 
         stripped = content.strip()
         if filepath.lower().endswith(".xml") or stripped.startswith("<?xml") or stripped.startswith("<"):
-            single_pipe = VisionPipeline.from_xml(content)
-            sol = cls(name=single_pipe.name)
-            sol.flows = {single_pipe.name: single_pipe}
-            sol.active_flow_name = single_pipe.name
-            sol.set_trigger_flow(single_pipe.name)
-            return sol
+            import xml.etree.ElementTree as ET
+            try:
+                return cls.from_xml(content)
+            except ET.ParseError as exc:
+                raise ValueError(
+                    f"'{os.path.basename(filepath)}' is not valid XML ({exc})") from exc
 
-        data = json.loads(content)
+        try:
+            data = json.loads(content)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"'{os.path.basename(filepath)}' is not a valid solution file "
+                f"(corrupt or truncated JSON at line {exc.lineno}, column {exc.colno})") from exc
+        if not isinstance(data, dict):
+            raise ValueError(f"'{os.path.basename(filepath)}' is not a solution file "
+                             f"(expected an object, found {type(data).__name__})")
         if "flows" in data and isinstance(data["flows"], list):
             return cls.from_dict(data)
         elif "nodes" in data:

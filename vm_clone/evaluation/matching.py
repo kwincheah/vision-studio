@@ -38,7 +38,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from vm_clone.evaluation.annotations import (
-    Annotation, Detection, ImageRecord, box_area, iou,
+    Annotation, Detection, box_area, iou,
 )
 
 #: IoU at or above which a prediction may claim a ground truth.  The COCO convention

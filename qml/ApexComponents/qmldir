@@ -1,0 +1,23 @@
+module ApexComponents
+Icon 1.0 Icon.qml
+ChromeToolButton 1.0 ChromeToolButton.qml
+Chip 1.0 Chip.qml
+AppButton 1.0 AppButton.qml
+ToggleSwitch 1.0 ToggleSwitch.qml
+SelectBox 1.0 SelectBox.qml
+TextBox 1.0 TextBox.qml
+StatusBadge 1.0 StatusBadge.qml
+TelemetryChip 1.0 TelemetryChip.qml
+PortDot 1.0 PortDot.qml
+NodeCard 1.0 NodeCard.qml
+TabButton2 1.0 TabButton2.qml
+FormRow 1.0 FormRow.qml
+DialogFrame 1.0 DialogFrame.qml
+DataTable 1.0 DataTable.qml
+CheckLabel 1.0 CheckLabel.qml
+NumberBox 1.0 NumberBox.qml
+SectionLabel 1.0 SectionLabel.qml
+DropMenu 1.0 DropMenu.qml
+ChromePillButton 1.0 ChromePillButton.qml
+FocusTrap 1.0 FocusTrap.qml
+ParamEditor 1.0 ParamEditor.qml

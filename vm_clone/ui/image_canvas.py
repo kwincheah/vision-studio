@@ -196,11 +196,22 @@ class ImageCanvasWidget(QWidget):
         if len(img.shape) == 2:
             h, w = img.shape
             bytes_per_line = w
-            qimg = QImage(img.data, w, h, bytes_per_line, QImage.Format.Format_Grayscale8)
-        else:
+            img_c = np.ascontiguousarray(img)
+            qimg = QImage(img_c.data, w, h, bytes_per_line, QImage.Format.Format_Grayscale8)
+        elif len(img.shape) == 3 and img.shape[2] == 3:
             h, w, ch = img.shape
-            rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img_c = np.ascontiguousarray(img)
             bytes_per_line = ch * w
+            qimg = QImage(img_c.data, w, h, bytes_per_line, QImage.Format.Format_BGR888)
+        elif len(img.shape) == 3 and img.shape[2] == 4:
+            h, w, ch = img.shape
+            img_c = np.ascontiguousarray(img)
+            bytes_per_line = ch * w
+            qimg = QImage(img_c.data, w, h, bytes_per_line, QImage.Format.Format_ARGB32)
+        else:
+            h, w = img.shape[:2]
+            rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            bytes_per_line = 3 * w
             qimg = QImage(rgb.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
 
         self._image_pixmap = QPixmap.fromImage(qimg)

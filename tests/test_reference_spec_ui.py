@@ -86,7 +86,7 @@ def test_image_display_area_has_the_documented_controls(qapp):
         assert btn.toolTip()
     assert area.btn_double.isCheckable()
     assert area.btn_crosshair.isChecked()
-    assert area.lbl_auto.text() == "Auto switch"
+    assert area.lbl_auto.text() == "Loop"
     area.deleteLater()
 
 

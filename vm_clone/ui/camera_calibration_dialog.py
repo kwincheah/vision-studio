@@ -10,19 +10,20 @@ Provides an interactive multi-view calibration workspace for machine vision came
 """
 import os
 import cv2
+from vm_clone.core.imageio import imread
 import numpy as np
-from typing import Optional, List, Dict, Any
+from typing import Optional
 
 from PyQt6.QtWidgets import (
     QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QSpinBox, QDoubleSpinBox, QListWidget, QListWidgetItem,
     QSplitter, QGroupBox, QFormLayout, QFileDialog, QMessageBox,
-    QToolButton, QFrame, QRadioButton, QButtonGroup, QScrollArea, QSizePolicy
+    QFrame, QRadioButton, QSizePolicy
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QSize, QPoint
-from PyQt6.QtGui import QImage, QPixmap, QColor, QFont, QIcon
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QImage, QPixmap, QColor
 
-from vm_clone.core.lens_calibration import LensCalibrationModel
+from vm_clone.core.sessions import LensSession
 from vm_clone.ui.styles import THEME
 
 
@@ -37,7 +38,7 @@ class CameraCalibrationDialog(QDialog):
         self.resize(1150, 720)
         self.setMinimumSize(960, 600)
 
-        self.model = LensCalibrationModel()
+        self.session = LensSession()      # views, solving and previews: shared with the QML front end
         self._current_input_image = current_image.copy() if current_image is not None else None
         self._selected_index = -1
         self._view_mode = "Corners"  # Corners, Original, Undistorted
@@ -194,7 +195,7 @@ class CameraCalibrationDialog(QDialog):
         )
         right_layout.addWidget(self.lbl_status_badge)
 
-        form_group = QGroupBox("Camera Intrinsics & Distortion")
+        form_group = QGroupBox("Camera Intrinsics && Distortion")
         form_layout = QFormLayout(form_group)
         form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         form_layout.setSpacing(6)
@@ -218,7 +219,7 @@ class CameraCalibrationDialog(QDialog):
         # Calibration Actions
         self.btn_calibrate = QPushButton("Compute Lens Calibration")
         self.btn_calibrate.setStyleSheet(
-            "background-color: #0078b0; color: #1a2024; font-weight: 600; padding: {THEME['sp_base']}px; border-radius: 3px;"
+            "background-color: #0078b0; color: #1a2024; font-weight: 600; padding: 8px; border-radius: 3px;"
         )
         self.btn_calibrate.clicked.connect(self._on_compute_calibration)
         right_layout.addWidget(self.btn_calibrate)
@@ -318,19 +319,21 @@ class CameraCalibrationDialog(QDialog):
             }}
         """)
 
+    @property
+    def model(self):
+        return self.session.model
+
     # -------------------------------------------------------------------------
     # Frame Management Actions
     # -------------------------------------------------------------------------
     def _add_image_frame(self, image: np.ndarray, name: str):
-        grid_size = (self.spin_cols.value(), self.spin_rows.value())
-        pattern_type = self.combo_pattern.currentText()
-        sq_size = self.spin_sq.value()
+        self.session.pattern = self.combo_pattern.currentText()
+        self.session.cols, self.session.rows = self.spin_cols.value(), self.spin_rows.value()
+        self.session.square_mm = self.spin_sq.value()
+        ok, _msg = self.session.add_image(image, name)
+        self._append_view_item(ok, name)
 
-        ok, msg, annotated = self.model.add_image(
-            image, name=name, pattern_type=pattern_type,
-            grid_size=grid_size, square_size_mm=sq_size
-        )
-
+    def _append_view_item(self, ok: bool, name: str):
         item = QListWidgetItem()
         if ok:
             item.setText(f"[OK] {name}")
@@ -349,7 +352,7 @@ class CameraCalibrationDialog(QDialog):
             "Images (*.png *.jpg *.jpeg *.bmp *.tif);;All Files (*)"
         )
         for fpath in files:
-            img = cv2.imread(fpath)
+            img = imread(fpath)
             if img is not None:
                 self._add_image_frame(img, os.path.basename(fpath))
 
@@ -365,27 +368,22 @@ class CameraCalibrationDialog(QDialog):
 
     def _on_generate_synthetic(self):
         """Generates synthetic distorted chessboard views at slight perspective angles."""
-        cols, rows = self.spin_cols.value(), self.spin_rows.value()
-        angle = np.random.choice([0.0, 5.0, -5.0, 8.0, -8.0])
-        distorted, ideal, meta = LensCalibrationModel.generate_synthetic_distorted_chessboard(
-            width=800, height=600, grid_size=(cols, rows), square_size_px=45,
-            k1=-0.28, k2=0.08, rotation_deg=angle
-        )
-        idx = self.list_views.count() + 1
-        self._add_image_frame(distorted, f"Synthetic View {idx} ({angle:+.0f} deg)")
+        self.session.pattern = self.combo_pattern.currentText()
+        self.session.cols, self.session.rows = self.spin_cols.value(), self.spin_rows.value()
+        self.session.square_mm = self.spin_sq.value()
+        ok, _msg = self.session.add_synthetic()
+        self._append_view_item(ok, self.session.views[-1]["name"])
 
     def _on_remove_view(self):
         row = self.list_views.currentRow()
-        if 0 <= row < len(self.model.calibration_images):
-            self.model.calibration_images.pop(row)
-            self.model.object_points_list.pop(row)
-            self.model.image_points_list.pop(row)
+        if 0 <= row < len(self.session.views):
+            self.session.remove(row)               # keeps the model's point lists in step with NG views
             self.list_views.takeItem(row)
             self._update_metrics_view()
             self._refresh_display()
 
     def _on_clear_views(self):
-        self.model.reset()
+        self.session.clear()
         self.list_views.clear()
         self.lbl_image.clear()
         self._update_metrics_view()
@@ -402,21 +400,15 @@ class CameraCalibrationDialog(QDialog):
         self._refresh_display()
 
     def _refresh_display(self):
-        if 0 <= self._selected_index < len(self.model.calibration_images):
-            frame_data = self.model.calibration_images[self._selected_index]
-            raw_img = frame_data["image"]
-            annotated_img = frame_data["annotated"]
-
-            if self._view_mode == "Corners" and annotated_img is not None:
-                disp_img = annotated_img
-            elif self._view_mode == "Undistorted" and self.model.is_calibrated:
-                disp_img = self.model.undistort(raw_img, alpha=0.0)
-            else:
-                disp_img = raw_img
-
+        if 0 <= self._selected_index < len(self.session.views):
+            view = self.session.views[self._selected_index]
+            mode = {"Corners": "Detected Corners", "Undistorted": "Undistorted (Rectified)"}.get(
+                self._view_mode, "Distorted (Raw)")
+            disp_img = self.session.preview(self._selected_index, mode)
+            raw_img = view["image"]
             self._render_image_to_label(disp_img)
             self.lbl_view_caption.setText(
-                f"Inspecting '{frame_data['name']}' ({raw_img.shape[1]}x{raw_img.shape[0]}) | Corners: {frame_data['corners_count']}"
+                f"Inspecting '{view['name']}' ({raw_img.shape[1]}x{raw_img.shape[0]}) | Corners: {view['corners']}"
             )
         else:
             self.lbl_image.clear()

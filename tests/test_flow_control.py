@@ -426,10 +426,8 @@ def test_menu_bar_corner_controls_and_telemetry(qapp):
     win = VisionMasterMainWindow()
     win.show()
     qapp.processEvents()
-    assert hasattr(win, "cbo_solution")
-    assert win.cbo_solution.count() >= 3
-    assert hasattr(win, "cbo_role")
-    assert win.cbo_role.count() >= 4
+    assert hasattr(win, "btn_project") and win.btn_project.menu() is not None
+    assert hasattr(win, "btn_role") and len(win.btn_role.menu().actions()) >= 3
     assert hasattr(win, "btn_menu_save")
 
     assert hasattr(win.flow_view, "telemetry_bar")

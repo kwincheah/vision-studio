@@ -34,7 +34,7 @@ from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTabWidget, QTableWidget,
     QTableWidgetItem, QHeaderView, QLabel, QPushButton, QWidget,
     QFormLayout, QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QCheckBox,
-    QScrollArea, QTreeWidget, QTreeWidgetItem, QDialogButtonBox
+    QScrollArea, QTreeWidget, QTreeWidgetItem
 )
 
 from vm_clone.core.base_tool import VisionToolBase, ToolExecutionResult, is_compatible_type
@@ -370,7 +370,9 @@ class ModuleConfigDialog(QDialog):
         def _commit(v):
             self.tool.set_param(key, v)
 
-        options = PARAM_ENUMS.get(key)
+        from vm_clone.core import param_schema
+        tool_name = getattr(self.tool, "tool_name", "")
+        options = param_schema.choices_for(tool_name, key) or (None if tool_name in param_schema.SCHEMA else PARAM_ENUMS.get(key))
         if isinstance(value, str) and options:
             editor = QComboBox()
             editor.addItems(options)

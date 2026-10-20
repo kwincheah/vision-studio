@@ -7,9 +7,11 @@ Matches HikRobot Vision Master Recognition and Defect Detection categories:
 - Defect Detection (Surface defect / scratch / dirt inspection)
 - Linear Edge Defect Detection (Edge profile tracking, notch and burr extraction)
 """
+import fnmatch
+
 import cv2
 import numpy as np
-from typing import Dict, Any, List
+from typing import Dict, Any
 from vm_clone.core.base_tool import VisionToolBase, ToolExecutionResult, ToolStatus, ToolPort, DataType
 from vm_clone.core.registry import register_tool
 
@@ -144,6 +146,22 @@ class Barcode1DTool(VisionToolBase):
         )
 
 
+_OCR_ENGINE: Any = None
+_OCR_ENGINE_ERROR: str = ""
+
+
+def _get_ocr_engine():
+    """Lazily create the shared OCR engine (RapidOCR / ONNX Runtime). None when unavailable."""
+    global _OCR_ENGINE, _OCR_ENGINE_ERROR
+    if _OCR_ENGINE is None and not _OCR_ENGINE_ERROR:
+        try:
+            from rapidocr_onnxruntime import RapidOCR
+            _OCR_ENGINE = RapidOCR()
+        except Exception as exc:  # ImportError, or a model/runtime load failure
+            _OCR_ENGINE_ERROR = f"{type(exc).__name__}: {exc}"
+    return _OCR_ENGINE
+
+
 @register_tool
 class OCRRecognitionTool(VisionToolBase):
     category = "Recognition"
@@ -160,31 +178,61 @@ class OCRRecognitionTool(VisionToolBase):
             "roi": [80, 490, 300, 60],
             "char_polarity": "White on Dark",  # White on Dark, Dark on White
             "min_confidence": 75.0,
-            "expected_pattern": "SN-VM-*"
+            "expected_pattern": "SN-*"  # wildcard pattern the text must match; blank = any text
         }
+
+    def _fail(self, message: str, status: ToolStatus = ToolStatus.NG) -> ToolExecutionResult:
+        return ToolExecutionResult(status=status, message=message,
+                                   outputs={"Text": "", "Confidence": 0.0})
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
         img = self.get_input_image(context)
         if img is None:
-            return ToolExecutionResult(status=ToolStatus.NG, message="No valid input image provided", outputs={"Text": "", "Confidence": 0.0})
+            return self._fail("No valid input image provided")
 
         gray = self.to_grayscale(img)
         rx, ry, rw, rh = self.get_roi("roi", [80, 490, 300, 60], img_shape=gray.shape)
 
         crop = gray[ry:ry+rh, rx:rx+rw]
         if crop.size == 0:
-            return ToolExecutionResult(status=ToolStatus.NG, message="Empty ROI crop", outputs={"Text": "", "Confidence": 0.0})
+            return self._fail("Empty ROI crop")
 
-        # Extract high contrast text blobs to verify text presence
-        _, th = cv2.threshold(crop, 180, 255, cv2.THRESH_BINARY)
-        nonzeros = cv2.countNonZero(th)
+        engine = _get_ocr_engine()
+        if engine is None:
+            return self._fail(
+                "OCR engine unavailable - install it with: pip install rapidocr-onnxruntime"
+                + (f" ({_OCR_ENGINE_ERROR})" if _OCR_ENGINE_ERROR else ""),
+                status=ToolStatus.ERROR)
 
-        # In PCB synthetic image, text at this location is "SN-VM-2026-X89"
-        recognized = "SN-VM-2026-X89" if nonzeros > 100 else ""
-        conf = 98.5 if len(recognized) > 0 else 0.0
+        # The recogniser is trained on dark text; present light-on-dark characters inverted.
+        polarity = str(self.get_param("char_polarity", "White on Dark"))
+        if polarity == "White on Dark":
+            crop = cv2.bitwise_not(crop)
+
+        try:
+            lines, _ = engine(cv2.cvtColor(crop, cv2.COLOR_GRAY2BGR))
+        except Exception as exc:
+            return self._fail(f"OCR failed: {type(exc).__name__}: {exc}", status=ToolStatus.ERROR)
+
+        lines = lines or []
+        # Reading order: top-to-bottom, then left-to-right.
+        lines = sorted(lines, key=lambda ln: (round(ln[0][0][1] / max(rh / 4.0, 1.0)), ln[0][0][0]))
+        recognized = " ".join(str(ln[1]).strip() for ln in lines).strip()
+        conf = (100.0 * float(np.mean([float(ln[2]) for ln in lines]))) if lines else 0.0
 
         min_conf = float(self.get_param("min_confidence", 75.0))
-        is_ok = (conf >= min_conf) and (len(recognized) > 0)
+        pattern = str(self.get_param("expected_pattern", "") or "").strip()
+        pattern_ok = (not pattern) or fnmatch.fnmatchcase(recognized, pattern)
+        is_ok = bool(recognized) and conf >= min_conf and pattern_ok
+
+        if not recognized:
+            verdict = "no text found"
+        elif conf < min_conf:
+            verdict = f"confidence below {min_conf:.0f}%"
+        elif not pattern_ok:
+            verdict = f"does not match '{pattern}'"
+        else:
+            verdict = "OK"
 
         overlays = [
             {"type": "rect", "box": [rx, ry, rw, rh], "color": (0, 240, 255), "label": f"OCR: {recognized}"}
@@ -192,7 +240,7 @@ class OCRRecognitionTool(VisionToolBase):
 
         return ToolExecutionResult(
             status=ToolStatus.OK if is_ok else ToolStatus.NG,
-            message=f"OCR Output: '{recognized}' (Confidence: {conf:.1f}%)",
+            message=f"OCR Output: '{recognized}' (Confidence: {conf:.1f}%) - {verdict}",
             outputs={"Text": recognized, "Confidence": conf},
             overlays=overlays
         )
@@ -339,7 +387,6 @@ class LinearEdgeDefectTool(VisionToolBase):
         if img is None:
             return ToolExecutionResult(status=ToolStatus.NG, message="No valid input image provided", outputs={"Burr_Count": 0, "Max_Deviation": 0.0})
 
-        gray = self.to_grayscale(img)
         p1 = self.get_param("start_pt", [80, 400])
         p2 = self.get_param("end_pt", [600, 400])
         if not isinstance(p1, (list, tuple)) or len(p1) < 2:

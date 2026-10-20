@@ -22,6 +22,13 @@ hidden_imports = [
     'PyQt6.QtGui',
     'PyQt6.QtWidgets',
     'PyQt6.QtSvg',
+    'PyQt6.QtQml',
+    'PyQt6.QtQuick',
+    'PyQt6.QtQuickWidgets',
+    'anthropic',
+    'keyring',
+    'keyring.backends.Windows',
+    'mcp',
     'cv2',
     'numpy',
 ] + collect_submodules('vm_clone')
@@ -30,6 +37,9 @@ hidden_imports = [
 datas = [
     ('vm_clone/samples/*.png', 'vm_clone/samples'),
     ('plugins', 'plugins'),
+    ('qml', 'qml'),                                    # the Qt Quick interface (main.py starts it)
+    ('vm_clone/flowgen/reference', 'vm_clone/flowgen/reference'),   # AI Gen reference the assistant reads
+    ('vm_clone/flowgen/recipes', 'vm_clone/flowgen/recipes'),
 ]
 
 # Include YOLO weights if present

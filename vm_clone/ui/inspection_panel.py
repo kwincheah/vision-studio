@@ -24,17 +24,17 @@ import logging
 LOG = logging.getLogger(__name__)
 from PyQt6.QtGui import QColor, QFont, QImage, QPixmap
 from PyQt6.QtWidgets import (
-    QAbstractItemView, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QFrame,
-    QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMessageBox,
-    QProgressBar, QPushButton, QSpinBox, QSplitter, QTableWidget, QTableWidgetItem,
-    QTabWidget, QTextEdit, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
+    QAbstractItemView, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QGroupBox,
+    QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMessageBox, QProgressBar,
+    QPushButton, QSplitter, QTableWidget, QTableWidgetItem, QTabWidget, QTextEdit,
+    QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
 from vm_clone.ui.inspection_controller import (
     DUPLICATE, FP, FN, FailureCase, InspectionController, filter_failures,
     failure_summary,
 )
-from vm_clone.ui.styles import SIZE, SPACE, THEME, TYPE
+from vm_clone.ui.styles import SIZE, SPACE, THEME
 
 #: Overlay colours, drawn from the approved palette so the failure view reads as part of
 #: the same application.  Ground truth and predictions are deliberately different hues
@@ -294,14 +294,13 @@ class FailureImageView(QLabel):
                   show_ground_truth: bool = True,
                   show_predictions: bool = True) -> Optional[str]:
         """Render an image with the relevant boxes.  Returns an error message or None."""
-        import cv2
-        import numpy as np
+        from vm_clone.core.imageio import imread
 
         if not image_path or not os.path.exists(image_path):
             self.show_placeholder(f"Image not available:\n{image_path}")
             return f"image not found: {image_path}"
 
-        image = cv2.imread(image_path)
+        image = imread(image_path)
         if image is None:
             self.show_placeholder(f"Could not read:\n{image_path}")
             return f"unreadable image: {image_path}"
@@ -853,7 +852,7 @@ class InspectionPanel(QWidget):
 
     def load_dataset_path(self, path: str) -> bool:
         try:
-            dataset = self.controller.load_dataset(path)
+            self.controller.load_dataset(path)
         except (FileNotFoundError, ValueError) as exc:
             self.controller.last_error = str(exc)
             QMessageBox.warning(self, "Dataset", str(exc))

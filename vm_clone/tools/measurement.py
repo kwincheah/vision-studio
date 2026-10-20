@@ -9,7 +9,7 @@ Measurement Tools matching HikRobot Vision Master Measurement category:
 """
 import cv2
 import numpy as np
-from typing import Dict, Any, List
+from typing import Dict, Any
 from vm_clone.core.base_tool import VisionToolBase, ToolExecutionResult, ToolStatus, ToolPort, DataType
 from vm_clone.core.registry import register_tool
 

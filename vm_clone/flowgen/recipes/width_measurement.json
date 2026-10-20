@@ -1,0 +1,55 @@
+{
+ "title": "Measure a width between two edges and check tolerance",
+ "when": "The user wants a dimension (width, gap, thickness) in pixels and a tolerance check.",
+ "spec": {
+  "name": "Width_Check",
+  "modules": [
+   {
+    "id": "src",
+    "tool": "Image Source",
+    "params": {
+     "source_type": "Synthetic",
+     "pattern_type": "PCB Inspection"
+    }
+   },
+   {
+    "id": "cal",
+    "tool": "Caliper",
+    "params": {
+     "line_p1": [
+      50,
+      150
+     ],
+     "line_p2": [
+      450,
+      150
+     ],
+     "caliper_mode": "Edge Pair"
+    }
+   },
+   {
+    "id": "tol",
+    "tool": "Condition Branch",
+    "params": {
+     "operator": "Between",
+     "threshold_low": 100.0,
+     "threshold_high": 300.0
+    }
+   }
+  ],
+  "links": [
+   {
+    "from": "src",
+    "from_port": "Image",
+    "to": "cal",
+    "to_port": "Image"
+   },
+   {
+    "from": "cal",
+    "from_port": "Distance",
+    "to": "tol",
+    "to_port": "Val_In"
+   }
+  ]
+ }
+}

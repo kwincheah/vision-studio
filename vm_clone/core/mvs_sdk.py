@@ -16,7 +16,7 @@ import time
 import ctypes
 import logging
 import xml.etree.ElementTree as ET
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple
 import numpy as np
 import cv2
 

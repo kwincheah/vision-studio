@@ -21,6 +21,34 @@ from vm_clone.ui.styles import THEME
 
 T = THEME
 
+
+def check_icon_url(colour: str = "#1a2024") -> str:
+    """A ``url(...)``-ready path to a tick mark PNG in ``colour`` (created on first use).
+
+    QSS cannot draw a tick, so the checked-indicator image is rendered once with OpenCV
+    into the temp folder; a failure just means checked boxes show a plain fill.
+    """
+    import os
+    import tempfile
+    try:
+        import cv2
+        import numpy as np
+        path = os.path.join(tempfile.gettempdir(), f"apex_check_{colour.lstrip('#')}.png")
+        if not os.path.exists(path):
+            size = 60
+            img = np.zeros((size, size, 4), np.uint8)
+            rgb = tuple(int(colour.lstrip('#')[k:k + 2], 16) for k in (4, 2, 0))
+            pts = np.array([[14, 31], [25, 42], [46, 18]], np.int32)
+            cv2.polylines(img, [pts], False, rgb + (255,), 7, cv2.LINE_AA)
+            ok, buf = cv2.imencode(".png", img)
+            if not ok:
+                return "none"
+            buf.tofile(path)
+        return path.replace("\\", "/")
+    except Exception:
+        return "none"
+
+
 VM_THEME_QSS = f"""
 /* =====================================================================
    Global base
@@ -421,9 +449,9 @@ QTreeWidget#resultTree::item:selected {{
    Flow-area zoom tool
    ===================================================================== */
 #flowZoomTool {{
-    background-color: rgba(18, 23, 31, 240);
-    border: 1px solid {T['vm_accent']};
-    border-radius: {T['r_control']}px;
+    background-color: {T['bg_surface_alt']};
+    border: 1px solid #aab3b9;
+    border-radius: {T['r_panel']}px;
 }}
 QLabel#flowZoomLabel {{
     color: {T['text_primary']};
@@ -433,13 +461,31 @@ QLabel#flowZoomLabel {{
 QToolButton#flowZoomButton {{
     background: transparent;
     border: none;
-    color: {T['text_secondary']};
+    color: {T['text_primary']};
     font-size: {T['fs_subtitle']}px;
     padding: 0;
 }}
 QToolButton#flowZoomButton:hover {{
-    background-color: {T['vm_accent_dim']};
+    background-color: {T['bg_control_hover']};
     border-radius: {T['r_control']}px;
+}}
+
+/* Flow telemetry readouts: three matching chips (the flow time carries the amber edge). */
+QWidget#flowTelemetryBar {{
+    background: transparent;
+}}
+QLabel#telemetryFlow, QLabel#telemetryTools, QLabel#telemetryAlgo {{
+    background-color: {T['bg_surface_alt']};
+    border: 1px solid #aab3b9;
+    border-radius: {T['r_panel']}px;
+    padding: 0px {T['sp_base']}px;
+    color: {T['text_secondary']};
+    font-size: {T['fs_caption']}px;
+}}
+QLabel#telemetryFlow {{
+    color: {T['text_primary']};
+    font-weight: {T['fw_demibold']};
+    border-color: {T['accent_border']};
 }}
 
 /* =====================================================================
@@ -510,17 +556,17 @@ QLabel#imageStripCaption {{
     font-size: {T['fs_body']}px;
 }}
 QComboBox#runScopeCombo {{
-    background-color: {T['vm_node']};
+    background-color: #ffffff;
     color: {T['text_primary']};
-    border: 1px solid {T['border_control']};
-    border-radius: {T['r_control']}px;
+    border: 1px solid #aab3b9;
+    border-radius: {T['r_panel']}px;
     padding: {T['sp_hair']}px {T['sp_base']}px;
     font-size: {T['fs_body']}px;
     min-height: {T['h_input']}px;
 }}
 QComboBox#runScopeCombo:hover {{
-    background-color: {T['border_subtle']};
-    border-color: {T['text_secondary']};
+    background-color: #ffffff;
+    border-color: #7d8991;
 }}
 QComboBox#runScopeCombo::drop-down {{
     border: none;
@@ -538,7 +584,7 @@ QPushButton#stripPlayButton, QToolButton#stripPlayButton {{
     background-color: #15803d;
     color: #ffffff;
     border: 1px solid #16a34a;
-    border-radius: {T['r_control']}px;
+    border-radius: {T['r_panel']}px;
     font-size: {T['fs_body']}px;
     font-weight: {T['fw_demibold']};
     padding: {T['sp_hair']}px {T['sp_loose']}px;
@@ -551,6 +597,19 @@ QPushButton#stripPlayButton:hover, QToolButton#stripPlayButton:hover {{
 QPushButton#stripPlayButton:pressed, QToolButton#stripPlayButton:pressed {{
     background-color: #14532d;
     border-color: #15803d;
+}}
+QPushButton#stripPlayButton[running="true"] {{
+    background-color: #b91c1c;
+    border-color: #dc2626;
+}}
+QPushButton#stripPlayButton[running="true"]:hover {{
+    background-color: #dc2626;
+    border-color: #ef4444;
+}}
+QPushButton#stripPlayButton[running="true"]:disabled {{
+    background-color: #8f5a5a;
+    border-color: #a97a7a;
+    color: #ffffff;
 }}
 #imageStripRow {{
     background-color: {T['vm_flyout_header']};
@@ -979,5 +1038,223 @@ QWidget#inspectionPanel QPushButton#primaryAction:disabled {{
        itself from its own contrast rule has no rule.  This still reads as inactive. */
     color: {T['text_secondary']};
     border-color: {T['border_subtle']};
+}}
+
+/* =====================================================================
+   Modern control layer
+   ---------------------------------------------------------------------
+   One consistent look for every input and button that sits on a light panel
+   or in a dialog: white fields, hairline neutral borders, 5 px corners, a
+   blue focus ring and a blue default action.  Chrome (toolbars, rail, status
+   bar) and the amber selection language are untouched - those are styled by
+   their own object names above, which out-rank these type selectors.
+   ===================================================================== */
+QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {{
+    background-color: #ffffff;
+    border: 1px solid #aab3b9;
+    border-radius: {T['r_panel']}px;
+    padding: 3px 8px;
+    min-height: 20px;
+    color: {T['text_primary']};
+    selection-background-color: {T['accent_primary']};
+    selection-color: #ffffff;
+}}
+QLineEdit:hover, QSpinBox:hover, QDoubleSpinBox:hover, QComboBox:hover {{
+    border-color: #7d8991;
+}}
+QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus, QSpinBox:focus,
+QDoubleSpinBox:focus, QComboBox:focus {{
+    border: 1px solid {T['accent_primary']};
+    background-color: #ffffff;
+}}
+QLineEdit:disabled, QPlainTextEdit:disabled, QTextEdit:disabled, QSpinBox:disabled,
+QDoubleSpinBox:disabled, QComboBox:disabled {{
+    background-color: #e9edef;
+    color: {T['text_muted']};
+    border-color: #cdd4d8;
+}}
+QLineEdit:read-only, QPlainTextEdit[readOnly="true"], QTextEdit[readOnly="true"] {{
+    background-color: #f3f5f6;
+}}
+QComboBox {{
+    padding-right: 22px;
+}}
+QComboBox::drop-down {{
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
+    width: 20px;
+    border: none;
+}}
+QComboBox QAbstractItemView {{
+    background-color: #ffffff;
+    border: 1px solid #aab3b9;
+    padding: 2px;
+    outline: 0;
+    selection-background-color: {T['accent_primary']};
+    selection-color: #ffffff;
+}}
+
+QPushButton {{
+    background-color: #f6f8f9;
+    color: {T['text_primary']};
+    border: 1px solid #aab3b9;
+    border-radius: {T['r_panel']}px;
+    padding: 4px 14px;
+    min-height: 20px;
+    min-width: 56px;
+}}
+QPushButton:hover {{
+    background-color: #e8edf0;
+    border-color: #7d8991;
+}}
+QPushButton:pressed {{
+    background-color: #d8dfe3;
+}}
+QPushButton:focus {{
+    border-color: {T['accent_primary']};
+}}
+QPushButton:disabled {{
+    background-color: #eceff0;
+    color: {T['text_muted']};
+    border-color: #d0d6d9;
+}}
+QPushButton:default {{
+    background-color: {T['accent_primary']};
+    border-color: #00638f;
+    color: #ffffff;
+    font-weight: {T['fw_demibold']};
+}}
+QPushButton:default:hover {{
+    background-color: #0a89c4;
+}}
+QPushButton:default:disabled {{
+    background-color: {T['bg_control']};
+    border-color: #aab3b9;
+    color: {T['text_secondary']};
+}}
+QPushButton:checked {{
+    background-color: {T['vm_accent_dim']};
+    border-color: {T['vm_accent']};
+}}
+QMessageBox QLabel, QInputDialog QLabel {{
+    background: transparent;
+}}
+QDialogButtonBox QPushButton, QMessageBox QPushButton {{
+    min-width: 80px;
+}}
+QCheckBox::indicator {{
+    width: 15px;
+    height: 15px;
+    border: 1px solid #8b959c;
+    border-radius: {T['r_panel']}px;
+    background-color: #ffffff;
+}}
+QCheckBox::indicator:hover {{
+    border-color: {T['accent_primary']};
+}}
+QScrollBar:vertical {{
+    background: transparent;
+    width: 12px;
+    margin: 0;
+}}
+QScrollBar::handle:vertical {{
+    background: #b4bcc2;
+    border-radius: {T['r_panel']}px;
+    min-height: 30px;
+    margin: 2px;
+}}
+QScrollBar::handle:vertical:hover {{
+    background: #8b959c;
+}}
+QScrollBar:horizontal {{
+    background: transparent;
+    height: 12px;
+    margin: 0;
+}}
+QScrollBar::handle:horizontal {{
+    background: #b4bcc2;
+    border-radius: {T['r_panel']}px;
+    min-width: 30px;
+    margin: 2px;
+}}
+QScrollBar::handle:horizontal:hover {{
+    background: #8b959c;
+}}
+QScrollBar::add-line, QScrollBar::sub-line {{
+    width: 0px;
+    height: 0px;
+}}
+QScrollBar::add-page, QScrollBar::sub-page {{
+    background: transparent;
+}}
+
+/* Menu-bar corner: the solution / role selectors sit inside the 30 px menu band, so they
+   drop the generic field padding and centre their text in a fixed 22 px box. */
+QComboBox#comboSolution, QComboBox#comboRole {{
+    min-height: 0px;
+    padding: 0px 22px 0px {T['sp_base']}px;
+    font-size: {T['fs_body']}px;
+}}
+QToolButton#btnMenuSave {{
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: {T['r_panel']}px;
+}}
+QToolButton#btnMenuSave:hover {{
+    background-color: {T['bg_control_hover']};
+    border-color: #aab3b9;
+}}
+
+/* Labels never paint their own box: a widget-level style on a QLabel otherwise fills it
+   with the palette window colour, which showed as grey bands across dialogs. */
+QLabel {{
+    background: transparent;
+}}
+
+/* Tables and trees: light striping and hairline grid instead of the heavy palette default. */
+QTableWidget, QTableView, QTreeWidget, QTreeView, QListWidget {{
+    alternate-background-color: #f1f4f5;
+    gridline-color: #dde2e5;
+}}
+QTableWidget::item:selected, QTableView::item:selected {{
+    background-color: {T['vm_accent_dim']};
+    color: {T['text_primary']};
+}}
+QCheckBox, QRadioButton {{
+    background: transparent;
+}}
+QCheckBox::indicator:checked {{
+    image: url({check_icon_url()});
+}}
+
+/* Menu-bar corner chips (project + role).  Flat controls that belong to the steel chrome:
+   a hairline outline, a lighter fill on hover, and the platform arrow for the menu. */
+QWidget#menuCornerWidget {{
+    background: transparent;
+}}
+QToolButton#projectChip, QToolButton#roleChip {{
+    background-color: transparent;
+    color: {T['text_primary']};
+    border: 1px solid #6a727a;
+    border-radius: {T['r_panel']}px;
+    padding: 0px 18px 0px {T['sp_base']}px;
+    font-size: {T['fs_body']}px;
+    font-weight: {T['fw_demibold']};
+    text-align: left;
+}}
+QToolButton#projectChip:hover, QToolButton#roleChip:hover, QToolButton#projectChip:open,
+QToolButton#roleChip:open {{
+    background-color: #98a0a7;
+    border-color: #4e565e;
+}}
+QToolButton#projectChip::menu-indicator, QToolButton#roleChip::menu-indicator {{
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
+    right: {T['sp_base']}px;
+}}
+QFrame#cornerSeparator {{
+    color: #6a727a;
+    background: #6a727a;
+    max-width: 1px;
 }}
 """

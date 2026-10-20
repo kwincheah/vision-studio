@@ -5,7 +5,6 @@ Provides Tool base class, Execution Context, Status, and Pin definitions.
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
-import time
 import numpy as np
 
 
@@ -80,11 +79,9 @@ class VisionToolBase:
 
     def _init_ports(self):
         """Define inputs and outputs."""
-        pass
 
     def _init_parameters(self):
         """Define parameter schema and default values."""
-        pass
 
     def get_param_defs(self) -> Dict[str, Any]:
         """Returns typed parameter schema definitions if defined."""
@@ -185,7 +182,12 @@ class VisionToolBase:
         if isinstance(current, (list, tuple)):
             if not isinstance(value, (list, tuple)):
                 return current
-            if current and len(value) != len(current):
+            if current and all(isinstance(c, (list, tuple)) for c in current):
+                # a list of points / pairs: any number of entries, each the same shape as the current ones
+                width = len(current[0])
+                if not all(isinstance(v, (list, tuple)) and len(v) == width for v in value):
+                    return current
+            elif current and len(value) != len(current):
                 return current
             return type(current)(value) if isinstance(current, tuple) else list(value)
         if isinstance(current, dict):

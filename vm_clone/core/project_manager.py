@@ -6,7 +6,6 @@ template scaffolding, loading, saving, and physical file deletion.
 import os
 import sys
 import json
-import time
 import re
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
@@ -200,6 +199,12 @@ class ProjectManager:
     # Project Scaffolding, Loading & Saving
     # =========================================================================
 
+    def project_path(self, name: str, directory: Optional[str] = None) -> Tuple[str, str]:
+        """Sanitised (project name, .vmp path) that ``create_project`` would use."""
+        clean_name = re.sub(r'[^\w\-_.]', '_', name.strip()) or "NewSolution"
+        target_dir = os.path.abspath(directory or self.default_projects_dir)
+        return clean_name, os.path.join(target_dir, f"{clean_name}.vmp")
+
     def create_project(
         self,
         name: str,
@@ -210,11 +215,8 @@ class ProjectManager:
         Create a new solution project from template, write file to disk,
         register in recent list, and return (solution, file_path).
         """
-        clean_name = re.sub(r'[^\w\-_.]', '_', name.strip()) or "NewSolution"
-        target_dir = os.path.abspath(directory or self.default_projects_dir)
-        os.makedirs(target_dir, exist_ok=True)
-
-        filepath = os.path.join(target_dir, f"{clean_name}.vmp")
+        clean_name, filepath = self.project_path(name, directory)
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
         # Resolve template
         sol = SolutionManager(name=clean_name)

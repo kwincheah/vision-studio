@@ -65,3 +65,18 @@ ehthumbs.db
 .env
 .env.*
 !.env.example
+
+# Local scratch / audit output
+audit.json
+_internal/
+.claude/
+
+# Internal audit / research reports (kept locally, not published)
+UI_UX_AUDIT_REPORT.md
+VISIONMASTER_ALIGNMENT_REPORT.md
+VISIONMASTER_RESEARCH_REPORT.md
+AUDIT_CHECKLIST.md
+docs/FUNCTIONAL_AUDIT_REPORT.md
+docs/UI_POLISH_AUDIT.md
+docs/USABILITY_REPORT.md
+docs/audit/

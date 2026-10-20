@@ -23,7 +23,7 @@ DIALOGS = [
     ("Settings", "Communication Configuration", "communication_config"),
     ("Tools", "Camera Lens Distortion Calibration Wizard...", "lens_calibration"),
     ("Tools", "N-Point Spatial Calibration Wizard", "npoint_calibration"),
-    ("Tools", "Calibration Target Generator", "calibration_target"),
+    ("Tools", "Calibration Target Generator...", "calibration_target"),
     ("System", "Camera Set", "camera_set"),
     ("System", "Controller Management", "controller_management"),
     ("System", "Log Viewer", "log_viewer"),

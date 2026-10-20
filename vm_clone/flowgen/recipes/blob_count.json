@@ -1,0 +1,84 @@
+{
+ "title": "Clean the image and count objects",
+ "when": "The user wants to count parts / particles: smooth, binarise, remove noise, then analyse connected regions.",
+ "spec": {
+  "name": "Blob_Count",
+  "modules": [
+   {
+    "id": "src",
+    "tool": "Image Source"
+   },
+   {
+    "id": "blur",
+    "tool": "Image Filter",
+    "params": {
+     "filter_type": "Gaussian",
+     "kernel_size": 5
+    }
+   },
+   {
+    "id": "bin",
+    "tool": "Image Binarization",
+    "params": {
+     "method": "Otsu"
+    }
+   },
+   {
+    "id": "open",
+    "tool": "Image Morphology",
+    "params": {
+     "operation": "Open",
+     "kernel_size": 3
+    }
+   },
+   {
+    "id": "blobs",
+    "tool": "BLOB Analysis",
+    "params": {
+     "min_area": 100
+    }
+   },
+   {
+    "id": "judge",
+    "tool": "Condition Branch",
+    "params": {
+     "operator": "Between",
+     "threshold_low": 1.0,
+     "threshold_high": 10.0
+    }
+   }
+  ],
+  "links": [
+   {
+    "from": "src",
+    "from_port": "Image",
+    "to": "blur",
+    "to_port": "Image"
+   },
+   {
+    "from": "blur",
+    "from_port": "Image",
+    "to": "bin",
+    "to_port": "Image"
+   },
+   {
+    "from": "bin",
+    "from_port": "Image",
+    "to": "open",
+    "to_port": "Image"
+   },
+   {
+    "from": "open",
+    "from_port": "Image",
+    "to": "blobs",
+    "to_port": "Image"
+   },
+   {
+    "from": "blobs",
+    "from_port": "Count",
+    "to": "judge",
+    "to_port": "Val_In"
+   }
+  ]
+ }
+}

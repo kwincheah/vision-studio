@@ -40,7 +40,7 @@ class ScriptTool(VisionToolBase):
         }
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
-        code = self.get_param("code", "")
+        code = str(self.get_param("code", "") or "")
         img = context.get("Image")
 
         outputs: Dict[str, Any] = {
@@ -50,7 +50,9 @@ class ScriptTool(VisionToolBase):
         }
         overlays: List[Dict[str, Any]] = []
 
-        local_env = {
+        # One namespace for globals *and* locals: with a separate locals dict, functions and
+        # comprehensions defined by the script cannot see `np`, `cv2`, `context`, ...
+        script_env = {
             "cv2": cv2,
             "np": np,
             "context": context,
@@ -59,7 +61,7 @@ class ScriptTool(VisionToolBase):
         }
 
         try:
-            exec(code, {}, local_env)
+            exec(code, script_env)
             st = ToolStatus.OK if outputs.get("Status") == "OK" else ToolStatus.NG
             return ToolExecutionResult(
                 status=st,

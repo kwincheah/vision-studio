@@ -187,3 +187,29 @@ def test_calibration_dialog_ui(qapp):
     assert "intrinsics" in applied_data[0]
     assert "distortion" in applied_data[0]
     dialog.deleteLater()
+
+
+def test_dialog_views_stay_aligned_with_the_model_when_a_view_is_ng(qapp, tmp_path):
+    """An NG view has a list row but no model entry; selecting / removing later rows must still hit
+    the right frame (this used to pop the wrong calibration view)."""
+    import cv2
+    import numpy as np
+    from vm_clone.ui.camera_calibration_dialog import CameraCalibrationDialog
+    dialog = CameraCalibrationDialog()
+    try:
+        dialog._on_clear_views()                       # the dialog seeds one synthetic view on open
+        dialog._add_image_frame(np.full((120, 160, 3), 200, np.uint8), "blank")      # NG: no pattern
+        dialog._on_generate_synthetic()
+        dialog._on_generate_synthetic()
+        assert [v["ok"] for v in dialog.session.views] == [False, True, True]
+        assert dialog.list_views.count() == 3 and len(dialog.model.object_points_list) == 2
+        dialog.list_views.setCurrentRow(1)
+        dialog._on_view_selection_changed(1)
+        assert "Synthetic View 2" in dialog.lbl_view_caption.text()
+        dialog._on_remove_view()                       # removes the first synthetic view, not the wrong one
+        assert [v["name"].split(" (")[0] for v in dialog.session.views] == ["blank", "Synthetic View 3"]
+        assert len(dialog.model.object_points_list) == 1 and dialog.list_views.count() == 2
+        dialog._on_clear_views()
+        assert dialog.list_views.count() == 0 and not dialog.model.object_points_list
+    finally:
+        dialog.deleteLater()

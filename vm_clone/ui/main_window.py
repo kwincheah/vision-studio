@@ -21,27 +21,25 @@ persistence, ROI drawing, layer filtering and CSV export.
 """
 import sys
 import os
-import time
-import json
+import logging
 import csv
 import cv2
+from vm_clone.core.imageio import imread, imwrite
 import numpy as np
-from typing import Optional, List, Dict, Any
+from typing import Optional
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
-    QDockWidget, QTreeWidget, QTreeWidgetItem, QToolBar, QPushButton,
-    QLabel, QTabWidget, QTableWidget, QTableWidgetItem, QHeaderView,
-    QFileDialog, QMessageBox, QStatusBar, QApplication, QInputDialog,
-    QLineEdit, QTabBar, QMenu, QDialog, QFormLayout, QSpinBox, QCheckBox,
-    QDialogButtonBox, QToolButton, QSizePolicy, QPlainTextEdit, QScrollArea,
-    QStyle,
-    QComboBox
+    QDockWidget, QTreeWidget, QTreeWidgetItem, QToolBar, QLabel,
+    QTabWidget, QTableWidget, QTableWidgetItem, QHeaderView, QFileDialog,
+    QMessageBox, QApplication, QInputDialog, QTabBar, QMenu,
+    QDialog, QFormLayout, QSpinBox, QCheckBox, QDialogButtonBox, QToolButton, QSizePolicy,
+    QPlainTextEdit, QScrollArea, QStyle, QFrame
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSlot, QMimeData, QPoint, QPointF, QSize
-from PyQt6.QtGui import (QIcon, QAction, QFont, QColor, QDrag, QKeySequence,
-                         QFontMetrics)
+from PyQt6.QtGui import (QIcon, QAction, QActionGroup, QFont, QColor, QDrag, QKeySequence,
+                         QFontMetrics, QPixmap, QPainter, QPen, QPainterPath)
 
-from vm_clone.core.registry import list_categories, create_tool_instance, get_tool_class
+from vm_clone.core.registry import list_categories, create_tool_instance, get_tool_class, new_instance_id
 from vm_clone.core.pipeline import VisionPipeline, SolutionManager
 from vm_clone.core.base_tool import ToolStatus
 from vm_clone.samples.pcb_solution import (
@@ -51,21 +49,25 @@ from vm_clone.samples.pcb_solution import (
     create_object_detection_solution
 )
 from vm_clone.core.project_manager import ProjectManager
+from vm_clone.core.sessions import apply_lens_calibration
+from vm_clone.core.formatting import format_flow_outputs
+from vm_clone.core.controller import ImagePool, ProjectState, RunEngine, auto_wire_image, make_module
 from vm_clone.ui.start_page import StartPageDialog, NewProjectDialog
 from vm_clone.ui.image_display import ImageDisplayArea
 from vm_clone.ui.flow_editor import FlowScene, FlowEditorView, NodeSignals, AddNodeCommand
 from vm_clone.ui.global_vars_dialog import GlobalVariablesDialog
-from vm_clone.ui.styles import INDUSTRIAL_THEME_QSS, THEME
+from vm_clone.ui.styles import THEME
 from vm_clone.ui.vm_theme import VM_THEME_QSS
 from vm_clone.ui.icons import get_category_icon, get_tool_icon, get_action_icon
-from vm_clone.ui.toolbox import ToolBoxPanel, get_brand_mark, CATEGORY_ORDER
+from vm_clone.ui.toolbox import ToolBoxPanel, get_brand_mark
 from vm_clone.ui.result_panel import ModuleResultPanel
-from vm_clone.ui.result_display import ResultDisplayArea, MODULE_LOG_HEADERS
+from vm_clone.ui.result_display import ResultDisplayArea
 from vm_clone.ui.module_config import ModuleConfigDialog
 from vm_clone.ui import layout_metrics as LM
 from vm_clone.ui.flow_overview import FlowOverviewWidget
-import vm_clone.tools
 
+
+logger = logging.getLogger("vm_clone.ui.main_window")
 
 class DraggableToolTree(QTreeWidget):
     """Tool Library tree supporting double-click and drag-and-drop onto flow canvas."""
@@ -201,6 +203,65 @@ class VisionMasterMainWindow(QMainWindow):
     #: What the bar itself spends on margins and its scroll buttons.
     FLOW_TAB_BAR_OVERHEAD = 12
 
+    #: Emitted from the worker thread when a flow cycle has finished (queued to the UI thread).
+    #: Execute flows on a worker thread so heavy modules never freeze the interface.
+    #: Tests set this False for deterministic, synchronous runs.
+    run_async = True
+
+    # -- names the rest of the window (and the tests) have always used; the state itself is
+    #    owned by the shared controller objects --
+    @property
+    def _image_flow(self) -> list:
+        return self.pool.items
+
+    @_image_flow.setter
+    def _image_flow(self, value: list) -> None:
+        self.pool.items = value
+
+    @property
+    def _current_image_flow_index(self) -> int:
+        return self.pool.index
+
+    @_current_image_flow_index.setter
+    def _current_image_flow_index(self, value: int) -> None:
+        self.pool.index = value
+
+    @property
+    def _run_busy(self) -> bool:
+        return self.engine.busy
+
+    @property
+    def _batch(self):
+        return self.engine.batch
+
+    @_batch.setter
+    def _batch(self, value) -> None:
+        self.engine.batch = value
+
+    @property
+    def _strip_run_active(self) -> bool:
+        return self.engine.strip_active
+
+    @property
+    def _stopping(self) -> bool:
+        return self.engine.stopping
+
+    @property
+    def current_project_path(self) -> Optional[str]:
+        return self.project.path
+
+    @current_project_path.setter
+    def current_project_path(self, value: Optional[str]) -> None:
+        self.project.path = value
+
+    @property
+    def _last_saved_snapshot(self) -> Optional[str]:
+        return self.project.saved
+
+    @_last_saved_snapshot.setter
+    def _last_saved_snapshot(self, value: Optional[str]) -> None:
+        self.project.saved = value
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Apex Industrial Vision Studio v4.3")
@@ -222,19 +283,36 @@ class VisionMasterMainWindow(QMainWindow):
         self.node_signals.validation_requested.connect(self.on_validate_active_flow)
         self.node_signals.configure_module.connect(self.on_open_module_config)
 
+        # All run / loop / stop / image-pool / project logic lives in vm_clone.core.controller,
+        # shared with the QML front end.  This window only presents it.
+        self.pool = ImagePool()
+        self.engine = RunEngine(
+            get_pipeline=lambda: self.pipeline,
+            get_solution=lambda: self.solution,
+            pool=self.pool,
+            is_async=lambda: self.run_async,
+            timer_active=lambda: self.run_timer.isActive(),
+            interval_ms=lambda: int(self.pipeline.run_interval_ms),
+            parent=self,
+        )
+        self.engine.cycle_started.connect(self._on_engine_cycle_started)
+        self.engine.cycle_finished.connect(self._on_engine_cycle_finished)
+        self.engine.state_changed.connect(self._update_run_button)
+        self.engine.image_selected.connect(self._on_engine_image_selected)
+        self.engine.progress.connect(lambda text: self._set_hint(text))
+        self.engine.run_finished.connect(lambda text: self._set_hint(text, 8000))
         self.run_timer = QTimer(self)
-        self.run_timer.timeout.connect(self.run_pipeline_step)
+        self.run_timer.timeout.connect(self._on_run_timer)
 
         self.selected_node_id = "node_source"
         self._locked = False
         self._toolbar_actions = {}
         self._image_strip_nodes: list = []
-        self._image_flow: list = []
-        self._current_image_flow_index: int = 0
         self._last_balance_width: int = 0
 
         # Project and solution manager for Startup Page & recent projects
         self.project_manager = ProjectManager()
+        self.project = ProjectState(self.project_manager)
         self.project_manager.seed_default_samples_if_empty()
         # Discover and load custom plugins
         from vm_clone.sdk.manager import PluginManager
@@ -269,7 +347,16 @@ class VisionMasterMainWindow(QMainWindow):
             self.flow_scene.select_node(first_id)
             self.on_node_selected(first_id)
         self._apply_responsive_chrome()
+        self.project.path = None
         self._last_saved_snapshot = self._take_solution_snapshot()
+        self._refresh_project_chip()
+        self._role_actions["Engineer"].setChecked(True)
+        self.btn_role.setText("Engineer")
+        # keep the unsaved-changes dot and Save button current while the user edits
+        self._chip_timer = QTimer(self)
+        self._chip_timer.setInterval(1500)
+        self._chip_timer.timeout.connect(self._refresh_project_chip)
+        self._chip_timer.start()
         self.run_pipeline_step()
 
     @property
@@ -320,14 +407,9 @@ class VisionMasterMainWindow(QMainWindow):
         tools_menu = mb.addMenu("&Tools")
         self._add_action(tools_menu, "Camera Lens Distortion Calibration Wizard...", self.on_open_lens_calibration_wizard)
         self._add_action(tools_menu, "N-Point Spatial Calibration Wizard", self.on_calibration_wizard)
-        self._add_action(tools_menu, "Calibration Target Generator",
-                         lambda: self._info("Calibration Target Generator",
-                                            "Generates a 9-point calibration target image and its\n"
-                                            "world-coordinate table for N-point spatial calibration."))
-        self._add_action(tools_menu, "Module Generator",
-                         lambda: self._info("Module Generator",
-                                            "Scaffolds a new vision module with ports, parameters and\n"
-                                            "the plugin registration boilerplate."))
+        self._add_action(tools_menu, "Calibration Target Generator...", self.on_generate_calibration_target)
+        self._add_action(tools_menu, "Module Generator...",
+                         lambda: self.on_open_plugin_manager(initial_tab=3))
         self._add_action(tools_menu, "Plugin Manager...", self.on_open_plugin_manager)
         self._add_action(tools_menu, "Plugin Marketplace...", lambda: self.on_open_plugin_manager(initial_tab=1))
         self._add_action(tools_menu, "Create Vision Plugin...", lambda: self.on_open_plugin_manager(initial_tab=3))
@@ -369,7 +451,7 @@ class VisionMasterMainWindow(QMainWindow):
                          self.on_open_experiment_folder)
 
         # --- View ---------------------------------------------------------
-        view_menu = self._init_view_menu(mb)
+        self._init_view_menu(mb)
 
         # --- Help ---------------------------------------------------------
         help_menu = mb.addMenu("&Help")
@@ -380,37 +462,69 @@ class VisionMasterMainWindow(QMainWindow):
         self._add_action(help_menu, "Version Information", self.on_version_info)
         self._add_action(help_menu, "About Apex Industrial Vision Studio", self.on_about)
 
-        # Figure 6-2: Top Right Corner Widget: Solution Name dropdown + Save + Role Switchover
+        # Figure 6-2: top-right corner - project menu, save, role switch.
         corner = QWidget()
         corner.setObjectName("menuCornerWidget")
         cl = QHBoxLayout(corner)
-        cl.setContentsMargins(0, 0, 8, 0)
+        cl.setContentsMargins(0, 3, 8, 3)
         cl.setSpacing(6)
+        cl.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
-        self.cbo_solution = QComboBox()
-        self.cbo_solution.setObjectName("comboSolution")
-        self.cbo_solution.setMinimumWidth(130)
-        self.cbo_solution.setFixedHeight(22)
-        self.cbo_solution.addItems(["PCB_AOI_Solution", "Robot_Calibration_Solution", "Precision_Measurement_Solution"])
-        self.cbo_solution.setToolTip("Currently-Loaded Solution (Figure 6-2 Item 3)")
-        self.cbo_solution.currentIndexChanged.connect(self._on_solution_combo_changed)
-        cl.addWidget(self.cbo_solution)
+        # Project chip: shows the loaded solution (and a dot while it has unsaved edits) and
+        # opens the file menu - open, save, recent projects and the sample solutions.
+        self.btn_project = QToolButton()
+        self.btn_project.setObjectName("projectChip")
+        self.btn_project.setIcon(get_action_icon("open", 16, QColor(THEME["text_primary"])))
+        self.btn_project.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.btn_project.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.btn_project.setFixedHeight(24)
+        # Fixed width: the corner widget is laid out once by the menu bar, so a chip that
+        # grew with its text (e.g. when the unsaved dot appears) would push the role chip out.
+        self.btn_project.setFixedWidth(210)
+        self.project_menu = QMenu(self.btn_project)
+        self.project_menu.aboutToShow.connect(self._populate_project_menu)
+        self.btn_project.setMenu(self.project_menu)
+        cl.addWidget(self.btn_project)
 
         self.btn_menu_save = QToolButton()
         self.btn_menu_save.setObjectName("btnMenuSave")
-        self.btn_menu_save.setIcon(get_action_icon("save", 18))
+        self.btn_menu_save.setIcon(get_action_icon("save", 16, QColor(THEME["text_primary"])))
         self.btn_menu_save.setFixedSize(24, 24)
         self.btn_menu_save.setToolTip("Save Solution (Ctrl+S)")
         self.btn_menu_save.clicked.connect(self.on_save_solution)
         cl.addWidget(self.btn_menu_save)
 
-        self.cbo_role = QComboBox()
-        self.cbo_role.setObjectName("comboRole")
-        self.cbo_role.setMinimumWidth(125)
-        self.cbo_role.setFixedHeight(22)
-        self.cbo_role.addItems(["Operating Mode", "Administrator", "Engineer", "Operator"])
-        self.cbo_role.setToolTip("Role Switchover (Figure 6-2 Item 4)")
-        cl.addWidget(self.cbo_role)
+        sep = QFrame()
+        sep.setObjectName("cornerSeparator")
+        sep.setFrameShape(QFrame.Shape.VLine)
+        sep.setFixedHeight(16)
+        cl.addWidget(sep)
+
+        # Role chip: Operator freezes editing; Engineer and Administrator may edit.
+        self.btn_role = QToolButton()
+        self.btn_role.setObjectName("roleChip")
+        self.btn_role.setIcon(self._user_glyph(16, QColor(THEME["text_primary"])))
+        self.btn_role.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.btn_role.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.btn_role.setFixedHeight(24)
+        self.btn_role.setMinimumWidth(124)
+        role_menu = QMenu(self.btn_role)
+        self._role_group = QActionGroup(self)
+        self._role_group.setExclusive(True)
+        self._role_actions = {}
+        for role, tip in (("Administrator", "Full access"),
+                          ("Engineer", "Build and edit flows"),
+                          ("Operator", "Run flows only - editing is locked")):
+            act = role_menu.addAction(f"{role}\t{tip}" if False else role)
+            act.setCheckable(True)
+            act.setToolTip(tip)
+            act.setStatusTip(tip)
+            self._role_group.addAction(act)
+            self._role_actions[role] = act
+            act.triggered.connect(lambda _c=False, r=role: self._set_role(r))
+        self.btn_role.setMenu(role_menu)
+        self.btn_role.setToolTip("Role - Operator locks flow editing")
+        cl.addWidget(self.btn_role)
 
         mb.setCornerWidget(corner, Qt.Corner.TopRightCorner)
 
@@ -462,13 +576,117 @@ class VisionMasterMainWindow(QMainWindow):
     def _show_workspace_tab(self, index: int):
         self.tab_workspace.setCurrentIndex(index)
 
-    def _on_solution_combo_changed(self, index: int):
-        if index == 0:
-            self._load_solution_instance(create_pcb_inspection_solution())
-        elif index == 1:
-            self._load_solution_instance(create_calibration_robot_solution())
-        elif index == 2:
-            self._load_solution_instance(create_precision_measurement_solution())
+    _SOLUTION_TEMPLATES = {
+        "PCB Inspection": create_pcb_inspection_solution,
+        "Precision Measurement": create_precision_measurement_solution,
+        "Robot Calibration": create_calibration_robot_solution,
+    }
+
+    @staticmethod
+    def _user_glyph(size: int, color: QColor) -> QIcon:
+        """Small head-and-shoulders glyph for the role chip."""
+        pix = QPixmap(size * 2, size * 2)
+        pix.fill(Qt.GlobalColor.transparent)
+        p = QPainter(pix)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        pen = QPen(color, 2.4)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        p.setPen(pen)
+        p.setBrush(Qt.BrushStyle.NoBrush)
+        u = size * 2 / 18.0
+        p.drawEllipse(QPointF(9 * u, 6.2 * u), 3.0 * u, 3.0 * u)
+        path = QPainterPath()
+        path.moveTo(3 * u, 15.5 * u)
+        path.cubicTo(3.5 * u, 10.5 * u, 14.5 * u, 10.5 * u, 15 * u, 15.5 * u)
+        p.drawPath(path)
+        p.end()
+        pix.setDevicePixelRatio(2.0)
+        return QIcon(pix)
+
+    def _refresh_project_chip(self):
+        """Show the loaded solution's name, a dot for unsaved edits, and the save state."""
+        name = self.solution.name or "Untitled"
+        dirty = False
+        if not self._run_busy:
+            try:
+                dirty = self.has_unsaved_changes()
+            except Exception:
+                dirty = False
+        shown = QFontMetrics(self.btn_project.font()).elidedText(
+            name, Qt.TextElideMode.ElideMiddle, 150)
+        self.btn_project.setText(("\u25CF " if dirty else "") + shown)
+        path = self.current_project_path
+        self.btn_project.setToolTip(
+            f"{name}\n{path}" if path else f"{name}\n(not saved to a file yet)")
+        if dirty:
+            self.btn_project.setToolTip(self.btn_project.toolTip() + "\nUnsaved changes")
+        self.btn_menu_save.setEnabled(dirty or not path)
+
+    def _populate_project_menu(self):
+        menu = self.project_menu
+        menu.clear()
+        menu.addAction("Open Solution...", self.on_open_solution).setShortcut("Ctrl+O")
+        menu.addAction("Save", self.on_save_solution).setShortcut("Ctrl+S")
+        menu.addAction("Save As...", self.on_save_solution_as).setShortcut("Ctrl+Shift+S")
+        menu.addSeparator()
+        recent = [r for r in self.project_manager.get_recent_projects()
+                  if r.get("path") and os.path.exists(r["path"])][:8]
+        recent_menu = menu.addMenu("Recent Projects")
+        recent_menu.setEnabled(bool(recent))
+        for r in recent:
+            act = recent_menu.addAction(r.get("name") or os.path.basename(r["path"]))
+            act.setToolTip(r["path"])
+            act.triggered.connect(lambda _c=False, pth=r["path"]: self.open_solution_path(pth))
+        sample_menu = menu.addMenu("Sample Solutions")
+        for label, factory in self._SOLUTION_TEMPLATES.items():
+            act = sample_menu.addAction(label)
+            act.triggered.connect(lambda _c=False, f=factory: self._load_solution_instance(f()))
+        menu.addSeparator()
+        menu.addAction("Start Page...", self.show_start_page)
+        if self.current_project_path:
+            menu.addAction("Show in Folder", lambda: self._reveal_project())
+
+    def _reveal_project(self):
+        import subprocess
+        path = self.current_project_path
+        if path and os.path.exists(path):
+            if sys.platform == "win32":
+                subprocess.Popen(["explorer", "/select,", os.path.normpath(path)])
+            else:
+                from PyQt6.QtCore import QUrl
+                from PyQt6.QtGui import QDesktopServices
+                QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(path)))
+
+    def open_solution_path(self, path: str) -> bool:
+        """Open a solution file (after offering to save unsaved edits). True on success."""
+        if not self._confirm_replace_solution():
+            return False
+        try:
+            sol = self.project_manager.load_project(path)
+            self.load_solution_manager(sol, filepath=path)
+        except Exception as e:
+            QMessageBox.critical(self, "Load Error", f"Failed to load solution:\n{e}")
+            return False
+        return True
+
+    def _set_role(self, role: str):
+        self.btn_role.setText(role)
+        self._role_actions[role].setChecked(True)
+        operator = role == "Operator"
+        self.btn_lock.setChecked(operator)          # fires on_toggle_lock
+        self.btn_lock.setEnabled(not operator)
+        self._set_hint(f"Role: {role}" + (" - editing locked" if operator else ""), 3000)
+
+    def _confirm_replace_solution(self) -> bool:
+        """Offer to save unsaved edits before the loaded solution is replaced."""
+        if not self.has_unsaved_changes():
+            return True
+        choice = self._confirm_discard_changes("before continuing")
+        if choice == "cancel":
+            return False
+        if choice == "save":
+            return self._save_solution(prompt=not self.current_project_path)
+        return True
 
     # =====================================================================
     # Control Toolbar - resource group (manual p.70, first icon row)
@@ -672,6 +890,7 @@ class VisionMasterMainWindow(QMainWindow):
 
         # View 1: Flow Diagram Editor (manual p.74)
         self.flow_scene = FlowScene(self.pipeline, self.node_signals)
+        self.flow_scene.edit_guard = self.wait_for_run
         self.flow_view = FlowEditorView(self.flow_scene)
         self.tab_workspace.addTab(self.flow_view, "Flow Diagram")
 
@@ -710,13 +929,13 @@ class VisionMasterMainWindow(QMainWindow):
         self.act_layer_all = QAction("All Overlays", self, checkable=True)
         self.act_layer_all.setChecked(True)
         self.act_layer_all.toggled.connect(self.on_toggle_layer_all)
-        self.act_layer_rois = QAction("ROIs & Defect Boxes", self, checkable=True)
+        self.act_layer_rois = QAction("ROIs && Defect Boxes", self, checkable=True)
         self.act_layer_rois.setChecked(True)
         self.act_layer_rois.toggled.connect(self.on_update_layers)
-        self.act_layer_metrics = QAction("Measurements & Labels", self, checkable=True)
+        self.act_layer_metrics = QAction("Measurements && Labels", self, checkable=True)
         self.act_layer_metrics.setChecked(True)
         self.act_layer_metrics.toggled.connect(self.on_update_layers)
-        self.act_layer_datums = QAction("Datum & Crosshairs", self, checkable=True)
+        self.act_layer_datums = QAction("Datum && Crosshairs", self, checkable=True)
         self.act_layer_datums.setChecked(True)
         self.act_layer_datums.toggled.connect(self.on_update_layers)
         self.act_layer_reticle = QAction("Coordinate Reticle Crosshair", self, checkable=True)
@@ -951,6 +1170,7 @@ class VisionMasterMainWindow(QMainWindow):
         self.image_display.image_selected.connect(self.on_image_strip_selected)
         self.image_display.add_image_requested.connect(self.on_load_image_file)
         self.image_display.clear_images_requested.connect(self.on_clear_image_flow)
+        self.image_display.add_folder_requested.connect(self.on_load_image_folder)
         self.image_display.run_requested.connect(self.on_strip_run_requested)
         self.image_canvas.image_file_dropped.connect(self.load_image_from_path)
         self.data_tabs.addTab(self.image_display, "Image")
@@ -1491,6 +1711,7 @@ class VisionMasterMainWindow(QMainWindow):
     # =====================================================================
     @pyqtSlot()
     def on_undo(self):
+        self.wait_for_run()
         if self.flow_scene.undo_stack.canUndo():
             text = self.flow_scene.undo_stack.undoText()
             self.flow_scene.undo_stack.undo()
@@ -1501,6 +1722,7 @@ class VisionMasterMainWindow(QMainWindow):
 
     @pyqtSlot()
     def on_redo(self):
+        self.wait_for_run()
         if self.flow_scene.undo_stack.canRedo():
             text = self.flow_scene.undo_stack.redoText()
             self.flow_scene.undo_stack.redo()
@@ -1517,6 +1739,7 @@ class VisionMasterMainWindow(QMainWindow):
 
     @pyqtSlot()
     def on_camera_set(self):
+        self.wait_for_run()
         from vm_clone.ui.camera_dialog import CameraManagementDialog
         src_node = None
         for nid, node in self.pipeline.nodes.items():
@@ -1530,7 +1753,7 @@ class VisionMasterMainWindow(QMainWindow):
         def _apply_selected_cam(dev_id: str, params: dict):
             nonlocal src_node
             if src_node is None:
-                src_node_id = f"src_{int(time.time() * 1000) % 10000}"
+                src_node_id = new_instance_id("src")
                 from vm_clone.core.registry import create_tool_instance
                 src_node = create_tool_instance("Image Source", src_node_id, "01_Acquisition")
                 self.pipeline.add_node(src_node)
@@ -1564,32 +1787,35 @@ class VisionMasterMainWindow(QMainWindow):
     def on_controller_management(self):
         self._info(
             "Controller Management",
-            "No external motion controller is bound to this solution.\n\n"
-            "Add a controller to exchange inspection results (position, verdict)\n"
-            "with a PLC or robot over the Communication Management channel."
+            "This build has no separate controller layer.\n"
+            "To exchange results with a PLC or robot, add a TCP Send module to a flow\n"
+            "(Communication category) and set its mode, IP address, port and format."
         )
 
     @pyqtSlot()
     def on_global_trigger(self):
         self._info(
             "Global Trigger",
-            "Global triggers fire a flow from an external event or a string command.\n\n"
-            "Available event sources: hardware I/O line, TCP string, timer."
+            "Flows are started from the toolbar (Once / Continuously) or by a Trigger\n"
+            "module in another flow. Use Multi-Flow > 'Set as trigger flow' to choose the\n"
+            "flow that the overview treats as the converging trigger."
         )
 
     @pyqtSlot()
     def on_global_script(self):
-        script = getattr(self, "_global_script_text",
-                         "# Global script: runs once per flow cycle\n"
-                         "# Available: GlobalVariable, inputs, results\n"
-                         "def process(context):\n"
-                         "    context.set_global('CycleStamp', 1)\n")
+        script = self.solution.global_script or (
+            "# Global script: runs after every flow cycle.\n"
+            "# context.results   -> {module name: verdict} of the cycle just run\n"
+            "# context.get_global(name, default) / context.set_global(name, value)\n"
+            "def process(context):\n"
+            "    pass\n")
         text, ok = QInputDialog.getMultiLineText(
-            self, "Global Script", "Global script source (executed by the solution):", script
+            self, "Global Script", "Global script source (saved with the solution):", script
         )
         if ok:
-            self._global_script_text = text
-            self._set_hint("Global script updated", 3000)
+            self.solution.global_script = text.strip()
+            self._set_hint("Global script updated" if self.solution.global_script
+                           else "Global script cleared", 3000)
 
     @pyqtSlot()
     def on_help_manual(self):
@@ -1648,39 +1874,72 @@ class VisionMasterMainWindow(QMainWindow):
     def on_performance_options(self):
         self._info(
             "Performance Options",
-            "Continuous cycle interval is configured per flow\n"
-            "(right-click a flow tab -> Flow Settings...).\n\n"
-            "Image processing runs on the flow executor so the interface stays responsive."
+            "Continuous cycle interval, stop-on-NG and the flow timeout are configured\n"
+            "per flow (right-click a flow tab -> Flow Settings...).\n"
+            "Flows execute on a background worker, so the interface stays responsive;"+chr(10)+
+            "a new run requested while one is active is queued and runs next."
         )
 
     @pyqtSlot()
     def on_hardware_trigger_settings(self):
         self._info(
             "Hardware Trigger Settings",
-            "Trigger source: Software (free-run) / Line 0 / Encoder\n"
-            "Debounce: 0 ms      Strobe delay: 0 us\n\n"
-            "This build runs the flow from the software trigger."
+            "Hardware / encoder triggering is not available in this build.\n"
+            "Flows run from the software trigger (Once / Continuously). Camera IO modules\n"
+            "drive strobe / result outputs only on supported cameras."
         )
 
     @pyqtSlot()
     def on_communication_config(self):
         self._info(
             "Communication Management",
-            "Send Event: TCP Client -> 127.0.0.1:8000 (JSON payload)\n"
-            "Receive Event: disabled\n"
-            "Heartbeat: 1000 ms\n\n"
-            "Use the TCP Send module inside a flow to emit a result payload."
+            "Communication is configured per module, not globally.\n"
+            "TCP Send: mode (Simulation log / TCP Client), IP address, port, prefix,\n"
+            "suffix and CSV / JSON / plain-text format.\n"
+            "Add a TCP Send module to a flow to transmit its result payload."
         )
 
     @pyqtSlot()
     def on_calibration_wizard(self):
-        issues = [
-            {"severity": "info", "node_id": "Wizard",
-             "message": "N-point spatial calibration converts pixel (u, v) into world (X, Y) in mm."},
-            {"severity": "info", "node_id": "Wizard",
-             "message": "Add an 'N-Point Calibration' module to the flow and set Calibration Mode."},
-        ]
-        FlowValidationDialog(issues, self, title="Calibration Wizard").exec()
+        """Insert (or select) an N-Point Calibration module, which owns the point tables."""
+        for nid in self.pipeline.execution_order:
+            if self.pipeline.nodes[nid].tool_name == "N-Point Calibration":
+                self.flow_scene.select_node(nid)
+                self._set_hint("Edit the pixel / world point pairs in the N-Point Calibration module", 5000)
+                return
+        self.on_add_tool_by_name("N-Point Calibration")
+        self._set_hint("N-Point Calibration module added - set its pixel / world point pairs", 5000)
+
+    def on_generate_calibration_target(self, *_):
+        """Render a printable calibration target and save it as an image."""
+        from vm_clone.core.target_generator import PATTERNS, make_calibration_target
+        pattern, ok = QInputDialog.getItem(
+            self, "Calibration Target Generator", "Pattern:", list(PATTERNS), 0, False)
+        if not ok:
+            return
+        cols, ok = QInputDialog.getInt(
+            self, "Calibration Target Generator",
+            "Squares / dots per row:", 10 if pattern == "Chessboard" else 7, 3, 40)
+        if not ok:
+            return
+        rows, ok = QInputDialog.getInt(
+            self, "Calibration Target Generator",
+            "Squares / dots per column:", 7 if pattern == "Chessboard" else 5, 3, 40)
+        if not ok:
+            return
+        fpath, _ = QFileDialog.getSaveFileName(
+            self, "Save Calibration Target", f"calibration_{pattern.split()[0].lower()}.png",
+            "PNG Image (*.png);;JPEG Image (*.jpg);;All Files (*.*)")
+        if not fpath:
+            return
+        try:
+            img = make_calibration_target(pattern, cols, rows)
+            if not imwrite(fpath, img):
+                raise OSError(f"could not write '{fpath}' (unsupported extension or path)")
+        except Exception as e:
+            QMessageBox.critical(self, "Calibration Target", f"Failed to save target: {e}")
+            return
+        self._set_hint(f"Saved {pattern} target ({cols}x{rows}) to {fpath}", 6000)
 
     @pyqtSlot()
     def on_open_lens_calibration_wizard(self):
@@ -1698,43 +1957,12 @@ class VisionMasterMainWindow(QMainWindow):
 
     def on_lens_calibration_applied(self, calib_data: dict):
         """Applies calibration results directly to the active pipeline."""
-        calib_node_id = None
-        for nid, node in self.pipeline.nodes.items():
-            if node.tool_name == "Lens Distortion Calibration":
-                calib_node_id = nid
-                break
-
-        if calib_node_id is None:
-            calib_node_id = f"lens_calib_{int(time.time())}"
-            calib_tool = create_tool_instance("Lens Distortion Calibration", calib_node_id, "LensDistortionCorrection")
-            if calib_tool:
-                self.pipeline.add_node(calib_tool)
-                src_id = None
-                for nid, node in self.pipeline.nodes.items():
-                    if node.tool_name == "Image Source":
-                        src_id = nid
-                        break
-                if src_id:
-                    self.pipeline.connect(src_id, "Image", calib_node_id, "Image", force=True)
-
-        node = self.pipeline.nodes.get(calib_node_id)
-        if node:
-            intrinsics = calib_data.get("intrinsics", {})
-            dist = calib_data.get("distortion", {})
-            node.set_param("mode", "Manual Coefficients")
-            node.set_param("manual_fx", intrinsics.get("fx", 650.0))
-            node.set_param("manual_fy", intrinsics.get("fy", 650.0))
-            node.set_param("manual_cx", intrinsics.get("cx", 400.0))
-            node.set_param("manual_cy", intrinsics.get("cy", 300.0))
-            node.set_param("manual_k1", dist.get("k1", -0.15))
-            node.set_param("manual_k2", dist.get("k2", 0.03))
-            node.set_param("manual_p1", dist.get("p1", 0.0))
-            node.set_param("manual_p2", dist.get("p2", 0.0))
-
-            if hasattr(self, "flow_scene"):
-                self.flow_scene.build_from_pipeline(preserve_positions=True)
-            if hasattr(self, "inspector"):
-                self.inspector.set_selected_node(node)
+        self.wait_for_run()
+        node = apply_lens_calibration(self.pipeline, calib_data)
+        if hasattr(self, "flow_scene"):
+            self.flow_scene.build_from_pipeline(preserve_positions=True)
+        if hasattr(self, "inspector"):
+            self.inspector.set_selected_node(node)
 
     def on_open_plugin_manager(self, initial_tab: int = 0):
         from vm_clone.ui.plugin_dialog import PluginManagerDialog
@@ -1837,6 +2065,7 @@ class VisionMasterMainWindow(QMainWindow):
 
     @pyqtSlot(int)
     def on_flow_tab_changed(self, index: int):
+        self.wait_for_run()
         flow_names = list(self.solution.flows.keys())
         if 0 <= index < len(flow_names):
             target_name = flow_names[index]
@@ -1849,6 +2078,7 @@ class VisionMasterMainWindow(QMainWindow):
 
     @pyqtSlot(int)
     def on_flow_tab_closed(self, index: int):
+        self.wait_for_run()
         flow_names = list(self.solution.flows.keys())
         if len(flow_names) <= 1:
             self.statusBar().showMessage("Cannot close primary sub-flow.", 2500)
@@ -1874,21 +2104,22 @@ class VisionMasterMainWindow(QMainWindow):
 
         menu = QMenu(self)
         act_rename = menu.addAction(get_action_icon("edit"), f"Rename '{flow_name}'...")
-        act_copy = menu.addAction(get_action_icon("copy"), f"Duplicate Flow")
-        act_settings = menu.addAction(get_action_icon("settings"), f"Flow Settings...")
+        act_copy = menu.addAction(get_action_icon("copy"), "Duplicate Flow")
+        act_settings = menu.addAction(get_action_icon("settings"), "Flow Settings...")
         menu.addSeparator()
-        act_export_xml = menu.addAction(get_action_icon("save"), f"Export Flow as XML...")
-        act_export = menu.addAction(get_action_icon("save"), f"Export Flow (.prc / .xml)...")
-        act_import = menu.addAction(get_action_icon("open"), f"Import Flow (.prc / .xml)...")
+        act_export_xml = menu.addAction(get_action_icon("save"), "Export Flow as XML...")
+        act_export = menu.addAction(get_action_icon("save"), "Export Flow (.prc / .xml)...")
+        act_import = menu.addAction(get_action_icon("open"), "Import Flow (.prc / .xml)...")
         menu.addSeparator()
-        act_validate = menu.addAction(get_action_icon("validate"), f"Validate Flow Integrity")
-        act_del = menu.addAction(get_action_icon("stop"), f"Delete Flow")
+        act_validate = menu.addAction(get_action_icon("validate"), "Validate Flow Integrity")
+        act_del = menu.addAction(get_action_icon("stop"), "Delete Flow")
         if len(flow_names) <= 1:
             act_del.setEnabled(False)
 
         action = menu.exec(self.flow_tab_bar.mapToGlobal(pos))
         if action == act_rename:
             new_name, ok = QInputDialog.getText(self, "Rename Flow", "New flow name:", text=flow_name)
+            new_name = (new_name or "").strip()
             if ok and new_name and new_name != flow_name:
                 if new_name in self.solution.flows:
                     QMessageBox.warning(self, "Rename Error", f"A flow named '{new_name}' already exists.")
@@ -1914,6 +2145,7 @@ class VisionMasterMainWindow(QMainWindow):
             )
             if fpath:
                 try:
+                    self.flow_scene.sync_positions()
                     self.solution.export_flow(flow_name, fpath)
                     QMessageBox.information(self, "Export Flow", f"Flow exported successfully to XML:\n{fpath}")
                 except Exception as e:
@@ -1926,6 +2158,7 @@ class VisionMasterMainWindow(QMainWindow):
             )
             if fpath:
                 try:
+                    self.flow_scene.sync_positions()
                     self.solution.export_flow(flow_name, fpath)
                     QMessageBox.information(self, "Export Flow", f"Flow exported successfully to:\n{fpath}")
                 except Exception as e:
@@ -1968,9 +2201,13 @@ class VisionMasterMainWindow(QMainWindow):
 
     @pyqtSlot()
     def on_add_flow_tab(self):
-        new_name = f"Flow{len(self.solution.flows) + 1}"
+        self.wait_for_run()
+        n = len(self.solution.flows) + 1
+        while f"Flow{n}" in self.solution.flows:
+            n += 1
+        new_name = f"Flow{n}"
         new_pipe = self.solution.add_flow(new_name)
-        src = create_tool_instance("Image Source", f"src_{int(time.time()*1000)%10000}", "01_Acquisition")
+        src = create_tool_instance("Image Source", new_instance_id("src"), "01_Acquisition")
         new_pipe.add_node(src)
         self.solution.active_flow_name = new_name
         self._refresh_flow_tabs()
@@ -2007,11 +2244,29 @@ class VisionMasterMainWindow(QMainWindow):
 
     @pyqtSlot()
     def on_strip_run_requested(self):
-        """Execute flow according to the scope chosen in the image strip ('Run all', 'Run selected', 'Single step')."""
-        self.run_pipeline_step()
-        scope = getattr(self.image_display, "cbo_run_scope", None)
-        scope_text = scope.currentText() if scope else "Run all"
-        self._set_hint(f"Flow executed ({scope_text})", 2000)
+        """Run according to the strip scope: 'Run all' processes every image once (repeating
+        with Loop); the other scopes run the flow on the selected image."""
+        if self._strip_is_busy():                     # the button is a Stop button right now
+            self.on_stop()
+            return
+        scope = self._run_scope()
+        if self.engine.start_strip_run(scope, self._loop_on()) == "single":
+            self._set_hint(f"Flow executed ({scope})", 2000)
+        self._update_run_button()
+
+    def _strip_is_busy(self) -> bool:
+        return self.engine.is_strip_busy()
+
+    def _update_run_button(self):
+        display = getattr(self, "image_display", None)
+        if display is None:
+            return
+        running, stopping = self.engine.show_as_running()
+        display.set_running(running, stopping=stopping)
+
+    def _select_pool_image(self, row: int):
+        """Make pool image ``row`` the one the Image Source feeds (and highlight it)."""
+        self.engine.select_image(row)
 
     @pyqtSlot(bool)
     def on_toggle_continuous(self, checked: bool):
@@ -2021,18 +2276,22 @@ class VisionMasterMainWindow(QMainWindow):
                 btn.setChecked(checked)
                 btn.blockSignals(False)
         if checked:
+            self.engine.reset_ticks()
             interval = max(10, int(self.pipeline.run_interval_ms))
             self.run_timer.start(interval)
+            self._update_run_button()
             self.btn_continuous.setToolTip("Continuous execution running - click to stop")
             self._set_status_badge("RUNNING", "run")
         else:
             self.run_timer.stop()
+            self._update_run_button()
             self.btn_continuous.setToolTip("Continuously - execute the flow in a loop")
             self._set_hint("Continuous execution stopped", 2000)
 
     @pyqtSlot()
     def on_stop(self):
         self.run_timer.stop()
+        self.engine.stop()
         for btn in (self.btn_continuous, self.btn_loop_flow):
             btn.blockSignals(True)
             btn.setChecked(False)
@@ -2040,6 +2299,7 @@ class VisionMasterMainWindow(QMainWindow):
         self._set_status_badge("STOPPED", "warn")
         self.lbl_component_state.setText("Stopped")
         self._set_hint("All flows stopped", 2500)
+        self._update_run_button()
 
     @pyqtSlot(bool)
     def on_toggle_roi_mode(self, enabled: bool):
@@ -2074,6 +2334,7 @@ class VisionMasterMainWindow(QMainWindow):
 
     @pyqtSlot(list)
     def on_canvas_roi_changed(self, roi: list):
+        self.wait_for_run()
         self.btn_draw_roi.setChecked(False)
         # The ROI is written straight into the selected module's parameters, which
         # is where the reference keeps it (the module configuration window shows it).
@@ -2083,10 +2344,55 @@ class VisionMasterMainWindow(QMainWindow):
         self._set_hint(f"ROI applied: {roi}", 3000)
         self.run_pipeline_step()
 
+    # ------------------------------------------------------------------
+    # Flow execution: compute on a worker thread, present on the UI thread
+    # ------------------------------------------------------------------
+    def is_running_flow(self) -> bool:
+        return self.engine.busy
+
     def run_pipeline_step(self):
-        t0 = time.perf_counter()
-        results = self.pipeline.execute_flow(global_vars=self.solution.global_variables)
-        total_ms = (time.perf_counter() - t0) * 1000.0
+        """Execute the active flow and show the outcome (asynchronously unless disabled)."""
+        self.engine.request_run()
+
+    def _on_run_timer(self):
+        self.engine.tick(self._run_scope(), self._loop_on())
+
+    def _run_scope(self) -> str:
+        combo = getattr(getattr(self, "image_display", None), "cbo_run_scope", None)
+        return combo.currentText() if combo is not None else "Run all"
+
+    def _loop_on(self) -> bool:
+        display = getattr(self, "image_display", None)
+        return bool(display is not None and display.btn_auto.isChecked())
+
+    def _auto_cycle_images(self) -> bool:
+        """Loop on, scope 'Run all' and more than one image: each continuous cycle takes the next one."""
+        return self.engine.auto_cycle(self._run_scope(), self._loop_on())
+
+    def _on_engine_cycle_started(self):
+        self._run_prev_state = self.lbl_component_state.text()
+        self.lbl_component_state.setText("Running...")
+
+    def _on_engine_cycle_finished(self, payload: dict):
+        self.lbl_component_state.setText(getattr(self, "_run_prev_state", "Ready"))
+        self._apply_cycle(payload)
+
+    def _on_engine_image_selected(self, row: int):
+        if hasattr(self, "image_display"):
+            self.image_display.select_frame(row)
+
+    def wait_for_run(self):
+        """Block until any in-flight cycle has finished and been shown.
+
+        Called before the flow is edited structurally (or replaced) so the worker is never
+        iterating a graph that is being changed underneath it.
+        """
+        self.engine.wait_for_run()
+
+    def _apply_cycle(self, payload: dict):
+        results = payload["results"]
+        script_error = payload["script_error"] or payload["failure"]
+        total_ms = payload["total_ms"]
 
         current_img = None
         all_overlays = []
@@ -2138,6 +2444,7 @@ class VisionMasterMainWindow(QMainWindow):
 
         self._refresh_image_display(results)
 
+        self.results_table.setUpdatesEnabled(False)
         self.results_table.setRowCount(0)
         for nid in self.pipeline.execution_order:
             res = results.get(nid)
@@ -2160,9 +2467,13 @@ class VisionMasterMainWindow(QMainWindow):
 
             self.results_table.setItem(row, 3, QTableWidgetItem(f"{res.elapsed_ms:.2f} ms"))
             self.results_table.setItem(row, 4, QTableWidgetItem(res.message))
+        self.results_table.setUpdatesEnabled(True)
 
         self._append_history_row(overall_ok, failed_modules, results)
         self._update_status_segments(algo_ms, total_ms)
+        self.txt_format_preview.setPlainText(self._format_flow_outputs(results))
+        if script_error:
+            self._set_hint(script_error, 6000)
 
         if overall_ok:
             self._set_status_badge("PASS", "ok")
@@ -2194,20 +2505,10 @@ class VisionMasterMainWindow(QMainWindow):
                 "Flow stopped automatically: NG defect detected (Stop on NG active).", 5000
             )
 
-        # Check HikRobot Auto switch in image strip
-        if hasattr(self, "image_display") and self.image_display.btn_auto.isChecked() and len(self._image_flow) > 1:
-            next_idx = (self._current_image_flow_index + 1) % len(self._image_flow)
-            self._current_image_flow_index = next_idx
-            next_item = self._image_flow[next_idx]
-            for nid, node in self.pipeline.nodes.items():
-                if node.tool_name == "Image Source":
-                    if next_item.get("path"):
-                        node.set_param("source_type", "File")
-                        node.set_param("file_path", next_item["path"])
-                    if next_item.get("image") is not None:
-                        node._override_image = next_item["image"]
-                        node._override_name = next_item["name"]
-                    break
+
+    def _format_flow_outputs(self, results: dict) -> str:
+        """One line per module: its verdict plus every scalar / text output it produced."""
+        return format_flow_outputs(self.pipeline, results)
 
     def _init_default_image_flow(self):
         """Seed the image flow with initial sample images (golden PCB and defect sample)."""
@@ -2218,7 +2519,7 @@ class VisionMasterMainWindow(QMainWindow):
         # 1. Golden PCB sample
         pcb_path = os.path.join(samples_dir, "pcb_sample.png")
         if os.path.exists(pcb_path):
-            img1 = cv2.imread(pcb_path)
+            img1 = imread(pcb_path)
             if img1 is not None:
                 self._image_flow.append({
                     "name": "pcb_sample.png",
@@ -2229,7 +2530,7 @@ class VisionMasterMainWindow(QMainWindow):
         # 2. Defect PCB sample
         defect_path = os.path.join(samples_dir, "pcb_sample_defect.png")
         if os.path.exists(defect_path):
-            img2 = cv2.imread(defect_path)
+            img2 = imread(defect_path)
             if img2 is not None:
                 self._image_flow.append({
                     "name": "pcb_sample_defect.png",
@@ -2301,19 +2602,32 @@ class VisionMasterMainWindow(QMainWindow):
         labels = [item["name"] for item in self._image_flow]
         if not labels:
             display.set_frames([])
+            self._cached_strip_names = []
             return
 
         current = max(0, min(self._current_image_flow_index, len(labels) - 1))
         self._current_image_flow_index = current
-        display.set_frames(labels, current)
-        for idx, item in enumerate(self._image_flow):
-            if item.get("image") is not None:
-                display.set_frame_thumbnail(idx, item["image"])
+        names_signature = [f"{item['name']}_{id(item.get('image'))}" for item in self._image_flow]
+        if getattr(self, "_cached_strip_names", None) != names_signature:
+            self._cached_strip_names = list(names_signature)
+            display.set_frames(labels, current)
+            for idx, item in enumerate(self._image_flow):
+                if item.get("image") is not None:
+                    display.set_frame_thumbnail(idx, item["image"])
+        else:
+            total = max(1, len(labels))
+            disp_name = labels[current] if labels else "Image Source"
+            display.lbl_strip.setText(f"{disp_name} ({current + 1}/{total})")
+            display.strip.blockSignals(True)
+            display.strip.setCurrentRow(current)
+            display.strip.blockSignals(False)
+
         display.mark_current_frame(self.image_canvas.current_pixmap())
 
     @pyqtSlot(int)
     def on_image_strip_selected(self, row: int):
         """Show the added image selected by the operator and execute the flow with it."""
+        self.wait_for_run()
         if getattr(self, "_strip_selecting", False):
             return
         self._strip_selecting = True
@@ -2321,23 +2635,7 @@ class VisionMasterMainWindow(QMainWindow):
             flow = getattr(self, "_image_flow", [])
             if not (0 <= row < len(flow)):
                 return
-            self._current_image_flow_index = row
-            item = flow[row]
-
-            # Feed this added image into the active flow's Image Source
-            src_tool = None
-            for nid, node in self.pipeline.nodes.items():
-                if node.tool_name == "Image Source":
-                    src_tool = node
-                    break
-
-            if src_tool is not None:
-                if item.get("path"):
-                    src_tool.set_param("source_type", "File")
-                    src_tool.set_param("file_path", item["path"])
-                if item.get("image") is not None:
-                    src_tool._override_image = item["image"]
-                    src_tool._override_name = item["name"]
+            self._select_pool_image(row)
 
             # Re-run pipeline against the selected image in the flow
             self.run_pipeline_step()
@@ -2392,7 +2690,6 @@ class VisionMasterMainWindow(QMainWindow):
 
     def _set_flow_tab_label(self, index: int, flow_name: str, overall_ok: bool):
         flow = self.solution.flows.get(flow_name)
-        dot = "●"
         if self.run_timer.isActive():
             color = "#e4b030"
             verdict = "RUNNING"
@@ -2423,6 +2720,7 @@ class VisionMasterMainWindow(QMainWindow):
         Display Setup tabs with an Execute / Continuous / OK footer, so a module can
         be verified without leaving its configuration.
         """
+        self.wait_for_run()
         tool = self.pipeline.nodes.get(instance_id)
         if tool is None:
             return
@@ -2469,12 +2767,14 @@ class VisionMasterMainWindow(QMainWindow):
 
     @pyqtSlot(str)
     def on_node_deleted(self, instance_id: str):
+        self.wait_for_run()
         self.pipeline.remove_node(instance_id)
         self.flow_scene.build_from_pipeline(preserve_positions=True)
         self.run_pipeline_step()
 
     @pyqtSlot(str, str, str, str)
     def on_connection_added(self, f_node, f_port, t_node, t_port):
+        self.wait_for_run()
         self.run_pipeline_step()
 
     @pyqtSlot(str)
@@ -2483,6 +2783,7 @@ class VisionMasterMainWindow(QMainWindow):
 
     @pyqtSlot(str, object)
     def on_param_changed(self, key: str, value):
+        self.wait_for_run()
         if not self.run_timer.isActive():
             self.run_pipeline_step()
 
@@ -2500,13 +2801,13 @@ class VisionMasterMainWindow(QMainWindow):
         The insertion goes through the flow scene's undo stack so Ctrl+Z and the
         toolbar Undo button both reverse it, exactly like a canvas drag.
         """
+        self.wait_for_run()
         if self.flow_scene.is_locked():
             self._set_hint("Editing is locked - unlock to insert modules", 3000)
             return
 
-        idx = len(self.pipeline.nodes) + 1
-        inst_id = f"node_{int(time.time()*1000)%100000}"
-        tool = create_tool_instance(tool_name, inst_id, f"{idx:02d}_{tool_name.replace(' ', '')}")
+        tool = make_module(self.pipeline, tool_name)
+        inst_id = tool.instance_id
 
         view_rect = self.flow_view.mapToScene(self.flow_view.viewport().rect()).boundingRect()
         drop_pos = QPointF(view_rect.left() + 40, view_rect.top() + 40)
@@ -2516,16 +2817,9 @@ class VisionMasterMainWindow(QMainWindow):
 
         self.flow_scene.undo_stack.push(AddNodeCommand(self.flow_scene, tool, drop_pos))
 
-        # Auto-wire the Image input from the closest upstream image producer so
-        # a newly inserted module is immediately runnable.
-        if "Image" in tool.inputs:
-            for prev_id in reversed(self.pipeline.execution_order):
-                if prev_id != inst_id and prev_id in self.pipeline.nodes:
-                    prev_node = self.pipeline.nodes[prev_id]
-                    if "Image" in prev_node.outputs:
-                        self.pipeline.connect(prev_id, "Image", inst_id, "Image")
-                        break
-            self.flow_scene.update_connections()
+        # a newly inserted module is wired to the nearest image producer so it can run at once
+        auto_wire_image(self.pipeline, tool)
+        self.flow_scene.update_connections()
 
         self.tab_workspace.setCurrentIndex(0)
         self.on_node_selected(inst_id)
@@ -2542,20 +2836,14 @@ class VisionMasterMainWindow(QMainWindow):
 
     @pyqtSlot(str, float, float)
     def on_tool_dropped(self, tool_name: str, x: float, y: float):
+        self.wait_for_run()
         if self.flow_scene.is_locked():
             self._set_hint("Editing is locked - unlock to insert modules", 3000)
             return
-        idx = len(self.pipeline.nodes) + 1
-        inst_id = f"node_{int(time.time()*1000)%100000}"
-        tool = create_tool_instance(tool_name, inst_id, f"{idx:02d}_{tool_name.replace(' ', '')}")
+        tool = make_module(self.pipeline, tool_name)
+        inst_id = tool.instance_id
         self.pipeline.add_node(tool)
-        if "Image" in tool.inputs:
-            for prev_id in reversed(self.pipeline.execution_order):
-                if prev_id != inst_id and prev_id in self.pipeline.nodes:
-                    prev_node = self.pipeline.nodes[prev_id]
-                    if "Image" in prev_node.outputs:
-                        self.pipeline.connect(prev_id, "Image", inst_id, "Image")
-                        break
+        auto_wire_image(self.pipeline, tool)
         self.flow_scene.build_from_pipeline(preserve_positions=True)
         if inst_id in self.flow_scene.node_items:
             self.flow_scene.node_items[inst_id].setPos(QPointF(x, y))
@@ -2595,101 +2883,102 @@ class VisionMasterMainWindow(QMainWindow):
             for i, fp in enumerate(fpaths):
                 self.add_image_to_flow(fp, execute=(i == 0))
 
+    IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff")
+
+    def on_load_image_folder(self, *_):
+        """Prompt for a folder and add every image in it to the image strip."""
+        folder = QFileDialog.getExistingDirectory(
+            self, "Load All Images From Folder", self._last_image_dir())
+        if folder:
+            self.load_image_folder(folder)
+
+    def _last_image_dir(self) -> str:
+        for item in reversed(getattr(self, "_image_flow", [])):
+            if item.get("path"):
+                return os.path.dirname(item["path"])
+        return ""
+
+    def load_image_folder(self, folder: str, limit: int = 1000) -> int:
+        """Add every image file in ``folder`` (natural name order). Returns how many were added."""
+        self.wait_for_run()
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+
+        def progress(done: int, total: int):
+            self._set_hint(f"Loading images... {done}/{total}")
+            QApplication.processEvents()
+
+        try:
+            added, skipped, failed = self.pool.add_folder(folder, limit, progress)
+        except OSError as exc:
+            self._set_hint(f"Cannot read folder: {exc}", 6000)
+            return 0
+        finally:
+            QApplication.restoreOverrideCursor()
+        if added + failed == 0:
+            self._set_hint(f"No images found in {folder}", 5000)
+            return 0
+        if added:
+            self._ensure_image_source()
+            self.engine.select_image(self.pool.index)
+            self.run_pipeline_step()
+        self._set_hint(f"Loaded {added} image(s) from {folder}"
+                       + (f" ({skipped} more skipped, limit {limit})" if skipped else "")
+                       + (f", {failed} unreadable" if failed else ""), 7000)
+        return added
+
     def load_image_from_path(self, filepath: str) -> bool:
         """Loads an image into the active flow's image list and executes the pipeline."""
         return self.add_image_to_flow(filepath, execute=True)
 
+    def _ensure_image_source(self):
+        """The active flow's Image Source node, created (and drawn) if the flow has none."""
+        for node in self.pipeline.nodes.values():
+            if node.tool_name == "Image Source":
+                return node
+        node_id = new_instance_id("src")
+        tool = create_tool_instance("Image Source", node_id, "01_Acquisition")
+        self.pipeline.add_node(tool)
+        self.flow_scene.build_from_pipeline(preserve_positions=True)
+        return tool
+
     def add_image_to_flow(self, image_or_path, name: Optional[str] = None, execute: bool = True) -> bool:
         """Adds an image (file path or numpy array) to the flow of added images (image pool)."""
-        img = None
-        path = None
-        disp_name = name
-
+        self.wait_for_run()
         if isinstance(image_or_path, str):
-            clean_path = image_or_path.strip().strip('"').strip("'") if image_or_path else ""
-            if not clean_path or not os.path.exists(clean_path):
-                self.statusBar().showMessage(f"Image file not found: {image_or_path}", 4000)
-                self._set_hint(f"Image file does not exist: {image_or_path}", 4000)
+            idx, error = self.pool.add_path(image_or_path, name)
+            if idx is None:
+                missing = "not found" in error
+                self.statusBar().showMessage(error, 4000)
+                self._set_hint(("Image file does not exist: " if missing else "Could not load image file format: ")
+                               + image_or_path, 4000)
                 if hasattr(self, "image_canvas"):
-                    self.image_canvas.set_empty_state("Image file does not exist", is_error=True, subtext=f"Path not found:\n{image_or_path}")
-                return False
-
-            path = os.path.abspath(clean_path)
-            disp_name = disp_name or os.path.basename(path)
-            try:
-                img = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_COLOR)
-            except Exception:
-                img = None
-            if img is None:
-                img = cv2.imread(path)
-            if img is None:
-                self.statusBar().showMessage(f"Failed to decode image: {image_or_path}", 4000)
-                self._set_hint(f"Could not load image file format: {image_or_path}", 4000)
-                if hasattr(self, "image_canvas"):
-                    self.image_canvas.set_empty_state("Failed to decode image", is_error=True, subtext=f"Supported: PNG, JPG, BMP, TIFF\n{image_or_path}")
+                    self.image_canvas.set_empty_state(
+                        "Image file does not exist" if missing else "Failed to decode image", is_error=True,
+                        subtext=(f"Path not found:\n{image_or_path}" if missing
+                                 else f"Supported: PNG, JPG, BMP, TIFF\n{image_or_path}"))
                 return False
         elif isinstance(image_or_path, np.ndarray):
-            img = image_or_path
-            path = None
-            disp_name = disp_name or f"Image_{len(self._image_flow) + 1}"
+            idx = self.pool.add_array(image_or_path, name)
         else:
             return False
 
-        # Find or create ImageSourceTool in active pipeline
-        src_node_id = None
-        for nid, node in self.pipeline.nodes.items():
-            if node.tool_name == "Image Source":
-                src_node_id = nid
-                break
-
-        if src_node_id is None:
-            src_node_id = f"src_{int(time.time() * 1000) % 10000}"
-            src_tool = create_tool_instance("Image Source", src_node_id, "01_Acquisition")
-            self.pipeline.add_node(src_tool)
-            self.flow_scene.build_from_pipeline(preserve_positions=True)
-        else:
-            src_tool = self.pipeline.nodes[src_node_id]
-
-        # Check if already in flow list
-        existing_idx = -1
-        for i, item in enumerate(self._image_flow):
-            if path and item.get("path") == path:
-                existing_idx = i
-                break
-            elif not path and item.get("name") == disp_name:
-                existing_idx = i
-                break
-
-        if existing_idx >= 0:
-            self._current_image_flow_index = existing_idx
-            self._image_flow[existing_idx]["image"] = img
-        else:
-            self._image_flow.append({
-                "name": disp_name,
-                "path": path,
-                "image": img
-            })
-            self._current_image_flow_index = len(self._image_flow) - 1
-
-        if path:
-            src_tool.set_param("source_type", "File")
-            src_tool.set_param("file_path", path)
-        src_tool._override_image = img
-        src_tool._override_name = disp_name
+        src_tool = self._ensure_image_source()
+        self.pool.apply_to(self.pipeline, idx)
+        disp_name = self.pool.items[idx]["name"]
 
         if execute:
-            self.flow_scene.select_node(src_node_id)
+            self.flow_scene.select_node(src_tool.instance_id)
             self.run_pipeline_step()
-            self.on_node_selected(src_node_id)
+            self.on_node_selected(src_tool.instance_id)
             self.statusBar().showMessage(f"Loaded image into flow: {disp_name}", 3500)
             self._set_hint(f"Loaded {disp_name} into {src_tool.name}", 3000)
-
         return True
 
     def on_clear_image_flow(self):
         """Clears the added image list in the image bar."""
-        self._image_flow.clear()
-        self._current_image_flow_index = 0
+        self.wait_for_run()
+        self.pool.clear()
+        self.engine.batch = None
         if hasattr(self, "image_display"):
             self.image_display.set_frames([])
             self.image_display.set_source_label("No image")
@@ -2697,7 +2986,7 @@ class VisionMasterMainWindow(QMainWindow):
 
     @pyqtSlot()
     def on_save_solution_as(self):
-        self.on_save_solution()
+        self._save_solution(prompt=True)
 
     @pyqtSlot()
     def on_export_flow_xml(self):
@@ -2709,6 +2998,7 @@ class VisionMasterMainWindow(QMainWindow):
         if not fpath:
             return
         try:
+            self.flow_scene.sync_positions()
             self.solution.export_flow_xml(flow_name, fpath)
             self._set_hint(f"Flow exported to XML: {fpath}", 5000)
             QMessageBox.information(self, "Export Flow", f"Flow '{flow_name}' exported successfully to XML:\n{fpath}")
@@ -2742,6 +3032,7 @@ class VisionMasterMainWindow(QMainWindow):
         if not fpath:
             return
         try:
+            self.flow_scene.sync_positions()
             self.solution.export_flow(flow_name, fpath)
             self._set_hint(f"Flow exported to {fpath}", 5000)
             QMessageBox.information(self, "Export Flow", f"Flow exported successfully to:\n{fpath}")
@@ -2771,6 +3062,8 @@ class VisionMasterMainWindow(QMainWindow):
         finishes opening/creating a project or entering workspace.
         """
         was_visible = self.isVisible()
+        if was_visible and not self._confirm_replace_solution():
+            return False
         dlg = StartPageDialog(project_manager=self.project_manager, parent=self if was_visible else None)
         dlg.solution_ready.connect(lambda sol, path: self.load_solution_manager(sol, filepath=path))
         res = dlg.exec()
@@ -2797,9 +3090,12 @@ class VisionMasterMainWindow(QMainWindow):
 
     def load_solution_manager(self, solution: SolutionManager, filepath: Optional[str] = None):
         """Loads a full SolutionManager containing multiple flows and global variables."""
+        self.wait_for_run()
         self.solution = solution
+        self.current_project_path = filepath
+        if not filepath:
+            self.setWindowTitle(f"Apex Industrial Vision Studio v4.3 - [{solution.name}]")
         if filepath:
-            self.current_project_path = filepath
             self.project_manager.add_recent_project(
                 filepath,
                 name=solution.name,
@@ -2820,23 +3116,32 @@ class VisionMasterMainWindow(QMainWindow):
             self.flow_overview.rebuild(self.solution.flows, self.solution.get_trigger_flow_name())
         self.result_panel.global_variables = self.solution.global_variables
         self._last_saved_snapshot = self._take_solution_snapshot()
+        self._refresh_project_chip()
         self.run_pipeline_step()
         self._set_hint(f"Loaded solution '{solution.name}' ({len(solution.flows)} flow(s))", 4000)
 
-    def _load_solution_instance(self, new_pipe: VisionPipeline):
+    def _load_solution_instance(self, new_pipe: VisionPipeline) -> bool:
+        self.wait_for_run()
+        if not self._confirm_replace_solution():
+            return False
         sol = SolutionManager(name=new_pipe.name)
         sol.flows = {new_pipe.name: new_pipe}
         sol.active_flow_name = new_pipe.name
         sol.set_trigger_flow(new_pipe.name)
         self.load_solution_manager(sol)
+        return True
 
     def on_new_solution(self):
+        if not self._confirm_replace_solution():
+            return
         dlg = NewProjectDialog(self.project_manager, self)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             if dlg.created_solution and dlg.created_filepath:
                 self.load_solution_manager(dlg.created_solution, filepath=dlg.created_filepath)
 
-    def on_open_solution(self):
+    def on_open_solution(self, *_):
+        if not self._confirm_replace_solution():
+            return
         fpath, _ = QFileDialog.getOpenFileName(
             self, "Open Solution File", self.project_manager.default_projects_dir,
             "Vision Solution (*.vmp *.sol *.json *.xml);;All Files (*.*)"
@@ -2845,27 +3150,37 @@ class VisionMasterMainWindow(QMainWindow):
             try:
                 sol = self.project_manager.load_project(fpath)
                 self.load_solution_manager(sol, filepath=fpath)
-                QMessageBox.information(self, "Solution Loaded", f"Solution '{sol.name}' loaded successfully.")
             except Exception as e:
-                QMessageBox.critical(self, "Load Error", f"Failed to load solution: {str(e)}")
+                QMessageBox.critical(self, "Load Error", f"Failed to load solution:\n{e}")
 
-    def on_save_solution(self):
-        default_dir = self.current_project_path or os.path.join(
-            self.project_manager.default_projects_dir, f"{self.solution.name}.vmp"
-        )
-        fpath, _ = QFileDialog.getSaveFileName(
-            self, "Save Solution File", default_dir,
-            "Vision Project (*.vmp);;Vision Solution (*.json);;All Files (*.*)"
-        )
-        if fpath:
-            try:
-                self.project_manager.save_project(self.solution, fpath)
-                self.current_project_path = fpath
-                self._last_saved_snapshot = self._take_solution_snapshot()
-                self.setWindowTitle(f"Apex Industrial Vision Studio v4.3 - [{self.solution.name}]")
-                QMessageBox.information(self, "Solution Saved", f"Solution saved successfully to:\n{fpath}")
-            except Exception as e:
-                QMessageBox.critical(self, "Save Error", f"Failed to save solution: {str(e)}")
+    def on_save_solution(self, *_):
+        """Save in place when the solution already has a file; otherwise ask where."""
+        self._save_solution(prompt=not self.current_project_path)
+
+    def _save_solution(self, prompt: bool) -> bool:
+        """Write the solution to disk. Returns True when it was actually saved."""
+        fpath = self.current_project_path
+        if prompt or not fpath:
+            default_path = fpath or os.path.join(
+                self.project_manager.default_projects_dir, f"{self.solution.name}.vmp"
+            )
+            fpath, chosen = QFileDialog.getSaveFileName(
+                self, "Save Solution File", default_path,
+                "Vision Project (*.vmp);;Vision Solution XML (*.xml);;Vision Solution JSON (*.json);;All Files (*.*)"
+            )
+            if not fpath:
+                return False
+            if not os.path.splitext(fpath)[1]:
+                # honour the format picked in the dialog when the name has no extension
+                fpath += ".xml" if "XML" in (chosen or "") else ".json" if "JSON" in (chosen or "") else ".vmp"
+        try:
+            self.project.save(self.solution, fpath, before=self.flow_scene.sync_positions)
+        except Exception as e:
+            QMessageBox.critical(self, "Save Error", f"Failed to save solution: {str(e)}")
+            return False
+        self.setWindowTitle(f"Apex Industrial Vision Studio v4.3 - [{self.solution.name}]")
+        self._set_hint(f"Saved solution to {fpath}", 5000)
+        return True
 
     def on_export_results_csv(self):
         fpath, _ = QFileDialog.getSaveFileName(self, "Export Results to CSV", "diagnostic_results.csv", "CSV Files (*.csv)")
@@ -2884,34 +3199,29 @@ class VisionMasterMainWindow(QMainWindow):
                 QMessageBox.critical(self, "Export Error", str(e))
 
     def _take_solution_snapshot(self) -> Optional[str]:
-        """Produce a serialized JSON snapshot excluding transient telemetry."""
+        """Serialised solution minus transient telemetry (shared with the QML front end)."""
         if not getattr(self, "solution", None):
             return None
-        try:
-            d = self.solution.to_dict()
-            # Strip transient runtime counters from flows
-            for flow_data in d.get("flows", {}).values():
-                flow_data.pop("execution_count", None)
-            return json.dumps(d, sort_keys=True)
-        except Exception:
-            return None
+        snap = ProjectState.snapshot(self.solution, before=self.flow_scene.sync_positions)
+        if snap is None:
+            logger.error("Could not snapshot the solution for change tracking")
+        return snap
 
     def has_unsaved_changes(self) -> bool:
         """Check whether current solution differs from last saved baseline."""
-        if not getattr(self, "solution", None) or self._last_saved_snapshot is None:
+        if not getattr(self, "solution", None):
             return False
-        current = self._take_solution_snapshot()
-        return current != self._last_saved_snapshot
+        return self.project.is_dirty(self.solution, before=self.flow_scene.sync_positions)
 
-    def _confirm_discard_changes(self) -> str:
-        """Prompt user on exit with unsaved changes. Returns 'save', 'discard', or 'cancel'."""
+    def _confirm_discard_changes(self, when: str = "before closing") -> str:
+        """Prompt about unsaved changes. Returns 'save', 'discard', or 'cancel'."""
         msg = QMessageBox(self)
         msg.setWindowTitle("Unsaved Changes")
-        msg.setText(f"The solution '{self.solution.name}' has unsaved modifications.\nDo you want to save before closing?")
+        msg.setText(f"The solution '{self.solution.name}' has unsaved modifications.\nDo you want to save {when}?")
         msg.setIcon(QMessageBox.Icon.Question)
         btn_save = msg.addButton("Save", QMessageBox.ButtonRole.AcceptRole)
         btn_discard = msg.addButton("Discard", QMessageBox.ButtonRole.DestructiveRole)
-        btn_cancel = msg.addButton("Cancel", QMessageBox.ButtonRole.RejectRole)
+        msg.addButton("Cancel", QMessageBox.ButtonRole.RejectRole)
         msg.setDefaultButton(btn_save)
         msg.exec()
         clicked = msg.clickedButton()
@@ -2923,6 +3233,7 @@ class VisionMasterMainWindow(QMainWindow):
 
     def closeEvent(self, event):
         """Cleanly handle application teardown, timers, and unsaved changes."""
+        self.wait_for_run()
         if self.has_unsaved_changes():
             choice = self._confirm_discard_changes()
             if choice == "cancel":

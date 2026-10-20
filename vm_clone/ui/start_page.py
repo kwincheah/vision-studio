@@ -6,18 +6,17 @@ with real-time search, file deletion (disk vs list removal), and template scaffo
 import os
 import subprocess
 import sys
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any
 from PyQt6.QtCore import Qt, pyqtSignal, QSize
-from PyQt6.QtGui import QIcon, QFont, QColor, QPainter, QPixmap
 from PyQt6.QtWidgets import (
     QApplication, QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QListWidget, QListWidgetItem, QFileDialog, QMessageBox,
-    QCheckBox, QFrame, QScrollArea, QComboBox, QSizePolicy, QMenu
+    QCheckBox, QFrame, QComboBox, QMenu
 )
 
 from vm_clone.core.pipeline import SolutionManager
 from vm_clone.core.project_manager import ProjectManager
-from vm_clone.ui.icons import get_vector_icon
+from vm_clone.ui.vm_theme import check_icon_url
 from vm_clone.ui.styles import THEME
 
 
@@ -73,7 +72,7 @@ class NewProjectDialog(QDialog):
                 background: #f8fafb;
                 border: 1px solid #5a6069;
                 border-radius: 4px;
-                padding: 6px {THEME['sp_loose']}px;
+                padding: 6px 12px;
                 font-size: 13px;
                 color: #1a2024;
             }
@@ -95,7 +94,7 @@ class NewProjectDialog(QDialog):
                 background: #f8fafb;
                 border: 1px solid #5a6069;
                 border-radius: 4px;
-                padding: 6px {THEME['sp_loose']}px;
+                padding: 6px 12px;
                 font-size: 13px;
                 color: #1a2024;
             }
@@ -141,7 +140,7 @@ class NewProjectDialog(QDialog):
                 background: #f8fafb;
                 border: 1px solid #5a6069;
                 border-radius: 4px;
-                padding: 6px {THEME['sp_loose']}px;
+                padding: 6px 12px;
                 font-size: 13px;
                 color: #1a2024;
             }
@@ -183,7 +182,7 @@ class NewProjectDialog(QDialog):
                 color: #1a2024;
                 border: none;
                 border-radius: 4px;
-                padding: 6px {THEME['sp_section']}px;
+                padding: 6px 16px;
                 font-size: 13px;
                 font-weight: 600;
             }
@@ -221,6 +220,16 @@ class NewProjectDialog(QDialog):
             4: "calibration"
         }
         tpl_key = tpl_map.get(idx, "blank")
+
+        existing = self.pm.project_path(name, target_dir)[1]
+        if os.path.exists(existing):
+            answer = QMessageBox.question(
+                self, "Project Exists",
+                f"A project file already exists at:\n{existing}\n\nReplace it with a new project?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No)
+            if answer != QMessageBox.StandardButton.Yes:
+                return
 
         try:
             sol, filepath = self.pm.create_project(name, target_dir, template=tpl_key)
@@ -273,7 +282,7 @@ class ProjectRowWidget(QWidget):
                 background-color: #d8f0e2;
                 color: #076b3a;
                 border-radius: 3px;
-                padding: {THEME['sp_hair']}px 4px;
+                padding: 2px 4px;
                 font-size: 11px;
                 font-weight: bold;
             """)
@@ -282,7 +291,7 @@ class ProjectRowWidget(QWidget):
                 background-color: #fadadd;
                 color: #b81c20;
                 border-radius: 3px;
-                padding: {THEME['sp_hair']}px 4px;
+                padding: 2px 4px;
                 font-size: 11px;
                 font-weight: bold;
             """)
@@ -295,7 +304,7 @@ class ProjectRowWidget(QWidget):
                 background-color: #f6dcae;
                 color: #0078b0;
                 border-radius: 3px;
-                padding: {THEME['sp_hair']}px 4px;
+                padding: 2px 4px;
                 font-size: 11px;
             """)
             top_layout.addWidget(tpl_badge)
@@ -316,7 +325,7 @@ class ProjectRowWidget(QWidget):
                 color: white;
                 border: none;
                 border-radius: 3px;
-                padding: 2px {THEME['sp_loose']}px;
+                padding: 2px 12px;
                 font-size: 12px;
                 font-weight: 600;
             }
@@ -403,7 +412,8 @@ class StartPageDialog(QDialog):
         # 1. Header Banner
         header = QFrame()
         header.setFixedHeight(64)
-        header.setStyleSheet(f"background-color: {THEME['vm_panel_header']}; border-bottom: 2px solid {THEME['accent_hover']};")
+        header.setObjectName("startHeader")
+        header.setStyleSheet(f"QFrame#startHeader {{ background-color: {THEME['vm_panel_header']}; border: none; border-bottom: 2px solid {THEME['accent_hover']}; }}")
         h_layout = QHBoxLayout(header)
         h_layout.setContentsMargins(24, 0, 24, 0)
         h_layout.setSpacing(14)
@@ -437,7 +447,7 @@ class StartPageDialog(QDialog):
                 color: #1a2024;
                 border: none;
                 border-radius: 4px;
-                padding: {THEME['sp_base']}px 16px;
+                padding: 8px 16px;
                 font-size: 13px;
                 font-weight: 600;
             }
@@ -452,7 +462,8 @@ class StartPageDialog(QDialog):
 
         # 2. Main Two-Column Body
         body = QWidget()
-        body.setStyleSheet(f"background-color: #ecf0f0;")
+        body.setObjectName("startBody")
+        body.setStyleSheet("QWidget#startBody, QWidget#startBody > QWidget { background-color: #ecf0f0; }")
         b_layout = QHBoxLayout(body)
         b_layout.setContentsMargins(24, 20, 24, 20)
         b_layout.setSpacing(24)
@@ -483,7 +494,7 @@ class StartPageDialog(QDialog):
                 border: 1px solid #5a6069;
                 border-left: 4px solid #0078b0;
                 border-radius: 4px;
-                padding: {THEME['sp_loose']}px {THEME['sp_section']}px;
+                padding: 12px 16px;
                 font-size: 14px;
                 font-weight: 600;
                 color: #1a2024;
@@ -507,7 +518,7 @@ class StartPageDialog(QDialog):
                 border: 1px solid #5a6069;
                 border-left: 4px solid #e4b030;
                 border-radius: 4px;
-                padding: {THEME['sp_loose']}px {THEME['sp_section']}px;
+                padding: 12px 16px;
                 font-size: 14px;
                 font-weight: 600;
                 color: #1a2024;
@@ -535,7 +546,7 @@ class StartPageDialog(QDialog):
 
         # Template quick cards
         tpl_cards = [
-            ("PCB Inspection & Defects", "pcb", "IC alignment, mounting holes, trace calipers & scratch check"),
+            ("PCB Inspection && Defects", "pcb", "IC alignment, mounting holes, trace calipers & scratch check"),
             ("Precision Measurement", "measurement", "Sub-pixel circle fitting, calipers, and tolerances"),
             ("YOLOv11 Object Detection", "yolo", "Real-time deep learning neural object detection"),
             ("Robot Coordinate Calibration", "calibration", "N-point affine calibration and color extraction")
@@ -557,7 +568,7 @@ class StartPageDialog(QDialog):
                     text-align: left;
                 }
                 QPushButton:hover {
-                    background: THEME['vm_panel'];
+                    background: #ecf0f0;
                     border-color: #0078b0;
                     color: #0078b0;
                 }
@@ -571,7 +582,7 @@ class StartPageDialog(QDialog):
         # Separator line
         v_sep = QFrame()
         v_sep.setFrameShape(QFrame.Shape.VLine)
-        v_sep.setStyleSheet(f"color: #d8dcdf;")
+        v_sep.setStyleSheet("color: #d8dcdf;")
         b_layout.addWidget(v_sep)
 
         # --- RIGHT COLUMN: Recent Projects ---
@@ -598,7 +609,7 @@ class StartPageDialog(QDialog):
             background: #d8dcdf;
             color: #414850;
             border-radius: 9px;
-            padding: {THEME['sp_hair']}px {THEME['sp_base']}px;
+            padding: 2px 8px;
             font-size: 12px;
             font-weight: bold;
         """)
@@ -652,7 +663,7 @@ class StartPageDialog(QDialog):
             QListWidget {
                 background-color: #f8fafb;
                 border: 1px solid #5a6069;
-                border-radius: {THEME['r_panel']}px;
+                border-radius: 4px;
                 outline: none;
             }
             QListWidget::item {
@@ -660,7 +671,7 @@ class StartPageDialog(QDialog):
                 border-bottom: 1px solid #e4e7ea;
             }
             QListWidget::item:hover {
-                background: THEME['vm_panel'];
+                background: #ecf0f0;
             }
             QListWidget::item:selected {
                 background: #f6dcae;
@@ -675,7 +686,7 @@ class StartPageDialog(QDialog):
         # Empty state label
         self.lbl_empty = QLabel("No recent projects found.\nClick 'New Project' or 'Open Project File' to get started.")
         self.lbl_empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_empty.setStyleSheet(f"color: #5a6168; font-size: 14px; line-height: 1.5;")
+        self.lbl_empty.setStyleSheet("color: #5a6168; font-size: 14px; line-height: 1.5;")
         self.lbl_empty.setVisible(False)
         right_layout.addWidget(self.lbl_empty)
 
@@ -685,14 +696,15 @@ class StartPageDialog(QDialog):
         # 3. Footer Bar
         footer = QFrame()
         footer.setFixedHeight(48)
-        footer.setStyleSheet(f"background-color: #e4e7ea; border-top: 1px solid #5a6069;")
+        footer.setObjectName("startFooter")
+        footer.setStyleSheet("QFrame#startFooter { background-color: #e4e7ea; border: none; border-top: 1px solid #aab3b9; }")
         f_layout = QHBoxLayout(footer)
         f_layout.setContentsMargins(24, 0, 24, 0)
 
         # Show on startup checkbox
         self.chk_startup = QCheckBox("Show Start Page on startup")
         self.chk_startup.setChecked(self.pm.get_show_on_startup())
-        self.chk_startup.setStyleSheet("""
+        self.chk_startup.setStyleSheet(("""
             QCheckBox {
                 font-size: 13px;
                 color: #414850;
@@ -707,8 +719,9 @@ class StartPageDialog(QDialog):
             QCheckBox::indicator:checked {
                 background: #0078b0;
                 border-color: #0078b0;
+                image: url(%s);
             }
-        """)
+        """) % check_icon_url("#ffffff"))
         self.chk_startup.toggled.connect(self._on_startup_toggled)
         f_layout.addWidget(self.chk_startup)
 
@@ -854,7 +867,7 @@ class StartPageDialog(QDialog):
             )
             btn_disk = msg_box.addButton("Delete File from Disk", QMessageBox.ButtonRole.DestructiveRole)
             btn_list = msg_box.addButton("Remove from List Only", QMessageBox.ButtonRole.ActionRole)
-            btn_cancel = msg_box.addButton(QMessageBox.StandardButton.Cancel)
+            msg_box.addButton(QMessageBox.StandardButton.Cancel)
 
             msg_box.exec()
             clicked = msg_box.clickedButton()

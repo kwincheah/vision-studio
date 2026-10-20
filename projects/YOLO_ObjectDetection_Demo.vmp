@@ -8,6 +8,7 @@
     "g_LotNumber": "LOT-2026-A1",
     "g_TriggerEnable": true
   },
+  "global_script": "",
   "flows": [
     {
       "name": "YOLO_Detection_Solution",
@@ -15,7 +16,7 @@
       "run_interval_ms": 50.0,
       "stop_on_ng": false,
       "flow_timeout_ms": 5000.0,
-      "execution_count": 0,
+      "execution_count": 1,
       "nodes": [
         {
           "instance_id": "node_source",
@@ -28,7 +29,14 @@
             "file_path": "C:\\Users\\winch\\Downloads\\VMClone\\vm_clone\\samples\\pcb_sample.png",
             "pattern_type": "PCB Inspection",
             "color_mode": "BGR",
-            "camera_index": 0
+            "camera_device": "mvs_gige_0",
+            "camera_index": 0,
+            "exposure_time_us": 20000.0,
+            "gain": 1.0,
+            "trigger_mode": "Continuous",
+            "mvs_config_file": "",
+            "mvs_trigger_source": "Software",
+            "stream_url": "rtsp://192.168.1.64:554/ch1/main"
           }
         },
         {
@@ -54,7 +62,17 @@
           "to_node": "node_yolo",
           "to_port": "Image"
         }
-      ]
+      ],
+      "positions": {
+        "node_source": [
+          50.0,
+          50.0
+        ],
+        "node_yolo": [
+          488.0,
+          63.0
+        ]
+      }
     }
   ]
 }

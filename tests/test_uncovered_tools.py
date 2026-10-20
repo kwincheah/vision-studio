@@ -16,6 +16,7 @@ import sys
 
 import cv2
 import numpy as np
+import time
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -413,10 +414,26 @@ def test_tcp_send_delivers_to_a_listening_socket():
     tool.set_param("mode", "TCP Client")
     tool.set_param("server_ip", "127.0.0.1")
     tool.set_param("server_port", port_holder[0])
+    tool.set_param("connect_timeout_ms", 5000)      # a busy machine must not fail the test
     tool.set_param("prefix", "VM_RES,")
     tool.set_param("suffix", "\\r\\n")
     result = tool.execute({"Data": "NG"})
-    thread.join(timeout=5.0)
+    thread.join(timeout=20.0)                      # the listener thread can be slow on a busy machine
+    deadline = time.time() + 20.0
+    while not received and time.time() < deadline and result.status == ToolStatus.OK:
+        time.sleep(0.02)
+    if result.status != ToolStatus.OK and "timed out" in result.message:
+        # the tool's 0.5 s connect timeout can expire on a busy machine; the listener above has
+        # already accepted nothing, so start a fresh one and try once more
+        received.clear()
+        port_holder.clear()
+        ready.clear()
+        thread = threading.Thread(target=serve, daemon=True)
+        thread.start()
+        assert ready.wait(5.0)
+        tool.set_param("server_port", port_holder[0])
+        result = tool.execute({"Data": "NG"})
+        thread.join(timeout=5.0)
 
     assert result.status == ToolStatus.OK, result.message
     assert received, "the listener received nothing"

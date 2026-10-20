@@ -21,15 +21,17 @@ populated from the images a flow run produced, which is how the vendor's
 "Module Images" collection behaves for a single-image solution.
 """
 from typing import List, Optional
+import numpy as np
 
 from PyQt6.QtCore import Qt, QSize, QRectF, QPointF, pyqtSignal
-from PyQt6.QtGui import QIcon, QPixmap, QPainter, QColor, QPen, QFont
+from PyQt6.QtGui import QIcon, QPixmap, QPainter, QColor, QPen, QFont, QPainterPath
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QToolButton, QListWidget,
     QListWidgetItem, QSizePolicy, QFrame, QComboBox, QPushButton
 )
 
 from vm_clone.ui.styles import THEME
+from vm_clone.ui.elided_label import ElidedLabel
 from vm_clone.ui.image_canvas import ImageCanvasWidget
 from vm_clone.ui.icons import get_action_icon
 from vm_clone.ui import layout_metrics as LM
@@ -107,6 +109,16 @@ def _view_icon(glyph: str, size: int = 18) -> QIcon:
     elif glyph == "add":
         p.drawLine(QPointF(8.0, 3.5), QPointF(8.0, 12.5))
         p.drawLine(QPointF(3.5, 8.0), QPointF(12.5, 8.0))
+    elif glyph == "folder":
+        path = QPainterPath()
+        path.moveTo(2.0, 12.5)
+        path.lineTo(2.0, 4.0)
+        path.lineTo(6.0, 4.0)
+        path.lineTo(7.5, 5.8)
+        path.lineTo(13.0, 5.8)
+        path.lineTo(13.0, 12.5)
+        path.closeSubpath()
+        p.drawPath(path)
     elif glyph == "clear":
         p.drawLine(QPointF(4.0, 4.0), QPointF(12.0, 12.0))
         p.drawLine(QPointF(12.0, 4.0), QPointF(4.0, 12.0))
@@ -153,6 +165,7 @@ class ImageDisplayArea(QWidget):
     view_mode_changed = pyqtSignal(bool)   # True = dual view
     image_selected = pyqtSignal(int)       # index into the image strip
     add_image_requested = pyqtSignal()     # request to add images to the flow
+    add_folder_requested = pyqtSignal()    # request to add every image in a folder
     clear_images_requested = pyqtSignal()   # request to clear the flow images
     run_requested = pyqtSignal()           # request to execute the flow
 
@@ -179,7 +192,7 @@ class ImageDisplayArea(QWidget):
         hl.setContentsMargins(7, 3, 5, 3)
         hl.setSpacing(4)
 
-        self.lbl_source = QLabel("No image")
+        self.lbl_source = ElidedLabel("No image")
         self.lbl_source.setObjectName("imageSourceLabel")
         self.lbl_source.setMinimumWidth(60)
         self.lbl_source.setSizePolicy(QSizePolicy.Policy.Ignored,
@@ -237,7 +250,7 @@ class ImageDisplayArea(QWidget):
 
         sb_layout.addStretch(1)
 
-        self.lbl_status_coords = QLabel("0 * 0 | X,---- Y,---- | R:--- G:--- B:---")
+        self.lbl_status_coords = ElidedLabel("0 * 0 | X,---- Y,---- | R:--- G:--- B:---")
         self.lbl_status_coords.setObjectName("imageStatusCoords")
         sb_layout.addWidget(self.lbl_status_coords)
 
@@ -246,13 +259,14 @@ class ImageDisplayArea(QWidget):
         # ---- image strip header ----------------------------------------------
         strip_header = QWidget()
         strip_header.setObjectName("imageStripHeader")
-        strip_header.setFixedHeight(34)
+        strip_header.setFixedHeight(36)
         sl = QHBoxLayout(strip_header)
         sl.setContentsMargins(10, 4, 8, 4)
         sl.setSpacing(8)
 
-        self.lbl_strip = QLabel("Image Source (0/0)")
+        self.lbl_strip = ElidedLabel("Image Source (0/0)")
         self.lbl_strip.setObjectName("imageStripLabel")
+        self.lbl_strip.setMinimumWidth(72)
         sl.addWidget(self.lbl_strip, 1)
 
         self.btn_add_image = _icon_button("add", "Add / Load Image Files to Flow...")
@@ -261,19 +275,28 @@ class ImageDisplayArea(QWidget):
         self.btn_add_image.clicked.connect(self.add_image_requested)
         sl.addWidget(self.btn_add_image)
 
+        self.btn_add_folder = _icon_button("folder", "Load all images from a folder...")
+        self.btn_add_folder.setObjectName("stripAddFolder")
+        self.btn_add_folder.setFixedSize(24, 24)
+        self.btn_add_folder.clicked.connect(self.add_folder_requested)
+        sl.addWidget(self.btn_add_folder)
+
         self.btn_clear_strip = _icon_button("clear", "Clear image flow list")
         self.btn_clear_strip.setObjectName("stripClearImages")
         self.btn_clear_strip.setFixedSize(24, 24)
         self.btn_clear_strip.clicked.connect(self.clear_images_requested)
         sl.addWidget(self.btn_clear_strip)
 
-        self.lbl_auto = QLabel("Auto switch")
+        self.lbl_auto = QLabel("Loop")
         self.lbl_auto.setObjectName("imageStripCaption")
+        self.lbl_auto.setMinimumWidth(self.lbl_auto.fontMetrics().horizontalAdvance("Loop") + 8)
         sl.addWidget(self.lbl_auto)
 
         self.btn_auto = ToggleSwitch()
         self.btn_auto.setObjectName("sliderToggle")
-        self.btn_auto.setToolTip("Cycle the image strip automatically after each run")
+        self.btn_auto.setToolTip(
+            "Loop: keep running the image(s) over and over until Stop is pressed. "
+            "With 'Run all' every image in the strip is processed in turn.")
         sl.addWidget(self.btn_auto)
 
         self.cbo_run_scope = QComboBox()
@@ -299,7 +322,7 @@ class ImageDisplayArea(QWidget):
         # Let the button take the width its icon + label need.  At the reference
         # window size this row is tight enough that a squeezed button clipped its
         # label to "Ru".
-        self.btn_play.setMinimumWidth(self.btn_play.sizeHint().width())
+        self.btn_play.setMinimumWidth(max(self.btn_play.sizeHint().width(), 78))
         self.btn_play.setToolTip("Execute flow according to selected scope (Run all / selected / step)")
         self.btn_play.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_play.clicked.connect(self.run_requested.emit)
@@ -413,16 +436,29 @@ class ImageDisplayArea(QWidget):
             arr = img_or_pixmap
             if len(arr.shape) == 2:
                 h, w = arr.shape
-                qimg = QImage(arr.data, w, h, w, QImage.Format.Format_Grayscale8)
+                step = max(1, min(h // 80, w // 112))
+                sub = np.ascontiguousarray(arr[::step, ::step])
+                thumb_cv = cv2.resize(sub, (56, 40), interpolation=cv2.INTER_AREA)
+                qimg = QImage(thumb_cv.data, 56, 40, 56, QImage.Format.Format_Grayscale8)
+                pix = QPixmap.fromImage(qimg)
             else:
                 h, w, ch = arr.shape
-                rgb = cv2.cvtColor(arr, cv2.COLOR_BGR2RGB)
-                qimg = QImage(rgb.data, w, h, ch * w, QImage.Format.Format_RGB888)
-            pix = QPixmap.fromImage(qimg)
+                step = max(1, min(h // 80, w // 112))
+                sub = np.ascontiguousarray(arr[::step, ::step])
+                thumb_cv = cv2.resize(sub, (56, 40), interpolation=cv2.INTER_AREA)
+                if ch == 3:
+                    qimg = QImage(thumb_cv.data, 56, 40, 56 * 3, QImage.Format.Format_BGR888)
+                else:
+                    rgb = cv2.cvtColor(thumb_cv, cv2.COLOR_BGRA2RGBA)
+                    qimg = QImage(rgb.data, 56, 40, 56 * 4, QImage.Format.Format_RGBA8888)
+                pix = QPixmap.fromImage(qimg)
 
         if pix is not None and not pix.isNull():
-            thumb = pix.scaled(56, 40, Qt.AspectRatioMode.KeepAspectRatio,
-                                  Qt.TransformationMode.SmoothTransformation)
+            if pix.width() != 56 or pix.height() != 40:
+                thumb = pix.scaled(56, 40, Qt.AspectRatioMode.KeepAspectRatio,
+                                      Qt.TransformationMode.SmoothTransformation)
+            else:
+                thumb = pix
             card = QPixmap(56, 40)
             card.fill(QColor(THEME['vm_viewport']))
             p = QPainter(card)
@@ -477,6 +513,38 @@ class ImageDisplayArea(QWidget):
             splitter.setSizes([int(total * 0.6), total - int(total * 0.6)])
         else:
             splitter.setSizes([int(total * 0.9), total - int(total * 0.9)])
+
+    def set_running(self, running: bool, stopping: bool = False):
+        """Turn the Run button into a Stop button while the strip is processing.
+
+        ``stopping`` shows a disabled 'Stopping...' until the cycle in flight has ended, so
+        the button only returns to 'Run' once everything has actually finished.
+        """
+        btn = self.btn_play
+        if running:
+            btn.setText(" Stopping..." if stopping else " Stop")
+            btn.setIcon(get_action_icon("stop", 16, QColor("#ffffff")))
+            btn.setToolTip("Stop processing")
+        else:
+            btn.setText(" Run")
+            btn.setIcon(get_action_icon("run_once", 16))
+            btn.setToolTip("Execute flow according to selected scope (Run all / selected / step)")
+        btn.setEnabled(not stopping)
+        btn.setProperty("running", bool(running))
+        btn.style().unpolish(btn)
+        btn.style().polish(btn)
+
+    def select_frame(self, row: int):
+        """Highlight a strip entry without announcing it (no re-run is triggered)."""
+        if not (0 <= row < self.strip.count()):
+            return
+        self.strip.blockSignals(True)
+        self.strip.setCurrentRow(row)
+        self.strip.scrollToItem(self.strip.item(row))
+        self.strip.blockSignals(False)
+        label = self._frames[row] if row < len(self._frames) else ""
+        self.lbl_strip.setText(f"{label} ({row + 1}/{max(1, self.strip.count())})")
+        self._update_page_buttons()
 
     def _step_image(self, delta: int):
         if self.strip.count() == 0:

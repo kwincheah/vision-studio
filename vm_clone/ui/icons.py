@@ -9,7 +9,7 @@ Grounded in Apple Design HIG principles for interface icons:
 """
 from PyQt6.QtGui import QIcon, QPixmap, QPainter, QColor, QPen, QBrush, QPainterPath, QFont
 from PyQt6.QtCore import Qt, QRectF, QPointF
-from typing import Dict, Optional
+from typing import Optional
 
 
 # Palette tokens for icon rendering

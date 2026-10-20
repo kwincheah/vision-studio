@@ -12,11 +12,11 @@ subscription are genuine interactions.
 """
 from typing import Any, Dict, List, Optional
 
-from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF, QTimer, QSize
-from PyQt6.QtGui import QColor, QFont, QIcon, QPainter, QPen, QPixmap
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QSize
+from PyQt6.QtGui import QColor, QFont, QIcon
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTreeWidget, QTreeWidgetItem, QHeaderView,
-    QLabel, QToolButton, QMenu, QInputDialog, QMessageBox
+    QWidget, QVBoxLayout, QTreeWidget, QTreeWidgetItem, QHeaderView, QMenu,
+    QInputDialog, QMessageBox
 )
 
 from vm_clone.core.base_tool import ToolExecutionResult, ToolStatus

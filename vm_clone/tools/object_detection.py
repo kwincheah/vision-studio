@@ -10,8 +10,7 @@ Provides inference-only deep learning detection with configurable:
 """
 import os
 import cv2
-import numpy as np
-from typing import Dict, Any, List, Optional, Union
+from typing import Dict, Any, List, Optional
 from vm_clone.core.base_tool import VisionToolBase, ToolExecutionResult, ToolStatus, ToolPort, DataType
 from vm_clone.core.registry import register_tool
 
@@ -20,8 +19,21 @@ from vm_clone.core.registry import register_tool
 _YOLO_MODEL_CACHE: Dict[str, Any] = {}
 
 
+def _resolve_model_path(model_path: str) -> str:
+    """Prefer a weights file shipped next to the application over a cwd-relative download.
+
+    Ultralytics silently downloads a missing ``yolo11n.pt`` into the working directory,
+    which stalls the UI thread (and fails offline) when the app is launched from elsewhere.
+    """
+    if os.path.isabs(model_path) or os.path.exists(model_path):
+        return model_path
+    app_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    bundled = os.path.join(app_root, model_path)
+    return bundled if os.path.exists(bundled) else model_path
+
+
 def _get_yolo_model(model_path: str):
-    """Retrieve or load YOLO model from cache."""
+    """Retrieve or load YOLO model from cache with warm-up."""
     path_key = (model_path or "yolo11n.pt").strip()
     if path_key not in _YOLO_MODEL_CACHE:
         try:
@@ -30,7 +42,15 @@ def _get_yolo_model(model_path: str):
             raise ImportError(
                 "YOLO inference requires 'ultralytics'. Install via 'pip install ultralytics'."
             ) from e
-        _YOLO_MODEL_CACHE[path_key] = YOLO(path_key)
+        model = YOLO(_resolve_model_path(path_key))
+        # Warmup model once with a synthetic dummy tensor to avoid initial inference stall
+        try:
+            import numpy as np
+            dummy = np.zeros((64, 64, 3), dtype=np.uint8)
+            model.predict(source=dummy, verbose=False, max_det=1)
+        except Exception:
+            pass
+        _YOLO_MODEL_CACHE[path_key] = model
     return _YOLO_MODEL_CACHE[path_key]
 
 

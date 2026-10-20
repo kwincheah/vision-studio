@@ -536,6 +536,13 @@ class ParameterInspectorWidget(QWidget):
                 return [d.device_id for d in devs]
             except Exception:
                 return ["virtual_gige_0", "virtual_usb3_0", "webcam_0", "ip_stream_custom"]
+        if self.current_tool is not None:                      # per-tool choices: the same key means different things on different tools
+            from vm_clone.core import param_schema
+            per_tool = param_schema.choices_for(getattr(self.current_tool, "tool_name", ""), key)
+            if per_tool:
+                return per_tool
+            if getattr(self.current_tool, "tool_name", "") in param_schema.SCHEMA:
+                return []
         return PARAM_ENUMS.get(key, [])
 
     def _on_val_changed(self, key: str, value):

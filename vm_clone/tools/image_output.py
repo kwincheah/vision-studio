@@ -7,9 +7,10 @@ Matches HikRobot Vision Master Acquisition & Image Output category:
 import os
 import time
 import cv2
+from vm_clone.core.imageio import imwrite
 import numpy as np
 from collections import deque
-from typing import Dict, Any, List, Deque, Optional
+from typing import Dict, Any, Deque, Optional
 from vm_clone.core.base_tool import VisionToolBase, ToolExecutionResult, ToolStatus, ToolPort, DataType
 from vm_clone.core.registry import register_tool
 
@@ -89,7 +90,7 @@ class ImageOutputTool(VisionToolBase):
                       max(1, min(100, int(self.as_float(
                           self.get_param("image_quality", 95), 95))))]
         try:
-            written = cv2.imwrite(filepath, img, params)
+            written = imwrite(filepath, img, params)
         except Exception as exc:
             return ToolExecutionResult(
                 status=ToolStatus.ERROR,

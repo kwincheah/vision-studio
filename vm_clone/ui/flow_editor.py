@@ -11,8 +11,7 @@ Professional machine vision block diagram:
 """
 from PyQt6.QtWidgets import (
     QGraphicsView, QGraphicsScene, QGraphicsItem, QGraphicsRectItem,
-    QGraphicsPathItem, QMenu, QMessageBox, QWidget, QHBoxLayout, QLabel,
-    QToolButton
+    QGraphicsPathItem, QMenu, QWidget, QHBoxLayout, QLabel, QToolButton
 )
 from PyQt6.QtGui import (
     QPainter, QColor, QPen, QBrush, QFont, QFontMetrics, QPainterPath,
@@ -65,10 +64,12 @@ class AddConnectionCommand(QUndoCommand):
         self.to_port = to_port
 
     def redo(self):
+        self.scene.before_edit()
         self.scene.pipeline.connect(self.from_node, self.from_port, self.to_node, self.to_port, force=True)
         _rebuild_scene(self.scene)
 
     def undo(self):
+        self.scene.before_edit()
         self.scene.pipeline.disconnect(self.to_node, self.to_port)
         _rebuild_scene(self.scene)
 
@@ -83,10 +84,12 @@ class DeleteConnectionCommand(QUndoCommand):
         self.to_port = to_port
 
     def redo(self):
+        self.scene.before_edit()
         self.scene.pipeline.disconnect(self.to_node, self.to_port)
         _rebuild_scene(self.scene)
 
     def undo(self):
+        self.scene.before_edit()
         self.scene.pipeline.connect(self.from_node, self.from_port, self.to_node, self.to_port, force=True)
         _rebuild_scene(self.scene)
 
@@ -99,6 +102,7 @@ class AddNodeCommand(QUndoCommand):
         self.pos = pos
 
     def redo(self):
+        self.scene.before_edit()
         self.scene.pipeline.add_node(self.tool)
         _rebuild_scene(self.scene)
         if self.tool.instance_id in self.scene.node_items:
@@ -108,6 +112,7 @@ class AddNodeCommand(QUndoCommand):
             self.scene.signals.node_selected.emit(self.tool.instance_id)
 
     def undo(self):
+        self.scene.before_edit()
         self.scene.pipeline.remove_node(self.tool.instance_id)
         _rebuild_scene(self.scene)
 
@@ -127,12 +132,14 @@ class DeleteNodeCommand(QUndoCommand):
         ]
 
     def redo(self):
+        self.scene.before_edit()
         self.scene.pipeline.remove_node(self.instance_id)
         _rebuild_scene(self.scene)
         if self.scene.signals:
             self.scene.signals.node_deleted.emit(self.instance_id)
 
     def undo(self):
+        self.scene.before_edit()
         if self.tool:
             self.scene.pipeline.add_node(self.tool)
             for fn, fp, tn, tp in self.connections:
@@ -343,7 +350,6 @@ class ConnectionItem(QGraphicsPathItem):
             tn_pos = to_node.scenePos()
             fn_w = getattr(from_node, "WIDTH", 176.0)
             fn_h = getattr(from_node, "height", 80.0)
-            tn_w = getattr(to_node, "WIDTH", 176.0)
             tn_h = getattr(to_node, "height", 80.0)
 
             x_right = max(p1.x() + clr, fn_pos.x() + fn_w + 16.0)
@@ -777,7 +783,25 @@ class FlowScene(QGraphicsScene):
         self._show_grid: bool = True
         self._locked: bool = False
 
+        self._built_pipeline: Optional[VisionPipeline] = None
+        #: Called before the graph is edited; the window uses it to let a running flow finish.
+        self.edit_guard = None
+
         self.setBackgroundBrush(QBrush(QColor(THEME["vm_canvas"])))
+
+    def before_edit(self) -> None:
+        if self.edit_guard is not None:
+            self.edit_guard()
+
+    def sync_positions(self) -> None:
+        """Copy the on-canvas node placement back onto the pipeline it was built from."""
+        pipe = self._built_pipeline
+        if pipe is None or not self.node_items:
+            return
+        pipe.node_positions = {
+            nid: [item.pos().x(), item.pos().y()]
+            for nid, item in self.node_items.items() if nid in pipe.nodes
+        }
 
     def set_grid_visible(self, visible: bool):
         self._show_grid = visible
@@ -918,27 +942,37 @@ class FlowScene(QGraphicsScene):
     def build_from_pipeline(self, preserve_positions: bool = True):
         if self._locked:
             return
-        saved_positions = {}
-        if preserve_positions:
+        self.sync_positions()
+        saved_positions: Dict[str, QPointF] = {}
+        for nid, xy in self.pipeline.node_positions.items():
+            saved_positions[nid] = QPointF(xy[0], xy[1])
+        if preserve_positions and self._built_pipeline is self.pipeline:
             for nid, item in self.node_items.items():
                 saved_positions[nid] = item.pos()
 
         self.clear()
         self.node_items.clear()
         self.connection_items.clear()
+        self._built_pipeline = self.pipeline
 
+        placed = 0
         for nid in self.pipeline.execution_order:
             node = self.pipeline.nodes.get(nid)
             if not node:
                 continue
 
+            if nid in saved_positions:
+                placed += 1
             pos = saved_positions.get(nid, QPointF(50, 50))
             item = FlowNodeItem(node, self.signals, pos)
             self.addItem(item)
             self.node_items[nid] = item
 
-        if not saved_positions and len(self.node_items) > 0:
+        # Nothing has a remembered position (fresh load of a hand-written / older project,
+        # or a flow switch): lay the graph out instead of stacking every node at one spot.
+        if placed == 0 and len(self.node_items) > 0:
             self.arrange_nodes_hierarchically()
+        self.sync_positions()
 
         for conn in self.pipeline.connections:
             src_node = self.node_items.get(conn.from_node)
@@ -1114,7 +1148,7 @@ class FlowZoomTool(QWidget):
         # the stylesheet unless it is told to; without this it falls back to
         # the global light `QWidget` background.
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.setFixedSize(112, 24)
+        self.setFixedSize(118, 24)
         self.setToolTip("Flow canvas zoom")
 
         row = QHBoxLayout(self)
@@ -1144,7 +1178,7 @@ class FlowZoomTool(QWidget):
         btn.setText(text)
         btn.setToolTip(tip)
         btn.setAutoRaise(True)
-        btn.setFixedSize(20, 18)
+        btn.setFixedSize(22, 20)
         return btn
 
     def refresh(self):
@@ -1154,7 +1188,9 @@ class FlowZoomTool(QWidget):
         parent = self.parentWidget()
         if parent is None:
             return
-        w, h = parent.width(), parent.height()
+        w = parent.width()
+        # sit above the horizontal scroll bar: measure to the bottom of the viewport
+        h = parent.viewport().height() if hasattr(parent, "viewport") else parent.height()
         if w <= 0 or h <= 0:
             return
         # Lower-left corner of the canvas, as in the vendor figure (region 11).
@@ -1183,21 +1219,17 @@ class FlowTelemetryBar(QWidget):
         # the width its own longest value needs.  Without a floor the layout squeezed
         # the last one and "Algorithm: 148.64ms" rendered clipped to "Algorithm: 148.6".
         self.lbl_flow = QLabel("Flow: 0.00ms")
-        self.lbl_flow.setStyleSheet(
-            f"color: {THEME['vm_accent']}; font-weight: {THEME['fw_demibold']}; "
-            f"font-size: {THEME['fs_caption']}px;")
+        self.lbl_flow.setObjectName("telemetryFlow")
         row.addWidget(self.lbl_flow)
 
         self.lbl_tools = QLabel("Tools: 0")
-        self.lbl_tools.setStyleSheet(
-            f"color: {THEME['vm_node_text_dim']}; font-size: {THEME['fs_caption']}px;")
+        self.lbl_tools.setObjectName("telemetryTools")
         row.addWidget(self.lbl_tools)
 
         # Abbreviated because the full word does not fit the measured strip width at
         # the reference window size, and this bar is read at a glance.
         self.lbl_algo = QLabel("Algo: 0.00ms")
-        self.lbl_algo.setStyleSheet(
-            f"color: {THEME['vm_node_text_dim']}; font-size: {THEME['fs_caption']}px;")
+        self.lbl_algo.setObjectName("telemetryAlgo")
         row.addWidget(self.lbl_algo)
 
         for label, sample in ((self.lbl_flow, "Flow: 000.00ms"),
@@ -1205,13 +1237,9 @@ class FlowTelemetryBar(QWidget):
                               (self.lbl_algo, "Algo: 000.00ms")):
             label.setMinimumWidth(
                 QFontMetrics(label.font()).horizontalAdvance(sample) +
-                2 * THEME["sp_hair"])
+                2 * THEME["sp_base"] + 6)   # chip padding + border + bold-weight slack
 
-        self.setStyleSheet(
-            f"background-color: {THEME['bg_surface']}; "
-            f"border: {THEME['bw_hair']}px solid {THEME['border_subtle']}; "
-            f"border-radius: {THEME['r_control']}px;"
-        )
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
     def update_telemetry(self, flow_ms: float, tool_count: int, algo_ms: float):
         self.lbl_flow.setText(f"Flow: {flow_ms:.2f}ms")
@@ -1224,10 +1252,12 @@ class FlowTelemetryBar(QWidget):
         parent = self.parentWidget()
         if parent is None:
             return
-        w, h = parent.width(), parent.height()
+        w = parent.width()
+        # sit above the horizontal scroll bar: measure to the bottom of the viewport
+        h = parent.viewport().height() if hasattr(parent, "viewport") else parent.height()
         if w <= 0 or h <= 0:
             return
-        x = FlowZoomTool.MARGIN_LEFT + 120
+        x = FlowZoomTool.MARGIN_LEFT + 126
         y = max(0, h - self.height() - 8)
         self.move(x, y)
 
@@ -1239,7 +1269,7 @@ class FlowEditorView(QGraphicsView):
         self.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
         self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
-        self.setStyleSheet("border: none; background: transparent;")
+        self.setStyleSheet("QGraphicsView { border: none; background: transparent; }")
         self.setFrameShape(QGraphicsView.Shape.NoFrame)
         self.setAcceptDrops(True)
 

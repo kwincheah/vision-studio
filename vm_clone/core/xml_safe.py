@@ -10,7 +10,6 @@ _DANGEROUS_XML_PATTERN = re.compile(r"<!(?:DOCTYPE|ENTITY)\b", re.IGNORECASE)
 
 class DefusedXMLError(ValueError):
     """Raised when XML contains forbidden DTD or entity declarations."""
-    pass
 
 
 def safe_fromstring(xml_str: Union[str, bytes]) -> ET.Element:

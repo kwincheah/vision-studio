@@ -33,12 +33,12 @@ truth, and the evaluation of it produces whatever precision and recall it produc
 """
 from __future__ import annotations
 
-import json
 import os
 import random
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import cv2
+from vm_clone.core.imageio import imwrite
 import numpy as np
 
 from vm_clone.evaluation.annotations import Annotation, Dataset, ImageRecord
@@ -330,7 +330,7 @@ def build_dataset(directory: str, name: str = "pcb_defect_synth",
                                 force_clean=force_clean)
 
         fname = f"board_{i:04d}.png"
-        cv2.imwrite(os.path.join(images_dir, fname), img)
+        imwrite(os.path.join(images_dir, fname), img)
         records.append(ImageRecord(
             image_path=os.path.join("images", fname),
             annotations=anns,
@@ -477,8 +477,6 @@ def reference_pcb_detector(image: np.ndarray, *,
             continue
         if bw > 0.5 * w or bh > 0.5 * h:
             continue
-        fill = area / float(max(1, bw * bh))
-        aspect = bw / float(max(1, bh))
         region = signed[y:y + bh, x:x + bw]
         depth = float(region.max()) if region.size else 0.0
 

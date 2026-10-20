@@ -9,19 +9,18 @@ Provides:
 """
 import os
 import time
-from typing import Optional, List, Dict
+from typing import Optional
 import cv2
-import numpy as np
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QSplitter, QTableWidget, QTableWidgetItem,
     QHeaderView, QLabel, QPushButton, QGroupBox, QFormLayout, QDoubleSpinBox,
-    QSpinBox, QComboBox, QLineEdit, QMessageBox, QWidget, QDialogButtonBox,
-    QFileDialog, QInputDialog
+    QComboBox, QLineEdit, QMessageBox, QWidget, QDialogButtonBox, QFileDialog,
+    QInputDialog
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QImage, QPixmap, QFont, QColor
+from PyQt6.QtGui import QImage, QPixmap
 
-from vm_clone.core.camera_manager import CameraManager, CameraDeviceInfo, CameraDriverBase
+from vm_clone.core.camera_manager import CameraManager, CameraDriverBase
 from vm_clone.ui.styles import THEME
 
 
@@ -253,6 +252,9 @@ class CameraManagementDialog(QDialog):
             item_type = QTableWidgetItem(dev.camera_type)
             item_serial = QTableWidgetItem(dev.serial_number or dev.device_id)
             item_iface = QTableWidgetItem(dev.interface_name or dev.camera_type)
+            full = "\n".join((dev.name, dev.camera_type, dev.serial_number or dev.device_id))
+            for cell in (item_name, item_type, item_serial, item_iface):
+                cell.setToolTip(full)          # the Name column is narrow: the tooltip has the whole text
 
             self.table_devices.setItem(r, 0, item_name)
             self.table_devices.setItem(r, 1, item_type)

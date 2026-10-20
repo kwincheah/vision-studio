@@ -7,8 +7,7 @@ Matches HikRobot Vision Master Communication category:
 """
 import socket
 import json
-import time
-from typing import Dict, Any, List
+from typing import Dict, Any
 from vm_clone.core.base_tool import VisionToolBase, ToolExecutionResult, ToolStatus, ToolPort, DataType
 from vm_clone.core.registry import register_tool
 
@@ -32,7 +31,8 @@ class TCPSendTool(VisionToolBase):
             "server_port": 8080,
             "prefix": "VM_RES,",
             "suffix": "\\r\\n",
-            "format": "CSV"  # CSV, JSON, Plain Text
+            "format": "CSV",  # CSV, JSON, Plain Text
+            "connect_timeout_ms": 500  # how long to wait for the PLC / robot to accept the connection
         }
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
@@ -71,7 +71,7 @@ class TCPSendTool(VisionToolBase):
             # know the PLC never received the verdict.
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.settimeout(0.5)
+                    s.settimeout(max(0.05, self.as_float(self.get_param("connect_timeout_ms", 500), 500) / 1000.0))
                     s.connect((ip, port))
                     s.sendall(raw_bytes)
             except OSError as exc:
