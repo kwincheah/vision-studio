@@ -14,12 +14,12 @@ import numpy as np
 import pytest
 from PyQt6.QtWidgets import QApplication
 
-import vm_clone.tools
-from vm_clone.core.base_tool import ToolStatus
-from vm_clone.core.pipeline import VisionPipeline, SolutionManager
-from vm_clone.core.registry import create_tool_instance
-from vm_clone.ui.main_window import VisionMasterMainWindow
-from vm_clone.ui.styles import initialize_app_fonts
+import apex_vision.tools
+from apex_vision.core.base_tool import ToolStatus
+from apex_vision.core.pipeline import VisionPipeline, SolutionManager
+from apex_vision.core.registry import create_tool_instance
+from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.styles import initialize_app_fonts
 
 
 @pytest.fixture(scope="session")

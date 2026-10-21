@@ -11,11 +11,11 @@ from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt, QPointF
 from PyQt6.QtGui import QMouseEvent, QWheelEvent
 
-import vm_clone.tools
-from vm_clone.core.pipeline import VisionPipeline
-from vm_clone.core.registry import create_tool_instance
-from vm_clone.ui.flow_editor import FlowScene, FlowEditorView, NodeSignals, PortItem, ConnectionItem
-from vm_clone.ui.styles import initialize_app_fonts
+import apex_vision.tools
+from apex_vision.core.pipeline import VisionPipeline
+from apex_vision.core.registry import create_tool_instance
+from apex_vision.ui.flow_editor import FlowScene, FlowEditorView, NodeSignals, PortItem, ConnectionItem
+from apex_vision.ui.styles import initialize_app_fonts
 
 
 @pytest.fixture(scope="session")

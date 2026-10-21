@@ -3,7 +3,7 @@ import QtQuick 2.15
 
 /*
  * Design tokens for Apex Industrial Vision Studio.
- * Mirrors vm_clone/ui/vm_theme.py (the widget UI) - change a value here and every
+ * Mirrors apex_vision/ui/theme.py (the widget UI) - change a value here and every
  * component and screen follows.
  */
 QtObject {

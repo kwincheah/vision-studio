@@ -4,7 +4,7 @@ import ApexTheme 1.0
 import ApexComponents 1.0
 
 // Camera management: device list, live preview, exposure / gain / trigger, MVS config import.
-// Live through `appCamera` (vm_clone/qml_services.py); sample data in Qt Design Studio.
+// Live through `appCamera` (apex_vision/qml_services.py); sample data in Qt Design Studio.
 DialogFrame {
     id: root
     readonly property var cam: typeof appCamera !== "undefined" ? appCamera : null

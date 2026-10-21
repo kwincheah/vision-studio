@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 def qapp():
     from PyQt6.QtWidgets import QApplication
 
-    from vm_clone.ui.styles import initialize_app_fonts
+    from apex_vision.ui.styles import initialize_app_fonts
 
     app = QApplication.instance() or QApplication([])
     initialize_app_fonts(app)
@@ -26,7 +26,7 @@ def qapp():
 
 @pytest.fixture()
 def win(qapp):
-    from vm_clone.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import VisionMasterMainWindow
 
     window = VisionMasterMainWindow()
     window.resize(1400, 760)
@@ -49,7 +49,7 @@ def test_flow_tab_is_expanding(qapp):
     203 px for content needing 222 px - which elided the cycle time.  With an expanding
     bar the tab takes the width the bar has instead.
     """
-    from vm_clone.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import VisionMasterMainWindow
 
     window = VisionMasterMainWindow()
     assert window.flow_tab_bar.expanding() is True
@@ -117,7 +117,7 @@ def test_tool_cell_font_is_explicit(qapp):
     The cells resolved the 13 px label size from the stylesheet cascade, which made
     'Linear Edge Defect' wrap onto three lines needing 91 px in an 84 px cell.
     """
-    from vm_clone.ui.toolbox import ToolGridWidget
+    from apex_vision.ui.toolbox import ToolGridWidget
 
     grid = ToolGridWidget()
     assert grid.font().pixelSize() == ToolGridWidget.LABEL_PX

@@ -13,10 +13,10 @@ import pytest
 import numpy as np
 from PyQt6.QtWidgets import QApplication
 
-import vm_clone.tools
-from vm_clone.core.base_tool import ToolStatus
-from vm_clone.core.camera_manager import CameraManager
-from vm_clone.core.mvs_sdk import (
+import apex_vision.tools
+from apex_vision.core.base_tool import ToolStatus
+from apex_vision.core.camera_manager import CameraManager
+from apex_vision.core.mvs_sdk import (
     MvsSdkLoader,
     MvsCameraDriver,
     MvsConfigFileManager,
@@ -25,10 +25,10 @@ from vm_clone.core.mvs_sdk import (
     PixelType_Gvsp_Mono8,
     PixelType_Gvsp_BGR8_Packed
 )
-from vm_clone.core.lens_calibration import LensCalibrationModel
-from vm_clone.core.pipeline import VisionPipeline
-from vm_clone.core.registry import create_tool_instance
-from vm_clone.ui.camera_dialog import CameraManagementDialog
+from apex_vision.core.lens_calibration import LensCalibrationModel
+from apex_vision.core.pipeline import VisionPipeline
+from apex_vision.core.registry import create_tool_instance
+from apex_vision.ui.camera_dialog import CameraManagementDialog
 
 
 @pytest.fixture(scope="session")

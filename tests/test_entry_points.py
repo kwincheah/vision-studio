@@ -42,8 +42,8 @@ def test_main_py_still_offers_the_widget_interface():
 
 def test_backend_startup_and_close_behaviour(tmp_path):
     from PyQt6.QtGui import QGuiApplication
-    from vm_clone.core.project_manager import ProjectManager
-    from vm_clone.qml_backend import AppBackend, FrameProvider
+    from apex_vision.core.project_manager import ProjectManager
+    from apex_vision.qml_backend import AppBackend, FrameProvider
     app = QGuiApplication.instance() or QGuiApplication(sys.argv)
     pm = ProjectManager(workspace_root=str(tmp_path))
     b = AppBackend(FrameProvider(), pm)

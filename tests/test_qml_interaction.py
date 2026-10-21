@@ -22,9 +22,9 @@ class Ui:
 
     def __init__(self):
         os.environ.setdefault("QT_QUICK_BACKEND", "software")
-        from vm_clone.core.project_manager import ProjectManager
-        from vm_clone.qml_backend import AppBackend, FrameProvider
-        from vm_clone.qml_services import install_services
+        from apex_vision.core.project_manager import ProjectManager
+        from apex_vision.qml_backend import AppBackend, FrameProvider
+        from apex_vision.qml_services import install_services
         self.app = QGuiApplication.instance() or QGuiApplication(sys.argv)
         self.engine = QQmlApplicationEngine()
         self.warnings = []
@@ -50,7 +50,7 @@ class Ui:
         self.be.setScope("Run all")
         self.be._project.saved = None            # never ask about unsaved edits between tests
         self.w.setProperty("startPageVisible", False)
-        self.be.load_solution(__import__("vm_clone.core.pipeline", fromlist=["SolutionManager"])
+        self.be.load_solution(__import__("apex_vision.core.pipeline", fromlist=["SolutionManager"])
                               .SolutionManager.load_from_file(DEMO), DEMO)
         self.settle()
         self.main.setProperty("zoom", 1.0)

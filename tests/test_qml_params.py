@@ -195,7 +195,7 @@ def test_every_card_in_every_sample_names_a_module_that_is_in_the_toolbox(ui):
     toolbox = {t for c in ui.be.toolCategories for t in c["tools"]}
     import glob
     import os
-    from vm_clone.core.pipeline import SolutionManager
+    from apex_vision.core.pipeline import SolutionManager
     root = os.path.join(os.path.dirname(__file__), "..")
     files = glob.glob(os.path.join(root, "projects", "*.vmp"))
     assert files
@@ -203,7 +203,7 @@ def test_every_card_in_every_sample_names_a_module_that_is_in_the_toolbox(ui):
         for flow in SolutionManager.load_from_file(f).flows.values():
             for n in flow.nodes.values():
                 assert n.tool_name in toolbox, f"{os.path.basename(f)}: {n.name} is a {n.tool_name!r}, which the toolbox does not offer"
-    from vm_clone.samples import pcb_solution as ps
+    from apex_vision.samples import pcb_solution as ps
     for make in (ps.create_pcb_inspection_solution, ps.create_calibration_robot_solution,
                  ps.create_precision_measurement_solution, ps.create_object_detection_solution):
         for n in make().nodes.values():

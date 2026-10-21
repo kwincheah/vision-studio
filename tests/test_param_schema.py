@@ -4,10 +4,10 @@ cannot hold.  Part of the review of all 42 modules."""
 import numpy as np
 import pytest
 
-import vm_clone.tools  # noqa: F401
-from vm_clone.core import param_schema as ps
-from vm_clone.core.base_tool import ToolStatus
-from vm_clone.core.registry import create_tool_instance, list_all_tools
+import apex_vision.tools  # noqa: F401
+from apex_vision.core import param_schema as ps
+from apex_vision.core.base_tool import ToolStatus
+from apex_vision.core.registry import create_tool_instance, list_all_tools
 
 TOOLS = sorted(list_all_tools())
 # free-text parameters that were reviewed one by one: there is no fixed set of values to offer
@@ -137,9 +137,9 @@ def test_clamp_and_problem_rules():
 def backend():
     from PyQt6.QtGui import QGuiApplication
     QGuiApplication.instance() or QGuiApplication([])
-    from vm_clone.core.pipeline import SolutionManager
-    from vm_clone.qml_backend import AppBackend, FrameProvider
-    from vm_clone.samples.pcb_solution import create_pcb_inspection_solution
+    from apex_vision.core.pipeline import SolutionManager
+    from apex_vision.qml_backend import AppBackend, FrameProvider
+    from apex_vision.samples.pcb_solution import create_pcb_inspection_solution
     b = AppBackend(FrameProvider())
     sol = SolutionManager(name="S")
     sol.flows["F"] = create_pcb_inspection_solution()
@@ -168,7 +168,7 @@ def test_moduleparams_describes_each_parameter_for_its_editor(backend):
 def test_trigger_target_flow_offers_the_flows_that_exist(backend):
     backend.addFlow()
     backend.engine.wait_for_run()
-    from vm_clone.core.registry import create_tool_instance as mk
+    from apex_vision.core.registry import create_tool_instance as mk
     trig = mk("Trigger", "trg")
     backend._pipeline.add_node(trig)
     row = next(r for r in backend.moduleParams("trg") if r["name"] == "target_flow")

@@ -11,9 +11,9 @@ pytest.importorskip("PyQt6.QtQml")
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QGuiApplication
 
-from vm_clone.core.pipeline import SolutionManager
-from vm_clone.qml_backend import AppBackend, FrameProvider
-from vm_clone.qml_services import CameraService, InspectionService, LensService, PluginService
+from apex_vision.core.pipeline import SolutionManager
+from apex_vision.qml_backend import AppBackend, FrameProvider
+from apex_vision.qml_services import CameraService, InspectionService, LensService, PluginService
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DEMO = os.path.join(ROOT, "projects", "PCB_Inspection_Demo.vmp")

@@ -11,7 +11,7 @@ import cv2
 import numpy as np
 from typing import Dict, Any, List, Type
 
-from vm_clone.sdk import (
+from apex_vision.sdk import (
     IVisionPlugin,
     PluginMetadata,
     PluginToolBase,

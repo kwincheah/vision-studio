@@ -15,12 +15,12 @@ import numpy as np
 import pytest
 from PyQt6.QtWidgets import QApplication
 
-from vm_clone.core.lens_calibration import LensCalibrationModel
-from vm_clone.core.pipeline import VisionPipeline
-from vm_clone.core.registry import create_tool_instance, get_tool_class
-from vm_clone.tools.calibration import CameraCalibrationTool
-from vm_clone.ui.camera_calibration_dialog import CameraCalibrationDialog
-from vm_clone.ui.styles import initialize_app_fonts
+from apex_vision.core.lens_calibration import LensCalibrationModel
+from apex_vision.core.pipeline import VisionPipeline
+from apex_vision.core.registry import create_tool_instance, get_tool_class
+from apex_vision.tools.calibration import CameraCalibrationTool
+from apex_vision.ui.camera_calibration_dialog import CameraCalibrationDialog
+from apex_vision.ui.styles import initialize_app_fonts
 
 
 @pytest.fixture(scope="session")
@@ -194,7 +194,7 @@ def test_dialog_views_stay_aligned_with_the_model_when_a_view_is_ng(qapp, tmp_pa
     the right frame (this used to pop the wrong calibration view)."""
     import cv2
     import numpy as np
-    from vm_clone.ui.camera_calibration_dialog import CameraCalibrationDialog
+    from apex_vision.ui.camera_calibration_dialog import CameraCalibrationDialog
     dialog = CameraCalibrationDialog()
     try:
         dialog._on_clear_views()                       # the dialog seeds one synthetic view on open

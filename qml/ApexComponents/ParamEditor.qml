@@ -4,7 +4,7 @@ import QtQuick.Dialogs
 import ApexTheme 1.0
 
 /*
- * Editor for one module parameter, chosen by its kind (see vm_clone/core/param_schema.py):
+ * Editor for one module parameter, chosen by its kind (see apex_vision/core/param_schema.py):
  *   bool -> switch      enum -> drop-down      combo -> drop-down + typed value     int / float -> number with limits
  *   rect / point / line / rgb -> labelled number fields      points -> one "x, y" per line
  *   path / dir -> text + Browse      code -> multi-line editor      device / flow -> drop-down of what exists

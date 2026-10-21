@@ -1,6 +1,6 @@
 import numpy as np
 
-from vm_clone.core.overlays import DEFAULT_LAYERS, render_overlays
+from apex_vision.core.overlays import DEFAULT_LAYERS, render_overlays
 
 OVERLAYS = [
     {"type": "rect", "box": [10, 10, 40, 30], "color": (0, 0, 255), "label": "box"},

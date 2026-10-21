@@ -15,18 +15,18 @@ import pytest
 from PyQt6.QtWidgets import QApplication, QComboBox
 from PyQt6.QtCore import Qt, QPointF
 
-import vm_clone.tools
-from vm_clone.core.base_tool import ToolExecutionResult, ToolStatus
-from vm_clone.core.pipeline import VisionPipeline
-from vm_clone.core.registry import create_tool_instance
-from vm_clone.ui.styles import initialize_app_fonts
-from vm_clone.ui.result_display import (
+import apex_vision.tools
+from apex_vision.core.base_tool import ToolExecutionResult, ToolStatus
+from apex_vision.core.pipeline import VisionPipeline
+from apex_vision.core.registry import create_tool_instance
+from apex_vision.ui.styles import initialize_app_fonts
+from apex_vision.ui.result_display import (
     ResultDisplayArea, build_result_table, extract_feature_rows, MODULE_LOG_HEADERS,
 )
-from vm_clone.ui.image_display import ImageDisplayArea
-from vm_clone.ui.module_config import ModuleConfigDialog, RUN_PARAM_GROUPS
-from vm_clone.ui.flow_editor import FlowScene, FlowEditorView, NodeSignals, FlowZoomTool
-from vm_clone.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.image_display import ImageDisplayArea
+from apex_vision.ui.module_config import ModuleConfigDialog, RUN_PARAM_GROUPS
+from apex_vision.ui.flow_editor import FlowScene, FlowEditorView, NodeSignals, FlowZoomTool
+from apex_vision.ui.main_window import VisionMasterMainWindow
 
 
 @pytest.fixture(scope="session")
@@ -255,7 +255,7 @@ def test_window_opens_module_config_and_reruns(qapp):
     nid = next(iter(win.pipeline.nodes))
     seen = {}
 
-    from vm_clone.ui import main_window as mw
+    from apex_vision.ui import main_window as mw
     original = mw.ModuleConfigDialog.exec
 
     def fake_exec(self):

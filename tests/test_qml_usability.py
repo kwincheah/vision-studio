@@ -107,7 +107,7 @@ def test_every_action_gives_feedback(ui):
 
 def _ai_fixture(ui, tmp_path, configured):
     from test_qml_aigen import FakeStore
-    from vm_clone.flowgen.settings import AISettings
+    from apex_vision.flowgen.settings import AISettings
     svc = ui.engine._services["appAI"]
     svc._store = FakeStore()
     svc._settings = AISettings(str(tmp_path / "ai.json"))

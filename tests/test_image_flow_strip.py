@@ -16,8 +16,8 @@ import pytest
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt
 
-from vm_clone.ui.main_window import VisionMasterMainWindow
-from vm_clone.ui.styles import initialize_app_fonts
+from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.styles import initialize_app_fonts
 
 
 @pytest.fixture(scope="module")

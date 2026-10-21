@@ -91,3 +91,6 @@ o.txt
 Thumbs.db
 .idea/
 .vscode/
+
+# Qt Design Studio per-user project state
+*.qtds

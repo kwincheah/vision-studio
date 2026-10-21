@@ -8,11 +8,11 @@ from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt, QPoint, QPointF, QEvent
 from PyQt6.QtGui import QMouseEvent, QPixmap
 
-from vm_clone.ui.image_canvas import ImageCanvasWidget
-from vm_clone.ui.main_window import VisionMasterMainWindow
-from vm_clone.samples.pcb_solution import create_pcb_inspection_solution
-from vm_clone.core.base_tool import ToolStatus
-from vm_clone.ui.styles import initialize_app_fonts
+from apex_vision.ui.image_canvas import ImageCanvasWidget
+from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.samples.pcb_solution import create_pcb_inspection_solution
+from apex_vision.core.base_tool import ToolStatus
+from apex_vision.ui.styles import initialize_app_fonts
 
 
 @pytest.fixture(scope="session")

@@ -10,7 +10,7 @@ We are proud to announce the initial open-source release of **Apex Industrial Vi
 - **Multi-Flow Orchestration:** Run concurrent, isolated inspection flows with shared global variables (up to 32 variables) and dependency triggers.
 - **Hikrobot MVS Camera Integration:** Direct compatibility with Hikrobot MVS industrial cameras via native SDK bindings (`MvCameraControl.dll` / `libMvCameraControl.so`) with live frame acquisition and auto-discovery.
 - **Camera Lens Distortion Calibration:** Full camera calibration wizard supporting OpenCV Zhang chessboard calibration, sub-pixel corner refinement, radial/tangential distortion correction ($k_1, k_2, k_3, p_1, p_2$), and real-time undistortion preview.
-- **Dynamic Plugin Ecosystem:** Stable SDK (`vm_clone.sdk`) allowing third-party engineers to build custom vision tools without modifying the core application.
+- **Dynamic Plugin Ecosystem:** Stable SDK (`apex_vision.sdk`) allowing third-party engineers to build custom vision tools without modifying the core application.
 - **Integrated Plugin Marketplace:** In-app catalog, GitHub direct installer, and automated plugin generator/packager.
 - **Industrial Splitter Workspace:** Pixel-accurate layout metrics featuring an integrated Left Tool Box, central multi-view canvas (Flow, Operation Interface, Multi-Flow Overview), and right-hand Image Display & Module Results table.
 - **Startup Welcome Hub:** Dedicated project manager supporting project templates (PCB Inspection, Precision Measurement, YOLOv11 Object Detection, Robot Coordinate Calibration) and recent solution tracking.

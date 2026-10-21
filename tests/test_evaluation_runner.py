@@ -14,7 +14,7 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from vm_clone.evaluation import (  # noqa: E402
+from apex_vision.evaluation import (  # noqa: E402
     Annotation, Dataset, Detection, Experiment, ExperimentStore,
     IncomparableExperiments, RunConfig, compare, comparability, pipeline_fingerprint,
     render_comparison, run_dataset,
@@ -39,7 +39,7 @@ def tiny_dataset(tmp_path):
         records.append(("images/" + name,
                         [Annotation((x, y, w, h), label) for x, y, w, h, label in anns]))
     ds = Dataset(name="tiny", root=str(tmp_path),
-                 records=[__import__("vm_clone.evaluation", fromlist=["ImageRecord"])
+                 records=[__import__("apex_vision.evaluation", fromlist=["ImageRecord"])
                           .ImageRecord(p, a) for p, a in records])
     return ds
 
@@ -75,7 +75,7 @@ def test_confidence_threshold_filters_predictions(tiny_dataset):
 
 def test_missing_image_is_recorded_not_skipped(tmp_path):
     ds = Dataset(name="missing", root=str(tmp_path), records=[
-        __import__("vm_clone.evaluation", fromlist=["ImageRecord"]).ImageRecord(
+        __import__("apex_vision.evaluation", fromlist=["ImageRecord"]).ImageRecord(
             "nope.png", [Annotation((0, 0, 5, 5), "x")])])
     outcome = run_dataset(ds, lambda image: [])
     assert outcome.result.images_evaluated == 0
@@ -113,7 +113,7 @@ def test_cancellation_stops_the_run(tmp_path):
     for i in range(6):
         cv2.imwrite(str(images / f"{i}.png"), np.full((32, 32, 3), 100, np.uint8))
     ds = Dataset(name="cancel", root=str(tmp_path), records=[
-        __import__("vm_clone.evaluation", fromlist=["ImageRecord"]).ImageRecord(
+        __import__("apex_vision.evaluation", fromlist=["ImageRecord"]).ImageRecord(
             f"images/{i}.png", []) for i in range(6)])
 
     seen = {"n": 0}
@@ -135,7 +135,7 @@ def test_resize_rescales_predictions_back_to_the_original_frame(tmp_path):
     images.mkdir()
     cv2.imwrite(str(images / "a.png"), np.full((100, 100, 3), 100, np.uint8))
     ds = Dataset(name="resize", root=str(tmp_path), records=[
-        __import__("vm_clone.evaluation", fromlist=["ImageRecord"]).ImageRecord(
+        __import__("apex_vision.evaluation", fromlist=["ImageRecord"]).ImageRecord(
             "images/a.png", [Annotation((0, 0, 50, 50), "x")])])
 
     def predict_half(image):
@@ -187,7 +187,7 @@ def test_experiment_records_settings_and_environment(tiny_dataset):
 
 def test_experiment_with_errors_is_marked_partial(tmp_path):
     ds = Dataset(name="bad", root=str(tmp_path), records=[
-        __import__("vm_clone.evaluation", fromlist=["ImageRecord"]).ImageRecord(
+        __import__("apex_vision.evaluation", fromlist=["ImageRecord"]).ImageRecord(
             "missing.png", [Annotation((0, 0, 5, 5), "x")])])
     exp = Experiment.from_run(run_dataset(ds, lambda image: []))
     assert exp.status == "failed"       # nothing evaluated at all
@@ -208,7 +208,7 @@ def test_model_reference_describes_a_real_file(tmp_path):
         run_dataset(Dataset(name="d", root=str(tmp_path)), lambda i: []),
         name="m")
     exp.model = {}
-    from vm_clone.evaluation.experiment import _safe_model_reference
+    from apex_vision.evaluation.experiment import _safe_model_reference
 
     ref = _safe_model_reference(str(weights))
     assert ref["kind"] == "file"
@@ -216,7 +216,7 @@ def test_model_reference_describes_a_real_file(tmp_path):
 
 
 def test_model_reference_is_honest_about_a_fictional_path():
-    from vm_clone.evaluation.experiment import _safe_model_reference
+    from apex_vision.evaluation.experiment import _safe_model_reference
 
     ref = _safe_model_reference("no-such-model.pt")
     assert ref["kind"] == "identifier", "a missing path must not be claimed as a file"
@@ -352,10 +352,10 @@ def test_find_detector_node_requires_a_detections_output():
     list, and every image produced zero detections.  The evaluation reported 0 TP and
     all-FN while appearing to have run correctly.
     """
-    import vm_clone.tools  # noqa: F401
-    from vm_clone.core.pipeline import VisionPipeline
-    from vm_clone.core.registry import create_tool_instance
-    from vm_clone.evaluation import find_detector_node, pipeline_predictor
+    import apex_vision.tools  # noqa: F401
+    from apex_vision.core.pipeline import VisionPipeline
+    from apex_vision.core.registry import create_tool_instance
+    from apex_vision.evaluation import find_detector_node, pipeline_predictor
 
     pipe = VisionPipeline(name="no-detector")
     pipe.add_node(create_tool_instance("Image Source", "src"))
@@ -368,10 +368,10 @@ def test_find_detector_node_requires_a_detections_output():
 
 
 def test_find_detector_node_accepts_the_defect_detection_node():
-    import vm_clone.tools  # noqa: F401
-    from vm_clone.core.pipeline import VisionPipeline
-    from vm_clone.core.registry import create_tool_instance
-    from vm_clone.evaluation import find_detector_node
+    import apex_vision.tools  # noqa: F401
+    from apex_vision.core.pipeline import VisionPipeline
+    from apex_vision.core.registry import create_tool_instance
+    from apex_vision.evaluation import find_detector_node
 
     pipe = VisionPipeline(name="classical")
     pipe.add_node(create_tool_instance("Image Source", "src"))
@@ -384,9 +384,9 @@ def test_defect_detection_emits_the_detections_contract():
     """The classical defect tool must expose the same outputs the evaluator reads."""
     import numpy as np
 
-    import vm_clone.tools  # noqa: F401
-    from vm_clone.core.base_tool import ToolStatus
-    from vm_clone.core.registry import create_tool_instance
+    import apex_vision.tools  # noqa: F401
+    from apex_vision.core.base_tool import ToolStatus
+    from apex_vision.core.registry import create_tool_instance
 
     tool = create_tool_instance("Defect Detection", "dd")
     for port in ("Boxes", "Classes", "Scores", "Detections"):
@@ -418,9 +418,9 @@ def test_defect_detection_records_survive_the_evaluation_adapter():
     """The detector's own output must convert into matchable `Detection` records."""
     import numpy as np
 
-    import vm_clone.tools  # noqa: F401
-    from vm_clone.core.registry import create_tool_instance
-    from vm_clone.evaluation import detections_from_outputs
+    import apex_vision.tools  # noqa: F401
+    from apex_vision.core.registry import create_tool_instance
+    from apex_vision.evaluation import detections_from_outputs
 
     tool = create_tool_instance("Defect Detection", "dd")
     image = np.full((480, 640, 3), 200, dtype=np.uint8)
@@ -433,9 +433,9 @@ def test_defect_detection_records_survive_the_evaluation_adapter():
 
 
 def test_pipeline_fingerprint_changes_with_parameters():
-    import vm_clone.tools  # noqa: F401
-    from vm_clone.core.pipeline import VisionPipeline
-    from vm_clone.core.registry import create_tool_instance
+    import apex_vision.tools  # noqa: F401
+    from apex_vision.core.pipeline import VisionPipeline
+    from apex_vision.core.registry import create_tool_instance
 
     pipe = VisionPipeline(name="p")
     tool = create_tool_instance("Object Detection", "n1")
@@ -465,9 +465,9 @@ def test_from_run_accepts_a_pipeline(tiny_dataset):
     while the CLI path (no pipeline) worked.  The GUI hit it inside a modal error dialog,
     which is how it stayed invisible.
     """
-    import vm_clone.tools  # noqa: F401
-    from vm_clone.core.pipeline import VisionPipeline
-    from vm_clone.core.registry import create_tool_instance
+    import apex_vision.tools  # noqa: F401
+    from apex_vision.core.pipeline import VisionPipeline
+    from apex_vision.core.registry import create_tool_instance
 
     pipe = VisionPipeline(name="rec")
     pipe.add_node(create_tool_instance("Image Source", "src"))

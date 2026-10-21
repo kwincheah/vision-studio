@@ -3,145 +3,145 @@
   {
    "page": 506,
    "score": 41,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0506.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0506.png",
    "excerpt": " Changing the settings when using the touch panel (CA Series Touch Panel) 5-10 Changing the settings when using the touch panel (CA Series Touch Panel) To connect a CA Series touch panel to the RS-232C port of the CV-X200 Series, the RS-232C port needs to be configured as a touch panel port. 1 Select [CA Series Touch Panel] - [Port Settings] from [Global]. The [CA Series Touch Panel Port Settings]"
   },
   {
    "page": 481,
    "score": 30,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0481.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0481.png",
    "excerpt": " Customizing screen display in run mode according to environments (Operation Screens) 4-23 Utility Copying and adding operation screen Select the desired operation screen for copying on the [Operation Screen Settings] screen and left-click . Deleting operation screen 1 Select the desired operation screen for deleting on the [Operation Screen Settings] screen and left\ufffeclick . A confirmation screen "
   },
   {
    "page": 457,
    "score": 28,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0457.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0457.png",
    "excerpt": " Creating a menu that collected only necessary items (Custom Menu) 3-95 Custom menu Creating a menu that collected only necessary items (Custom Menu) 1 In Setup Mode, open the screen of the desired item to register in the custom menu. 2 Left-click at the left of the item name. The [Edit Custom Menu] screen appears. 3 Input the [Custom Menu Name] and [Help] (explanation displayed at selection of th"
   },
   {
    "page": 482,
    "score": 28,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0482.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0482.png",
    "excerpt": " Customizing screen display in run mode according to environments (Operation Screens) 4-24 Allowing the operation screen to be edited Select the desired operation screen for editing on the [Operation Screen Settings] screen and left-click [Edit] to edit the operation screen. Editing part details 1 Left-click the desired part for editing. [Edit] is displayed on the upper right. 2 Left-click [Edit]."
   },
   {
    "page": 31,
    "score": 27,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0031.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0031.png",
    "excerpt": " Displaying menu according to the condition (context menu) 1-15 Basic operation Displaying menu according to the condition (context menu) In the setup mode, press the right button of the mouse (right-click) to use the context menu. Context menu displayed by right-click The context menu displayed varies depending on the pointer location during right-click. (1) Context menu displayed by the display "
   },
   {
    "page": 480,
    "score": 23,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0480.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0480.png",
    "excerpt": " Customizing screen display in run mode according to environments (Operation Screens) 4-22 Customizing screen display in run mode according to environments (Operation Screens) Multiple customized screen displays can be made according to the environments. Appropriate displays can be used for different applications or user accounts. To display a customized operation screen, it is necessary to add a "
   },
   {
    "page": 27,
    "score": 19,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0027.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0027.png",
    "excerpt": " Operating the unit with a touch panel 1-11 Basic operation Operating the unit with a touch panel By connecting a Keyence touch panel CA-MP120T, you can operate this unit using screen taps instead of a mouse (CV\ufffeX200 Series only). For details on how to connect a touch panel, refer to the CV-X Series Setup Manual. Selecting an item (Left click/Double click) Directly tap the item you wish to select "
   },
   {
    "page": 26,
    "score": 16,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0026.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0026.png",
    "excerpt": " Using mouse 1-10 Using mouse To operate the CV-X series, use the dedicated USB mouse (OP-87506). To operate the CV-X200 Series using a touch panel, refer to \u201cOperating the unit with a touch panel\u201d (Page 1-11). (1) Left button Press this to select the item. (2) Right button Press this to display the context menu (Page 1-15). (3) Wheel Turn the wheel to display the lower part of a list or to change"
   },
   {
    "page": 21,
    "score": 15,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0021.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0021.png",
    "excerpt": " Interface 1-5 Introduction Interface The screens of the controller in setup mode and run mode are as shown in the figures that follow. (1) Global setting menu Opens the global setting menu (Page 5-1). (2) Tool edit menu Displays the menu to edit the tool selected or to add/delete a camera in use. (3) Save button Saves program setting currently edited. (4) Program menu Opens the menu related to pr"
   },
   {
    "page": 22,
    "score": 14,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0022.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0022.png",
    "excerpt": " Interface 1-6 (11) Error list button This is displayed only if a setting error occurs. Condition of the error can be checked. (12) Menu buttons Opens \"Execute Condition Settings\"(Page 3-74), \"Output Settings\" (Page 3-77) or \"Utility\" (Page 4-1). (13) Run mode change button Changes to run mode. (14) Total status display Displays the total status. (15) Custom menu button Displayed only when [Custom"
   },
   {
    "page": 468,
    "score": 13,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0468.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0468.png",
    "excerpt": " Analyzing operation results (Statistics) 4-10 The measured list view displays the results of items that have been selected for statistics processing. Statistical summary data such as OK/NG counts, standard deviation of each data, process capability (Cpu, Cpl, Cpk), etc. can be seen and saved to an SD card 2. The cause of NG judgment can also be analyzed by checking the data against the image arch"
   },
   {
    "page": 458,
    "score": 12,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0458.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0458.png",
    "excerpt": " Creating a menu that collected only necessary items (Custom Menu) 3-96 Custom menu details including change of display sequence on the custom menu can be edited. 1 Put a check mark on [Edit Custom Menu] at the lower part of the custom menu. The custom menu can be edited. 2 Edit the custom menu as necessary. Changing display sequence of the items in the tool Left-click or . Changing menu item name"
   },
   {
    "page": 484,
    "score": 12,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0484.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0484.png",
    "excerpt": " Customizing screen display in run mode according to environments (Operation Screens) 4-26 Fit Selects automatic zoom-in/out (fit display) suitable for the display image size. \u2022 Display Size: Displays in fit according to the screen size. \u2022 Inspection Region: Displays in fit according to the inspection region of selected tool. \u2022 Detect Position: For the tool that measures the position, displays in "
   },
   {
    "page": 681,
    "score": 12,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0681.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0681.png",
    "excerpt": " Typical setting procedure for PROFINET 6-149 Control and data output by PROFINET 11From [Hardware Catalog] on the [HW Config] screen, open [PROFINET IO] - [Additional Field Devices] - [Sensors] - [Keyence Machine Vision System], then drag & drop [CV-X1XX] or [CV-X2XX] into [PROFINET-IO-System] in the Station Window. The CV-X100 or CV-X200 is added to the Station Window, and all modules that can b"
   },
   {
    "page": 715,
    "score": 12,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0715.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0715.png",
    "excerpt": " Supplementary explanation of \"Identification\" category tools 7-23 Appendix The \"Date Encryption Settings\" allows users to create a conversion table to decrypt the data when an encrypted date, time, or shift is printed on a target. Use this conversion table to keep the encoded register string and the internal calendar linked and thus allow encoded date and time stamps to be read as normal characte"
   },
   {
    "page": 43,
    "score": 11,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0043.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0043.png",
    "excerpt": " Setting measurement conditions (Tool) 1-27 Inspection/measurement condition settings Adding a tool. 1 Left-click in setup mode. The [Tool Catalog] screen appears. 2 Select the inspection category in [Category] at the upper part of the screen. Relevant tool is displayed at the lower part of the screen. 3 Select a tool at the lower part of the screen, specify tool ID and left-click . Tool is added,"
   },
   {
    "page": 444,
    "score": 11,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0444.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0444.png",
    "excerpt": " Setting result output items for RS-232C non-procedural communication (RS-232C (Non-procedural Communication)) 3-82 Setting result output items for RS-232C non-procedural communication (RS-232C (Non-procedural Communication)) Output details such as measured value, judgment result, measurement count, etc. are specified for output in RS\ufffe232C non-procedural communication of the controller. Output det"
   },
   {
    "page": 445,
    "score": 11,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0445.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0445.png",
    "excerpt": " Setting result output items for Ethernet interface in non-procedural communication (Ethernet (Non-procedural)) 3-83 Output setting Setting result output items for Ethernet interface in non-procedural communication (Ethernet (Non-procedural)) Output details such as measured value, judgment result, measurement count, etc. are specified for output in Ethernet interface non-procedural communication o"
   },
   {
    "page": 446,
    "score": 11,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0446.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0446.png",
    "excerpt": " Setting result output items for the SD card (SD Card 2) 3-84 Setting result output items for the SD card (SD Card 2) Output details such as measured value, judgment result, measurement count, etc. are specified for saving on the SD card (SD card 2) inserted in the SD2 slot. Output details and output sequence can be specified for the environment in operation. 1 At the left of the [Output Settings]"
   },
   {
    "page": 447,
    "score": 11,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0447.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0447.png",
    "excerpt": " Setting result output items from Ethernet interface to PC application (PC program) 3-85 Output setting Setting result output items from Ethernet interface to PC application (PC program) Output details such as measured value, judgment result, measurement count, etc. are specified for output from the controller Ethernet interface to PC program (CV-H1X). Output details and output sequence can be spe"
   },
   {
    "page": 717,
    "score": 11,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0717.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0717.png",
    "excerpt": " Supplementary explanation of \"Identification\" category tools 7-25 Appendix 2 Left-click [Register]. The [Library Registration] screen appears. 3 Select an image for which the library is registered on the View toolbar. \u2022 Reference Image: Displays a reference image. \u2022 Current Image: Displays the current image captured by a camera. \u2022 Image Strip: Displays the images remaining on the image strip. 4 C"
   },
   {
    "page": 735,
    "score": 11,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0735.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0735.png",
    "excerpt": " Error messages 7-43 Appendix Edit Operation Screen Custom Menu Auto-Teach Inspection 31223 Failed to obtain the file list. The FTP server is not supported. Failed the batch test. 31224 Timeout error occurred during communication with the FTP server. Failed the batch test. 31225 The file name is too long. Failed the batch test. 31226 No image found Failed the batch test. 31227 File is not found. F"
   },
   {
    "page": 50,
    "score": 10,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0050.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0050.png",
    "excerpt": " Specifying filter processing on the image (Image Enhance) 1-34 Specifying filter processing on the image (Image Enhance) Specify the image enhancement filter to apply to the image. When a color camera is used, the filter is applied to the images converted using color extraction. Refer to \"List of image enhancement filters\" (Page 1-35) for more details on the effect and settings of each image enha"
   },
   {
    "page": 331,
    "score": 10,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0331.png",
+   "file": "docs\\references\\keyence\\pages\\CV-X100_200_User_Manual_p0331.png",
    "excerpt": " OCR 2-271 Function list 1 Left-click [Edit]. The [Edit] screen appears. 2 Select the register destination library file by choosing the [Library No.] (0 - 999). To change the list format, change [View Mode]. \u2022 Character (default): Displays the list of the registered characters in a matrix format. \u2022 Registered: Displays the registration status of each character type. To change the library name, inp"
   }
  ],
@@ -150,145 +150,145 @@
   {
    "page": 112,
    "score": 75,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0112.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0112.png",
    "excerpt": " Creating and Editing Flowcharts 4-10 Saving settings Selecting [Save] saves the changes to settings made so far in a program file. Note Any changes in the settings that were not saved prior to turning off the controller will be lost. Key operations on the edit unit menu On the Edit Unit menu, the following combinations have are available with the handheld controller Difference between sub menus o"
   },
   {
    "page": 526,
    "score": 69,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0526.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0526.png",
    "excerpt": " Creating Display Templates 6-10 Key operations on the [Screen Display] menu Key operations on the display template setting menu Key operations on the dialog in Draw/Multi Select menu Reference Switching between grid layout and free layout using key operation does not affect the [Layout method] on the [Options] menu (Page 6-7). The layout returns to the one specified by [Layout method] when the [O"
   },
   {
    "page": 105,
    "score": 45,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0105.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0105.png",
    "excerpt": " Creating and Editing Flowcharts 4-3 Flowchart Editing - Setting the Inspection and Measurement Conditions Editing the Flowchart The flowchart is configured using related Edit Unit menus selectable from the flowchart editor menu. Main menu This menu is used to access the edit menu (sub menus) for each unit. When you select the setting you want to change in the top menu, the corresponding sub menu "
   },
   {
    "page": 527,
    "score": 40,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0527.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0527.png",
    "excerpt": " Screen Display Style 6-11 Creating Controller Display Screens (Screen Editor) Screen Display Style Screen display styles are preset screen templates that display information for the controller. When creating a new screen display, a display style must be chose in the ScreenEditor. Display styles allow you to create screen displays quickly by allowing users to choose a style and make changes to it."
   },
   {
    "page": 87,
    "score": 39,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0087.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0087.png",
    "excerpt": " Operating Using the Touch Panel 3-15 Run Operating Using the Touch Panel The Keyence CA-MP120T touch panel can optionally be used to operate and program the controller instead of using the hand held controller. Reference When connecting a touch panel, it is necessary to change the RS\ufffe232C port settings on the controller. See \"RS-232 Network Settings\" (Page 7-28) for more details. Selecting Items "
   },
   {
    "page": 90,
    "score": 39,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0090.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0090.png",
    "excerpt": " Operating Using the Touch Panel 3-18 Using the Touch Menu (Handheld Controller Mode) The touch menu (handheld controller mode) is used to perform handheld controller input by touch operations. The functions of the buttons displayed on the touch menu (handheld controller mode) are as shown below. (1) Cursor keys Executes the same function as the Up/Down/Left/Right on the handheld controller to sel"
   },
   {
    "page": 29,
    "score": 38,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0029.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0029.png",
    "excerpt": "1-9 Connections Function The buttons on the handheld controller perform special functions when pressed under certain conditions. Various other functions can be performed using key combinations (pressing two or more buttons simultaneously). Note, the functions available will differ depending on the controller operating state, and the functions assigned to the key combinations on the handheld contro"
   },
   {
    "page": 28,
    "score": 37,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0028.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0028.png",
    "excerpt": " Connections 1-8 This section explains the common operations and functions of the handheld controller (OP-84231). Reference \u2022 Text in parentheses indicates the labeling on OP-84231. A blank console without labels (OP-84236) is also available in consideration of original button assignments. \u2022 Functions can be assigned to each button and to key combinations. The accessible operations on the handheld"
   },
   {
    "page": 479,
    "score": 31,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0479.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0479.png",
    "excerpt": " Changing a Variable Value (Variable Update) 5-9 Using Functions During Operation 9 Select [OK] to close the Variable Update Settings menu. Reference When a variable is assigned to a program parameter, it is possible to add it to the Variable Update list by selecting [Add to Update List] from the Edit menu of the flowchart. Modifying the variable update settings Select the desired variable to modi"
   },
   {
    "page": 82,
    "score": 30,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0082.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0082.png",
    "excerpt": " Changing the Screen Display (View Toolbar) 3-10 Changing the Screen Display (View Toolbar) The View toolbar allows the displayed screen to be changed as described below. \u2022 Zooming in/out of the displayed image (Page 3-10) \u2022 Scrolling the image (Page 3-11) \u2022 Changing units / pages (Page 3-12) \u2022 Changing the displayed image type (Page 3-13) \u2022 Switching between displayed images (Page 3-13) \u2022 Changin"
   },
   {
    "page": 85,
    "score": 26,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0085.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0085.png",
    "excerpt": " Changing the Screen Display (View Toolbar) 3-13 Run This function can be used to change the type of image displayed on the screen. Select the image type from the drop down menu [Change Image Type]. \u2022 Raw image 1: Displays the raw image as it is without any regions or processing. \u2022 Raw image 2: Displays the raw image as it is with the inspection region shown. \u2022 Grayed image: Displays the image sho"
   },
   {
    "page": 520,
    "score": 25,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0520.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0520.png",
    "excerpt": " Creating Display Templates 6-4 To change the settings of the existing display template: Place the cursor on the display template to edit, press the No.1 (FUNCTION) button on the handheld controller, and select [Edit] - [Properties] from the screen editing menu. To delete a display template: Place the cursor on the display template to delete, press the No.1 (FUNCTION) button on the handheld contro"
   },
   {
    "page": 433,
    "score": 24,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0433.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0433.png",
    "excerpt": " On-screen graphics 4-331 Flowchart Editing - Setting the Inspection and Measurement Conditions Applying an offset or rotation to the display position An offset or rotation can be applied to the specified display position. As the on-screen graphics supports the displaying of multiple graphics, so it is useful to apply the same level of offset to each. Reference \u2022 The assignment of an array variabl"
   },
   {
    "page": 525,
    "score": 24,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0525.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0525.png",
    "excerpt": " Creating Display Templates 6-9 Creating Controller Display Screens (Screen Editor) Selecting multiple parts for simultaneous operation It is possible to select multiple display parts to copy, delete, align, or arrange them simultaneously. To select multiple parts, check desired display parts listed on the display template setting dialog. Reference Multi Select mode (Page 6-6) can also be used to "
   },
   {
    "page": 566,
    "score": 23,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0566.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0566.png",
    "excerpt": " Screen parts 6-50 List of Variables This part is used to display a list of the values of local and global variables. \u2022 The list displays all local variables, which includes the defined arrays, structures and global variables in that order. \u2022 This part supports page switching when there are multiple variables. Note The List of Variables part can not be placed on a page frame. The Unit Result of No"
   },
   {
    "page": 89,
    "score": 21,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0089.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0089.png",
    "excerpt": " Operating Using the Touch Panel 3-17 Run Using the Touch Menu (Normal Mode) The touch menu (normal mode) is used for touch operation of the functions that are frequently used in Run mode. The functions of the buttons displayed on the touch menu (normal mode) are as shown below. (1) Change the displayed unit Switches the display to the unit results before or after the currently displayed unit (Pag"
   },
   {
    "page": 483,
    "score": 19,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0483.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0483.png",
    "excerpt": " Statistics 5-13 Using Functions During Operation The list view displays the results of items that have been selected for statistical processing. \u2022 Here statistical summary data such as OK/NG counts, standard deviation of each item can be seen and saved to an SD card. \u2022 The cause of rejects can also be analyzed by checking the data against the image archive. \u2022 Upper and lower limits can also be op"
   },
   {
    "page": 531,
    "score": 19,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0531.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0531.png",
    "excerpt": " Screen Display Style 6-15 Creating Controller Display Screens (Screen Editor) This template displays two images of the same size, side by side, and information related to those images using the entire screen. The template consists of two image displays, and a base frame with parts for displaying related information. Changing the settings of a screen display Place the cursor on the screen display "
   },
   {
    "page": 533,
    "score": 19,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0533.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0533.png",
    "excerpt": " Screen Display Style 6-17 Creating Controller Display Screens (Screen Editor) This template displays two images half of the display size in the Y direction, top and bottom, and information related to those images using the entire screen. The template consists of two image displays, and a base frame with parts for displaying related information. Changing the settings of a screen display Place the "
   },
   {
    "page": 535,
    "score": 19,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0535.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0535.png",
    "excerpt": " Screen Display Style 6-19 Creating Controller Display Screens (Screen Editor) This template displays one large image and three smaller images vertically and to the right, and information related to those images using the entire screen. The template consists of four image displays, and a base frame with parts for displaying related information. Changing the settings of a screen display Place the c"
   },
   {
    "page": 537,
    "score": 19,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0537.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0537.png",
    "excerpt": " Screen Display Style 6-21 Creating Controller Display Screens (Screen Editor) This template displays one large image and four smaller images vertically and to the right, and information related to those images using the entire screen. The template consists of five image displays, and a base frame with parts for displaying related information. Changing the settings of a screen display Place the cu"
   },
   {
    "page": 548,
    "score": 19,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0548.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0548.png",
    "excerpt": " Screen parts 6-32 Parameters \u2022 Position: Specify the top left coordinate of the position to display the value (-9999 to 9999 for both X and Y). \u2022 Hide when skipped: Place a check in this option to display the text only when the controller executes the unit for the setting parameter or results data specified in [Value] (Page 6-31). \u2022 Link to image display: The setting parameter or results data spe"
   },
   {
    "page": 17,
    "score": 18,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0017.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0017.png",
    "excerpt": " Contents 17 Introduction .............................................................2 Safety Information for XG-7000 Series ....................4 General Precautions .....................................4 Warning .........................................................4 Caution ..........................................................5 Note ...................................................."
   },
   {
    "page": 92,
    "score": 18,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0092.png",
+   "file": "docs\\references\\keyence\\pages\\XG-7000Series-UserManual_p0092.png",
    "excerpt": " Inspection Region Menu 3-20 Inspection Region Menu This menu is used to edit the size and position of the regions used in a unit. This includes inspection, mask, search, pattern, calibration, and trapezoid correction regions. The following regions shapes are supported by the XG\ufffe7000 Series. Note Depending on the content of the program, it may not be possible to change all or some of the region se"
   }
  ],
@@ -296,145 +296,145 @@
   {
    "page": 73,
    "score": 49,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0073.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0073.png",
    "excerpt": "2-33 Parts List Parts List System View Flowchart View q Parts List Vision Window User Window Screen Editor Views (Screen Editor/Screen Browser/Screen Properties) Information View Parts List Overview A list of parts (such as vision tools, screen templates and menus) can be displayed to be used when setting up the program or GUI's. Items can be simply dragged and dropped from the parts list into the"
   },
   {
    "page": 727,
    "score": 48,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0727.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0727.png",
    "excerpt": " Main Error Messages 5-119 Error Messages The selection failed because the number exceeded the maximum number. The number of selected units exceeded the maximum number (64) which could be selected on the image display. It is not possible to select more than 64 units on the image display. A setting error occurred. The variable, setting parameter, or result data set for the display template part or "
   },
   {
    "page": 88,
    "score": 46,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0088.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0088.png",
    "excerpt": " Screen Editor 2-48 Screen Editor Displays the results of custom screens & menus that have been created. The screens and menus displayed may differ depending on the content selected in Screen Browser and Screen Properties. Note The location, style and content of screens and menus (not including standard menus) created can be viewed but not operated in the Screen Editor. To confirm the operations o"
   },
   {
    "page": 78,
    "score": 28,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0078.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0078.png",
    "excerpt": "2-38 Screens Displays the different screen templates available ranging from blank to 8 organized image displays Screen parts Image Display Base frame Page frame Basic Parts Values Text Active Text Horizontal Line Vertical line Point Rectangle Circle Polygon Table Standard parts Program name Inspection Date Inspection time Display Camera & Image Information Display Area & Image Magnification Total "
   },
   {
    "page": 89,
    "score": 26,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0089.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0089.png",
    "excerpt": " Screen Editor 2-49 Screen Editor Views (Screen Editor/Screen Browser/Screen Properties) Frame Switch between display frames and pages that have been setup and are currently available. \u2022 When a base frame is selected: Specify the page number of the part on the base frame in the numerical input box. \u2022 When a page frame is selected: The page number of the selected page frame is displayed. Alignment "
   },
   {
    "page": 592,
    "score": 26,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0592.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0592.png",
    "excerpt": " Touch Panel Menu 4-48 Touch Panel Menu Change the assignment of functions corresponding to the buttons on the touch menu which can be used on the controller screen. The functions assigned to the handheld controller can be assigned to the touch menu. Therefore, it is necessary to set the handheld controller assignments in advance. Reference For more details on how to use the touch menu, see the XG"
   },
   {
    "page": 87,
    "score": 25,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0087.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0087.png",
    "excerpt": "2-47 Screen Editor Views (Screen Editor/Screen Browser/Screen Properties) Screen Editor Views (Screen Editor/Screen Browser/ Screen Properties) System View Flowchart View Parts List Vision Window User Window q Screen Editor Views (Screen Editor/Screen Browser/ Screen Properties) Information View Overview of Screen Editor Views To create a GUI for the XG-8000 Series the XG Vision Editor uses the in"
   },
   {
    "page": 92,
    "score": 25,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0092.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0092.png",
    "excerpt": " Screen Browser 2-52 [Screens] Tab Displays information for the created display templates. \u2022 Click the [Screen] tab to switch Screen Editor (Page 2- 48) to the screen edit mode. \u2022 The created screens and their associated parts are managed and displayed in a tree for each screen. \u2022 Select the screen or part needing to be edited and change the settings with Screen Properties or Screen Editor. Refere"
   },
   {
    "page": 619,
    "score": 24,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0619.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0619.png",
    "excerpt": " View Menu 5-11 XG VisionEditor Application Menu View Menu System View Check this option to display System View (Page 2-2). Flowchart View Check this option to display Flowchart View (Page 2-19). Vision Window Check this option to display the Vision Window (Page 2- 40). User Window Check one of User Windows 1 to 16 to display the corresponding User Window (Page 2-43). Unit Properties Check this op"
   },
   {
    "page": 590,
    "score": 23,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0590.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0590.png",
    "excerpt": " Handheld Controller Function 4-46 Handheld Controller Function Change the assignment of functions corresponding to the buttons on the handheld controller. The assigned functions can be enabled or disabled for each user group. Note \u2022 Changing the default assignments changes the operation methods of the functions described in the manual and may prevent the use of some functions. Check the changes a"
   },
   {
    "page": 712,
    "score": 23,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0712.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0712.png",
    "excerpt": " XG-H8N (XG VisionEditor) 5-104 Display Unit On-screen graphics Displays graphic objects and characters linked to variables and step results. Graphic objects: rectangle, rotated rectangle, circle, oval, ring, arc, point (rotating crosshair), line, characters: text, values, active text, decimal to ASCII. Output Units Parallel Terminal Output Unit \u2022 Outputs user-defined inspection results to the I/O"
   },
   {
    "page": 91,
    "score": 21,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0091.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0091.png",
    "excerpt": " Screen Browser 2-51 Screen Editor Views (Screen Editor/Screen Browser/Screen Properties) Screen Browser The Screen Browser manages the image displays, frames, screen parts, and menus that go into making a custom GUI in a hierarchal tree view. Reference The Screen Browser also allows the adding / editing and deleting of screens, image displays frames and parts. See the XG VisionEditor Reference Ma"
   },
   {
    "page": 83,
    "score": 20,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0083.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0083.png",
    "excerpt": "2-43 User Window User Window System View Flowchart View Parts List Vision Window q User Window Screen Editor Views (Screen Editor/Screen Browser/Screen Properties) Information View Overview of User Window The User Window displays raw and processed images for multiple units specified by the user as well as image files stored on the PC. Either single or multiple unit regions can be chosen and displa"
   },
   {
    "page": 93,
    "score": 20,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0093.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0093.png",
    "excerpt": " Screen Properties 2-53 Screen Editor Views (Screen Editor/Screen Browser/Screen Properties) Screen Properties Displays the setup menu (or properties page) of the screen or menu currently selected with Screen Editor or Screen Browser. Displaying Screen Properties From the [View] menu select [Screen Properties]. When the view is enabled a check mark will be displayed next to [Screen Properties]. Th"
   },
   {
    "page": 714,
    "score": 20,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0714.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0714.png",
    "excerpt": " XG-H8N (XG VisionEditor) 5-106 Program creation/ editing function Program creation Flowchart View \u2022 Allows creation, editing, and display of inspection programs using a flowchart of units. \u2022 Functions: Splitting views, zoom, move all regions, align all regions, grouping units, multiple paste, partial paste, unit ID renumbering, breakpoint setting, step execution, flowchart image output, and locki"
   },
   {
    "page": 16,
    "score": 19,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0016.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0016.png",
    "excerpt": " Overview of the XG-8000 Series Machine Vision System 1-6 Additions and changes to the screen editor \u2022 Two display size options of 100% and 75% \u2022 6-screen and 8-screen display templates were added. \u2022 The number of image areas which can be used for 1 display template was changed from 5 to 8. Additions to the system variables \u2022 %ClsNum00 - 19: System variables indicating the feature quantity for eac"
   },
   {
    "page": 37,
    "score": 19,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0037.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0037.png",
    "excerpt": " Interface 1-27 Getting Started (9) Toolbar The following functions are displayed as buttons. Clicking an icon executes the function. Toolbar icon and name Function New Program File Displays the add new program menu. See \"Creating a Program\" (Page 2-8) for more details. Open file Displays the edit menu for the global variable file or system setting file selected in [System View]. Save Program File"
   },
   {
    "page": 28,
    "score": 18,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0028.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0028.png",
    "excerpt": " Installing XG VisionEditor 1-18 5 Enter your user information, then click [Next]. The [Options] window appears. 6 Specify the installation options, then click [Next]. \u2022 Create a desktop shortcut: Creates a shortcut icon for starting the XG VisionEditor on the desktop. (default: ON) \u2022 Install sample inspection files: Installs a sample program file and an image for retest to the sample workspace. ("
   },
   {
    "page": 494,
    "score": 18,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0494.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0494.png",
    "excerpt": " User Menu Unit 3-380 User Menu Unit The user menu unit delays the flowchart operation until the specified menu is closed. This unit can be used to synchronize the processing of the flowchart with user interaction for such operations like re-writing setting values. Reference When the menu specified is opened, the result of flowchart processing so far is applied to the screen display. After that, t"
   },
   {
    "page": 615,
    "score": 18,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0615.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0615.png",
    "excerpt": " Edit Menu 5-7 XG VisionEditor Application Menu Align all regions Aligns all inspection regions of units using the same image variable and registered image simultaneously along a guideline. This function is useful when you need to align regions with the same shape (such as for connector pin inspection). This is more convenient than changing the region settings for each unit individually. Reference"
   },
   {
    "page": 7,
    "score": 17,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0007.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0007.png",
    "excerpt": " Contents 7 Introduction ........................................................2 Notations used in this manual .......................2 This manual and related manuals .................3 General Precautions .....................................4 Software License Agreement .............................5 Contents .............................................................7 Chapter 1 Introduction"
   },
   {
    "page": 614,
    "score": 17,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0614.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0614.png",
    "excerpt": " Edit Menu 5-6 Available Units The units which can be selected as target units are listed. Note You cannot select a unit with a setting error. Use these buttons to specify the unit in [Available Units] to be the target unit. \u2022 : Moves the unit selected in the [Available Units] list to the [Selected Units] list to set as the target unit. \u2022 : Moves all units displayed in the [Available Units] list t"
   },
   {
    "page": 626,
    "score": 17,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0626.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0626.png",
    "excerpt": " Settings Menu 5-18 \u2022 Name: Enter the item name to be displayed in the [Variable Update Settings] menu. When [Variable Name] is clicked, the variable name is entered as an item name. When [Variable Comment] is clicked, the comment specified for the variable is entered as an item name. \u2022 Updateable: Select whether to overwrite the specified variable during operation (default: Yes). \u2022 Variable Setti"
   },
   {
    "page": 632,
    "score": 17,
-   "file": "C:\\Users\\winch\\Downloads\\VMClone\\docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0632.png",
+   "file": "docs\\references\\keyence\\pages\\XG-8000VisionEditor-ReferenceManual_p0632.png",
    "excerpt": "5-24 Window Menu Change Layout You can store up to five window or view layouts (location and arrangement) displayed with the XG VisionEditor. Specify the layout number you want to view to switch to the corresponding layout. Reset Layout Resets the window or view layout (location and arrangement) of the current layout No. to the status immediately after the installation. When a confirmation message"
   }
  ]

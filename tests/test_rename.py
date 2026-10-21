@@ -101,7 +101,7 @@ def test_rename_rules_in_the_backend(ui):
 
 
 def test_the_new_name_is_saved_in_the_project_and_the_tool_is_unchanged(ui, tmp_path):
-    from vm_clone.core.pipeline import SolutionManager
+    from apex_vision.core.pipeline import SolutionManager
     node = nid(ui, "03 MountingHole")
     assert ui.be.renameNode(node, "Hole finder") == ""
     path = tmp_path / "s.xml"

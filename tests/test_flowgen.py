@@ -6,10 +6,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from vm_clone.core.pipeline import SolutionManager
-from vm_clone.flowgen import api, catalog, docs, reference_gen
-from vm_clone.flowgen.agent import FlowAgent, _tool_defs
-from vm_clone.flowgen.spec import build_flow, has_errors, spec_to_xml, validate_spec
+from apex_vision.core.pipeline import SolutionManager
+from apex_vision.flowgen import api, catalog, docs, reference_gen
+from apex_vision.flowgen.agent import FlowAgent, _tool_defs
+from apex_vision.flowgen.spec import build_flow, has_errors, spec_to_xml, validate_spec
 
 GOOD = {"name": "Blur_Count", "modules": [
     {"id": "src", "tool": "Image Source"},
@@ -27,7 +27,7 @@ def codes(spec):
 
 # ---------------------------------------------------------------- catalogue
 def test_catalogue_covers_every_registered_tool_with_ports_and_parameters():
-    from vm_clone.core.registry import list_all_tools
+    from apex_vision.core.registry import list_all_tools
     cat = {c["tool"]: c for c in catalog.full_catalog()}
     assert set(cat) == set(list_all_tools()) and len(cat) >= 40
     assert cat["Caliper"]["outputs"]["Edge1"] == "POINT"
@@ -164,7 +164,7 @@ def test_dry_run_skips_side_effect_modules_and_reports_status():
 
 
 def test_an_open_flow_can_be_read_back_as_a_valid_spec():
-    from vm_clone.samples.pcb_solution import create_pcb_inspection_solution
+    from apex_vision.samples.pcb_solution import create_pcb_inspection_solution
     spec = api.pipeline_to_spec(create_pcb_inspection_solution())
     assert api.validate_flow(spec)["ok"] and len(spec["modules"]) == 7
     assert spec["modules"][1]["params"]["min_score"] == 0.70        # only non-default parameters are listed

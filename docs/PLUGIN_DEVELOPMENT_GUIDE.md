@@ -52,8 +52,8 @@ import cv2
 import numpy as np
 from typing import Dict, Any
 
-from vm_clone.core.base_tool import VisionToolBase, ToolExecutionResult, ToolStatus
-from vm_clone.sdk import (
+from apex_vision.core.base_tool import VisionToolBase, ToolExecutionResult, ToolStatus
+from apex_vision.sdk import (
     IVisionPlugin,
     PluginMetadata,
     ParamDef,

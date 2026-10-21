@@ -9,11 +9,11 @@ from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QPointF, Qt
 from PyQt6.QtGui import QKeyEvent
 
-import vm_clone.tools
-from vm_clone.core.registry import list_all_tools, create_tool_instance
-from vm_clone.core.base_tool import ToolStatus
-from vm_clone.core.pipeline import VisionPipeline
-from vm_clone.ui.flow_editor import (
+import apex_vision.tools
+from apex_vision.core.registry import list_all_tools, create_tool_instance
+from apex_vision.core.base_tool import ToolStatus
+from apex_vision.core.pipeline import VisionPipeline
+from apex_vision.ui.flow_editor import (
     FlowScene,
     FlowEditorView,
     AddNodeCommand,

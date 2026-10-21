@@ -33,7 +33,7 @@ def _load(app, backend=None):
     engine.warnings.connect(lambda ws: warnings.extend(w.toString() for w in ws))
     if backend is not None:
         engine.rootContext().setContextProperty("appBackend", backend)
-        engine._services = __import__("vm_clone.qml_services", fromlist=["install_services"]).install_services(engine, backend)
+        engine._services = __import__("apex_vision.qml_services", fromlist=["install_services"]).install_services(engine, backend)
     engine.addImportPath(QML)
     engine.load(QUrl.fromLocalFile(os.path.join(QML, "Main.qml")))
     _spin(app)
@@ -71,13 +71,13 @@ def test_design_time_load_has_no_warnings_and_shows_both_screens(gui):
 
 
 def test_live_backend_feeds_real_solution_into_qml(gui):
-    from vm_clone.qml_backend import AppBackend, FrameProvider
+    from apex_vision.qml_backend import AppBackend, FrameProvider
     provider = FrameProvider()
     engine = QQmlApplicationEngine()
     engine.addImageProvider("frame", provider)
     backend = AppBackend(provider)
     engine.rootContext().setContextProperty("appBackend", backend)
-    engine._services = __import__("vm_clone.qml_services", fromlist=["install_services"]).install_services(engine, backend)
+    engine._services = __import__("apex_vision.qml_services", fromlist=["install_services"]).install_services(engine, backend)
     warnings = []
     engine.warnings.connect(lambda ws: warnings.extend(w.toString() for w in ws))
     engine.addImportPath(QML)
@@ -98,8 +98,8 @@ def test_live_backend_feeds_real_solution_into_qml(gui):
 
 
 def _backend(gui):
-    from vm_clone.qml_backend import AppBackend, FrameProvider
-    from vm_clone.core.pipeline import SolutionManager
+    from apex_vision.qml_backend import AppBackend, FrameProvider
+    from apex_vision.core.pipeline import SolutionManager
     backend = AppBackend(FrameProvider())
     backend._solution = SolutionManager.load_from_file(DEMO)
     backend._selected = next(iter(backend._pipeline.execution_order))
@@ -229,13 +229,13 @@ def test_backend_wire_delete_and_roi_editing(gui):
 def test_qml_canvas_view_functions_and_wire_drop(gui):
     from PyQt6.QtCore import Q_ARG, QMetaObject, Qt
     from PyQt6.QtQuick import QQuickItem
-    from vm_clone.qml_backend import AppBackend, FrameProvider
+    from apex_vision.qml_backend import AppBackend, FrameProvider
     provider = FrameProvider()
     engine = QQmlApplicationEngine()
     engine.addImageProvider("frame", provider)
     backend = AppBackend(provider)
     engine.rootContext().setContextProperty("appBackend", backend)
-    engine._services = __import__("vm_clone.qml_services", fromlist=["install_services"]).install_services(engine, backend)
+    engine._services = __import__("apex_vision.qml_services", fromlist=["install_services"]).install_services(engine, backend)
     warnings = []
     engine.warnings.connect(lambda ws: warnings.extend(w.toString() for w in ws))
     engine.addImportPath(QML)
@@ -272,13 +272,13 @@ def test_dragging_between_ports_with_the_mouse_creates_a_wire(gui):
     from PyQt6.QtCore import QPoint, QPointF, Qt
     from PyQt6.QtQuick import QQuickItem
     from PyQt6.QtTest import QTest
-    from vm_clone.qml_backend import AppBackend, FrameProvider
+    from apex_vision.qml_backend import AppBackend, FrameProvider
     provider = FrameProvider()
     engine = QQmlApplicationEngine()
     engine.addImageProvider("frame", provider)
     backend = AppBackend(provider)
     engine.rootContext().setContextProperty("appBackend", backend)
-    engine._services = __import__("vm_clone.qml_services", fromlist=["install_services"]).install_services(engine, backend)
+    engine._services = __import__("apex_vision.qml_services", fromlist=["install_services"]).install_services(engine, backend)
     engine.addImportPath(QML)
     engine.load(QUrl.fromLocalFile(os.path.join(QML, "Main.qml")))
     backend.openRecent(DEMO)
@@ -366,7 +366,7 @@ def test_unsaved_changes_are_never_replaced_without_asking(gui, tmp_path):
 
 
 def SolutionManager_load(path):
-    from vm_clone.core.pipeline import SolutionManager
+    from apex_vision.core.pipeline import SolutionManager
     return SolutionManager.load_from_file(str(path))
 
 
@@ -390,8 +390,8 @@ def test_backend_layers_and_formatted_output(gui):
 
 
 def test_loading_a_solution_seeds_the_image_strip_without_changing_the_source(gui):
-    from vm_clone.qml_backend import AppBackend, FrameProvider
-    from vm_clone.core.pipeline import SolutionManager
+    from apex_vision.qml_backend import AppBackend, FrameProvider
+    from apex_vision.core.pipeline import SolutionManager
     b = AppBackend(FrameProvider())
     sol = SolutionManager.load_from_file(DEMO)
     source_before = dict(next(n for n in sol.get_active_flow().nodes.values() if n.tool_name == "Image Source").parameters)

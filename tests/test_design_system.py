@@ -15,17 +15,17 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from vm_clone.ui.styles import (  # noqa: E402
+from apex_vision.ui.styles import (  # noqa: E402
     BORDER, FONT_STACK, RADIUS, SIZE, SPACE, THEME, TYPE, WEIGHT,
     control_h, corner_radius, font_px, font_weight, nearest_space, ramp_report,
     space,
 )
-from vm_clone.ui.styles import INDUSTRIAL_THEME_QSS  # noqa: E402
-from vm_clone.ui.vm_theme import VM_THEME_QSS  # noqa: E402
+from apex_vision.ui.styles import INDUSTRIAL_THEME_QSS  # noqa: E402
+from apex_vision.ui.theme import VM_THEME_QSS  # noqa: E402
 
 UI_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
-                                      "vm_clone", "ui"))
-SHEETS = {"industrial": INDUSTRIAL_THEME_QSS, "vm_theme": VM_THEME_QSS}
+                                      "apex_vision", "ui"))
+SHEETS = {"industrial": INDUSTRIAL_THEME_QSS, "theme": VM_THEME_QSS}
 
 
 # ---------------------------------------------------------------------------
@@ -116,7 +116,7 @@ def test_application_font_matches_the_body_token(qapp):
     # `initialize_app_fonts` uses a point size, so `pointSize()` must be positive;
     # a pixel-sized font reports -1 and makes internal widgets warn and fall back.
     assert font.pointSize() > 0, "the application font has no usable point size"
-    from vm_clone.ui.styles import _point_size_for
+    from apex_vision.ui.styles import _point_size_for
 
     assert font.pointSizeF() == pytest.approx(_point_size_for(TYPE["body"]), abs=0.2)
     # the resolved height must be close to the pixel scale the stylesheet declares
@@ -128,7 +128,7 @@ def test_application_font_matches_the_body_token(qapp):
 def test_apply_type_sets_the_ramp_size(qapp):
     from PyQt6.QtWidgets import QLabel
 
-    from vm_clone.ui.styles import apply_type
+    from apex_vision.ui.styles import apply_type
 
     label = QLabel("x")
     for role in ("micro", "caption", "body", "label", "subtitle", "title"):
@@ -204,7 +204,7 @@ def test_inline_widget_lengths_are_on_scale():
     allowed = set(TYPE.values()) | set(SPACE.values()) | set(RADIUS.values())
     off = []
     for fname in sorted(os.listdir(UI_DIR)):
-        if not fname.endswith(".py") or fname in ("styles.py", "vm_theme.py"):
+        if not fname.endswith(".py") or fname in ("styles.py", "theme.py"):
             continue
         text = open(os.path.join(UI_DIR, fname), encoding="utf-8").read()
         for m in LENGTH_DECL.finditer(text):
@@ -272,7 +272,7 @@ def test_stylesheet_sources_have_no_literal_font_size_or_radius():
     its tokens, so the rendered CSS necessarily contains resolved numbers and asserting
     on those would prove nothing.
     """
-    for fname in ("styles.py", "vm_theme.py"):
+    for fname in ("styles.py", "theme.py"):
         text = open(os.path.join(UI_DIR, fname), encoding="utf-8").read()
         fonts = re.findall(r"font-size:\s*\d+px", text)
         radii = re.findall(r"border-radius:\s*\d+px", text)
@@ -282,7 +282,7 @@ def test_stylesheet_sources_have_no_literal_font_size_or_radius():
 
 def test_stylesheet_sources_use_tokens_for_font_size_and_radius():
     """The obverse of the check above: the tokens must actually be used."""
-    for fname in ("styles.py", "vm_theme.py"):
+    for fname in ("styles.py", "theme.py"):
         text = open(os.path.join(UI_DIR, fname), encoding="utf-8").read()
         assert re.search(r"font-size:\s*\{", text), f"{fname} uses no size token"
         assert re.search(r"border-radius:\s*\{", text), f"{fname} uses no radius token"
@@ -296,7 +296,7 @@ def qapp():
     """A QApplication with the design-system font installed."""
     from PyQt6.QtWidgets import QApplication
 
-    from vm_clone.ui.styles import initialize_app_fonts
+    from apex_vision.ui.styles import initialize_app_fonts
 
     app = QApplication.instance()
     if app is None:

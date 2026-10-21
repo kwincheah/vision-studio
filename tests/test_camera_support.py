@@ -11,15 +11,15 @@ import pytest
 import numpy as np
 from PyQt6.QtWidgets import QApplication
 
-import vm_clone.tools
-from vm_clone.core.base_tool import ToolStatus
-from vm_clone.core.camera_manager import (
+import apex_vision.tools
+from apex_vision.core.base_tool import ToolStatus
+from apex_vision.core.camera_manager import (
     CameraManager, CameraDeviceInfo, OpenCVCameraDriver, IndustrialCameraDriver, StreamCameraDriver
 )
-from vm_clone.core.registry import create_tool_instance
-from vm_clone.ui.main_window import VisionMasterMainWindow
-from vm_clone.ui.camera_dialog import CameraManagementDialog
-from vm_clone.ui.styles import initialize_app_fonts
+from apex_vision.core.registry import create_tool_instance
+from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.camera_dialog import CameraManagementDialog
+from apex_vision.ui.styles import initialize_app_fonts
 
 
 @pytest.fixture(scope="session")

@@ -10,9 +10,9 @@ import os
 
 import pytest
 
-import vm_clone.tools  # noqa: F401
-from vm_clone.core.pipeline import SolutionManager, VisionPipeline
-from vm_clone.core.registry import create_tool_instance, list_all_tools
+import apex_vision.tools  # noqa: F401
+from apex_vision.core.pipeline import SolutionManager, VisionPipeline
+from apex_vision.core.registry import create_tool_instance, list_all_tools
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PROJECTS = sorted(glob.glob(os.path.join(ROOT, "projects", "*.vmp")))
@@ -105,7 +105,7 @@ def test_unknown_xml_tool_becomes_placeholder_and_keeps_its_parameters(tmp_path)
 def test_window_saves_and_reopens_xml_in_place(tmp_path):
     from PyQt6.QtWidgets import QApplication
     app = QApplication.instance() or QApplication([])
-    from vm_clone.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import VisionMasterMainWindow
     win = VisionMasterMainWindow()
     try:
         path = str(tmp_path / "ui.xml")

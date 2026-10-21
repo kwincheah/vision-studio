@@ -14,8 +14,8 @@ from PyQt6.QtTest import QTest
 from test_flowgen import GOOD, FakeClient, call, text
 from test_flowgen_providers import chat_chunks, sse
 from test_qml_interaction import fresh, ui  # noqa: F401
-from vm_clone.flowgen import keystore, providers
-from vm_clone.flowgen.settings import AISettings
+from apex_vision.flowgen import keystore, providers
+from apex_vision.flowgen.settings import AISettings
 
 KEY = "sk-ant-test-key-000000000000000"
 OPENAI_KEY = "sk-openai-test-0000000000000"
@@ -728,5 +728,5 @@ def test_xml_can_be_copied_and_saved(ui, ai, tmp_path):
     assert QGuiApplication.clipboard().text().startswith("<?xml")
     out = tmp_path / "f.xml"
     ai.saveXml(0, str(out))
-    from vm_clone.core.pipeline import SolutionManager
+    from apex_vision.core.pipeline import SolutionManager
     assert "Blur_Count" in SolutionManager.from_xml(out.read_text(encoding="utf-8")).flows

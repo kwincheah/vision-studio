@@ -15,13 +15,13 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
-import vm_clone.tools
-from vm_clone.ui.styles import initialize_app_fonts
-from vm_clone.ui.inspector import ParameterInspectorWidget, abbreviate_path, LABEL_W
-from vm_clone.ui.main_window import VisionMasterMainWindow
-from vm_clone.ui import layout_metrics as LM
-from vm_clone.tools.acquisition import ImageSourceTool
-from vm_clone.tools.image_output import ImageOutputTool
+import apex_vision.tools
+from apex_vision.ui.styles import initialize_app_fonts
+from apex_vision.ui.inspector import ParameterInspectorWidget, abbreviate_path, LABEL_W
+from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui import layout_metrics as LM
+from apex_vision.tools.acquisition import ImageSourceTool
+from apex_vision.tools.image_output import ImageOutputTool
 
 
 @pytest.fixture(scope="session")
@@ -337,7 +337,7 @@ def test_path_field_and_browse_button_share_the_field_axis(qapp):
 
 
 def test_abbreviate_path_keeps_the_tail_and_never_loses_information():
-    win_path = r"C:\Users\winch\Downloads\VMClone\vm_clone\samples\pcb_sample.png"
+    win_path = r"C:\Users\someone\projects\apex_vision\samples\pcb_sample.png"
     short = abbreviate_path(win_path)
     assert short.startswith("…")
     assert short.endswith("pcb_sample.png")

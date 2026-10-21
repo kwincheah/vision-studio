@@ -31,16 +31,16 @@ hidden_imports = [
     'mcp',
     'cv2',
     'numpy',
-] + collect_submodules('vm_clone')
+] + collect_submodules('apex_vision')
 
 # Collect data files and model weights
 datas = [
-    ('vm_clone/samples/*.png', 'vm_clone/samples'),
+    ('apex_vision/samples/*.png', 'apex_vision/samples'),
     ('plugins', 'plugins'),
-    ('vm_clone/assets', 'vm_clone/assets'),            # application icon
+    ('apex_vision/assets', 'apex_vision/assets'),            # application icon
     ('qml', 'qml'),                                    # the Qt Quick interface (main.py starts it)
-    ('vm_clone/flowgen/reference', 'vm_clone/flowgen/reference'),   # AI Gen reference the assistant reads
-    ('vm_clone/flowgen/recipes', 'vm_clone/flowgen/recipes'),
+    ('apex_vision/flowgen/reference', 'apex_vision/flowgen/reference'),   # AI Gen reference the assistant reads
+    ('apex_vision/flowgen/recipes', 'apex_vision/flowgen/recipes'),
 ]
 
 # Include YOLO weights if present
@@ -117,7 +117,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='vm_clone/assets/app_icon.ico',
+    icon='apex_vision/assets/app_icon.ico',
 )
 
 coll = COLLECT(

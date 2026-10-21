@@ -9,10 +9,10 @@ import pytest
 import numpy as np
 import cv2
 
-from vm_clone.core.registry import list_all_tools, list_categories, create_tool_instance
-from vm_clone.core.base_tool import ToolStatus
-from vm_clone.core.pipeline import VisionPipeline
-import vm_clone.tools
+from apex_vision.core.registry import list_all_tools, list_categories, create_tool_instance
+from apex_vision.core.base_tool import ToolStatus
+from apex_vision.core.pipeline import VisionPipeline
+import apex_vision.tools
 
 
 def test_registry_populated():

@@ -4,7 +4,7 @@ import ApexTheme 1.0
 import ApexComponents 1.0
 
 // Camera lens distortion calibration wizard: target settings, views pool, preview, solution.
-// Live through `appLens` (vm_clone/qml_services.py); sample data in Qt Design Studio.
+// Live through `appLens` (apex_vision/qml_services.py); sample data in Qt Design Studio.
 DialogFrame {
     id: root
     readonly property var lens: typeof appLens !== "undefined" ? appLens : null

@@ -3,12 +3,12 @@
 **`python main.py` now starts the QML interface.** The classic widget interface remains available
 with `python main.py --widgets`.
 
-The application has two front ends over the same engine (`vm_clone/core`, `vm_clone/tools`):
+The application has two front ends over the same engine (`apex_vision/core`, `apex_vision/tools`):
 
 | | Widget UI | QML UI |
 |---|---|---|
 | start | `python main.py` | `python qml_main.py` |
-| code | `vm_clone/ui/*.py` (PyQt6 widgets + QSS) | `qml/` + `vm_clone/qml_backend.py` |
+| code | `apex_vision/ui/*.py` (PyQt6 widgets + QSS) | `qml/` + `apex_vision/qml_backend.py` |
 | edit visually | no | **Qt Design Studio** - open `qml/ApexVision.qmlproject` |
 
 ## The helper script
@@ -28,7 +28,7 @@ Example: `convert_qml dialog ExportReport "Export Report" File` creates `ExportR
 puts "Export Report..." in the File menu and wires it to open the dialog. Re-running is safe.
 
 ## One brain, two faces
-Both front ends call the same widget-free code in **`vm_clone/core/controller.py`**, so a behaviour is
+Both front ends call the same widget-free code in **`apex_vision/core/controller.py`**, so a behaviour is
 written - and fixed - once:
 
 | class | owns |
@@ -50,9 +50,9 @@ Each widget class becomes a QML file; the logic that used to live in the widget'
 to a small method on `AppBackend`, and the QML calls it.
 
 ```
- widget class (vm_clone/ui/x.py)            QML file                          backend (qml_backend.py)
+ widget class (apex_vision/ui/x.py)            QML file                          backend (qml_backend.py)
  ------------------------------            --------------------------------  ---------------------------
- QSS tokens (vm_theme.py THEME)        ->  qml/ApexTheme/Theme.qml
+ QSS tokens (theme.py THEME)        ->  qml/ApexTheme/Theme.qml
  QPushButton / QLineEdit / QComboBox   ->  qml/ApexComponents/*.qml
  QDialog subclass                      ->  qml/ApexDialogs/<Name>Dialog.qml  + a line in DialogHost.qml
  QMainWindow areas                     ->  qml/screens/*.qml
@@ -75,14 +75,14 @@ to a small method on `AppBackend`, and the QML calls it.
    `MyDialog { anchors.fill: parent; visible: host.current === "myDialog"; onClosed: host.close() }`.
 4. **Open it** - add `{ text: "My Dialog...", key: "myDialog" }` to a menu in `SampleData.menus`
    and `case "myDialog": dialogs.show("myDialog"); break` in `MainScreen.invoke()`.
-5. **Behaviour** - add the property/slot it needs to `vm_clone/qml_backend.py`
+5. **Behaviour** - add the property/slot it needs to `apex_vision/qml_backend.py`
    (`@pyqtProperty(..., notify=changed)` for data, `@pyqtSlot(...)` for commands; call
    `self._notify()` after changing state). Reuse the engine - never copy logic.
 6. **Check** - `python -m pytest tests/test_qml_ui.py` (loads every screen, fails on any QML warning
    and on a menu key with no handler).
 
 ### Port a new colour / size / icon
-* Colour, font size, spacing, radius: `ApexTheme/Theme.qml` (mirror of `vm_theme.py`).
+* Colour, font size, spacing, radius: `ApexTheme/Theme.qml` (mirror of `theme.py`).
 * Icon: add a path to `qml/tools/make_icons.py`, run it, use `Icon { name: "myicon" }`.
 
 ## What is converted
@@ -101,7 +101,7 @@ menu), canvas pan and zoom (drag, wheel, fit), ROI drawing on the image, and the
 question before a solution is replaced.
 
 ## Tool dialogs: live through four services
-`vm_clone/qml_services.py` exposes one small QObject per tool dialog (context properties
+`apex_vision/qml_services.py` exposes one small QObject per tool dialog (context properties
 `appLens`, `appCamera`, `appPlugins`, `appInspection`); each wraps a front-end independent engine:
 
 | dialog | service | engine |

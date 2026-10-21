@@ -29,7 +29,7 @@ Change a value in `Theme.qml` and every component follows. To add an icon, add i
 ```
 python qml_main.py [solution.vmp | solution.xml]
 ```
-`vm_clone/qml_backend.py` exposes the loaded solution to QML as `appBackend`: modules,
+`apex_vision/qml_backend.py` exposes the loaded solution to QML as `appBackend`: modules,
 wiring, layout, verdicts, timings, the current image, recent projects, and the commands
 `run`, `stop`, `saveProject`, `moveNode`, `openRecent`, `createProject`, ... Flows run on a
 worker thread. Every screen uses `typeof appBackend !== "undefined"` to fall back to sample
@@ -39,4 +39,4 @@ data, which is what keeps the design canvas working.
 Every screen and dialog of the widget application has a live QML counterpart. Editing, running,
 saving, images, wiring, ROI, lens calibration, camera preview, plugins and the inspection
 evaluation all run on the real engine; see `docs/QML_CONVERSION.md` for the mapping, the services
-(`vm_clone/qml_services.py`) and the recipe for porting more.
+(`apex_vision/qml_services.py`) and the recipe for porting more.

@@ -1,4 +1,4 @@
-"""Render the application icon: vm_clone/assets/app_icon.svg -> app_icon.png (512) and app_icon.ico (16-256 px)."""
+"""Render the application icon: apex_vision/assets/app_icon.svg -> app_icon.png (512) and app_icon.ico (16-256 px)."""
 import io
 import os
 import sys
@@ -10,7 +10,7 @@ from PyQt6.QtCore import QBuffer, QIODevice  # noqa: E402
 from PyQt6.QtGui import QGuiApplication, QImage, QPainter  # noqa: E402
 from PyQt6.QtSvg import QSvgRenderer  # noqa: E402
 
-ASSETS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "vm_clone", "assets")
+ASSETS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "apex_vision", "assets")
 SIZES = (16, 24, 32, 48, 64, 128, 256)
 
 

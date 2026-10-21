@@ -20,12 +20,12 @@ import pytest
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt, QPointF, QPoint
 
-import vm_clone.tools
-from vm_clone.core.base_tool import ToolStatus
-from vm_clone.core.pipeline import VisionPipeline
-from vm_clone.ui.styles import initialize_app_fonts
-from vm_clone.ui.main_window import VisionMasterMainWindow
-from vm_clone.ui import layout_metrics as LM
+import apex_vision.tools
+from apex_vision.core.base_tool import ToolStatus
+from apex_vision.core.pipeline import VisionPipeline
+from apex_vision.ui.styles import initialize_app_fonts
+from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui import layout_metrics as LM
 
 
 @pytest.fixture(scope="session")
@@ -111,7 +111,7 @@ def test_end_to_end_module_insert_wire_run_and_export(qapp, tmp_path_factory=Non
             data = json.load(fh)
 
         restored = VisionPipeline(name=data["name"])
-        from vm_clone.core.registry import create_tool_instance
+        from apex_vision.core.registry import create_tool_instance
         for nd in data["nodes"]:
             tool = create_tool_instance(nd["tool_name"], nd["instance_id"], nd["name"])
             tool.load_dict(nd)

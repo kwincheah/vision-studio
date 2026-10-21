@@ -12,9 +12,9 @@ import pytest
 import numpy as np
 import cv2
 
-from vm_clone.core.registry import create_tool_instance
-from vm_clone.core.base_tool import ToolStatus
-import vm_clone.tools
+from apex_vision.core.registry import create_tool_instance
+from apex_vision.core.base_tool import ToolStatus
+import apex_vision.tools
 
 
 def test_position_correction():
@@ -94,12 +94,12 @@ def test_image_buffer():
 # OCR Recognition must read the pixels, never return a canned string
 # ---------------------------------------------------------------------------
 def _ocr_engine_available() -> bool:
-    from vm_clone.tools.recognition import _get_ocr_engine
+    from apex_vision.tools.recognition import _get_ocr_engine
     return _get_ocr_engine() is not None
 
 
 def test_ocr_reports_engine_unavailable_instead_of_fabricating(monkeypatch):
-    import vm_clone.tools.recognition as rec
+    import apex_vision.tools.recognition as rec
     monkeypatch.setattr(rec, "_get_ocr_engine", lambda: None)
     img = np.full((600, 800, 3), 255, dtype=np.uint8)
     cv2.putText(img, "LOT-4711", (90, 530), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 0), 3)
@@ -138,7 +138,7 @@ def test_script_tool_functions_and_comprehensions_see_injected_names():
 
 
 def test_calibration_target_is_detectable_by_opencv():
-    from vm_clone.core.target_generator import make_calibration_target, inner_pattern_size
+    from apex_vision.core.target_generator import make_calibration_target, inner_pattern_size
     img = make_calibration_target("Chessboard", 10, 7)
     ok, _ = cv2.findChessboardCorners(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY),
                                       inner_pattern_size("Chessboard", 10, 7))
@@ -152,7 +152,7 @@ def test_calibration_target_is_detectable_by_opencv():
 
 
 def test_global_script_runs_persists_and_reports_errors(tmp_path):
-    from vm_clone.core.pipeline import SolutionManager
+    from apex_vision.core.pipeline import SolutionManager
     sol = SolutionManager(name="gs")
     flow = sol.add_flow("Flow1")
     flow.add_node(create_tool_instance("Image Source", "src", "01_Src"))
@@ -172,7 +172,7 @@ def test_global_script_runs_persists_and_reports_errors(tmp_path):
 
 
 def test_imageio_round_trips_non_ascii_paths(tmp_path):
-    from vm_clone.core.imageio import imread, imwrite
+    from apex_vision.core.imageio import imread, imwrite
     folder = tmp_path / "ünï_目录"
     folder.mkdir()
     path = str(folder / "图像.png")

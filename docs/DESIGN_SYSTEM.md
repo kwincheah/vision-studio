@@ -17,7 +17,7 @@ source (`scripts/audit_hardcoded_metrics.py`):
 
 | Finding | Before |
 |---|---|
-| Hardcoded visual constants in `vm_clone/ui` | **383** |
+| Hardcoded visual constants in `apex_vision/ui` | **383** |
 | Distinct `font-size` values | 6 (11/12/13/14/16/17 px) |
 | Distinct `padding` shorthands | **29** |
 | Distinct `margin` shorthands | 10 |
@@ -43,7 +43,7 @@ Two structural causes, both invisible in a screenshot:
 
 ## 2. Tokens
 
-Defined once in `vm_clone/ui/styles.py` and exposed to the stylesheet under flat names
+Defined once in `apex_vision/ui/styles.py` and exposed to the stylesheet under flat names
 (`{T['fs_body']}`, `{T['sp_base']}`) so a rule and the ramp cannot disagree.
 
 ### 2.1 Type ramp

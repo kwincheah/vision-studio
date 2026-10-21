@@ -1,4 +1,4 @@
-"""The shared controller (vm_clone/core/controller.py) is front-end independent: these tests drive it
+"""The shared controller (apex_vision/core/controller.py) is front-end independent: these tests drive it
 with no widget and no QML, exactly as both user interfaces do."""
 import os
 import time
@@ -8,12 +8,12 @@ import numpy as np
 import pytest
 from PyQt6.QtCore import QCoreApplication
 
-import vm_clone.tools  # noqa: F401
-from vm_clone.core.base_tool import ToolStatus
-from vm_clone.core.controller import ImagePool, ProjectState, RunEngine, natural_key
-from vm_clone.core.pipeline import SolutionManager
-from vm_clone.core.project_manager import ProjectManager
-from vm_clone.core.registry import create_tool_instance
+import apex_vision.tools  # noqa: F401
+from apex_vision.core.base_tool import ToolStatus
+from apex_vision.core.controller import ImagePool, ProjectState, RunEngine, natural_key
+from apex_vision.core.pipeline import SolutionManager
+from apex_vision.core.project_manager import ProjectManager
+from apex_vision.core.registry import create_tool_instance
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DEMO = os.path.join(ROOT, "projects", "Precision_Measurement_Demo.vmp")

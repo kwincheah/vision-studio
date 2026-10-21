@@ -19,8 +19,8 @@ import numpy as np
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt, QPointF
 
-import vm_clone.tools
-from vm_clone.sdk import (
+import apex_vision.tools
+from apex_vision.sdk import (
     CURRENT_SDK_VERSION,
     PluginMetadata,
     PluginToolBase,
@@ -32,14 +32,14 @@ from vm_clone.sdk import (
     ToolExecutionResult,
     ToolStatus,
 )
-from vm_clone.sdk.manager import PluginManager, PluginState
-from vm_clone.core.registry import _TOOL_REGISTRY, _CATEGORIES, get_tool_class, create_tool_instance
-from vm_clone.core.base_tool import MissingPluginPlaceholderTool
-from vm_clone.core.pipeline import VisionPipeline, SolutionManager
-from vm_clone.core.project_manager import ProjectManager
-from vm_clone.ui.main_window import VisionMasterMainWindow
-from vm_clone.ui.plugin_dialog import PluginManagerDialog
-from vm_clone.ui.styles import initialize_app_fonts
+from apex_vision.sdk.manager import PluginManager, PluginState
+from apex_vision.core.registry import _TOOL_REGISTRY, _CATEGORIES, get_tool_class, create_tool_instance
+from apex_vision.core.base_tool import MissingPluginPlaceholderTool
+from apex_vision.core.pipeline import VisionPipeline, SolutionManager
+from apex_vision.core.project_manager import ProjectManager
+from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.plugin_dialog import PluginManagerDialog
+from apex_vision.ui.styles import initialize_app_fonts
 
 
 @pytest.fixture(scope="module")
@@ -116,7 +116,7 @@ def test_e2e_canvas_workflow_execution(qapp):
     assert connected is True
 
     # 3. Test Schema-Driven ParameterInspectorWidget Configuration
-    from vm_clone.ui.inspector import ParameterInspectorWidget
+    from apex_vision.ui.inspector import ParameterInspectorWidget
     inspector = ParameterInspectorWidget()
     inspector.set_tool(sobel_tool)
     assert inspector.current_tool == sobel_tool

@@ -4,7 +4,7 @@ import ApexTheme 1.0
 import ApexComponents 1.0
 
 // Plugin manager: installed plugins, community marketplace, GitHub installer, plugin creator.
-// Live through `appPlugins` (vm_clone/qml_services.py); sample data in Qt Design Studio.
+// Live through `appPlugins` (apex_vision/qml_services.py); sample data in Qt Design Studio.
 DialogFrame {
     id: root
     readonly property var service: typeof appPlugins !== "undefined" ? appPlugins : null

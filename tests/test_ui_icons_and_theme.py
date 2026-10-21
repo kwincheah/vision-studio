@@ -4,10 +4,10 @@ Tests for UI Icons, Theme Tokens, and Tool Navigation polish.
 import pytest
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
-from vm_clone.ui.icons import get_category_icon, get_tool_icon, get_action_icon
-from vm_clone.ui.styles import THEME, INDUSTRIAL_THEME_QSS
-from vm_clone.core.registry import list_categories, get_tool_class
-from vm_clone.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.icons import get_category_icon, get_tool_icon, get_action_icon
+from apex_vision.ui.styles import THEME, INDUSTRIAL_THEME_QSS
+from apex_vision.core.registry import list_categories, get_tool_class
+from apex_vision.ui.main_window import VisionMasterMainWindow
 
 
 @pytest.fixture(scope="session")

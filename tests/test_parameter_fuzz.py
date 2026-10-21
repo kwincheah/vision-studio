@@ -17,9 +17,9 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from vm_clone.core.base_tool import ToolStatus  # noqa: E402
-from vm_clone.core.registry import list_all_tools, create_tool_instance  # noqa: E402
-import vm_clone.tools  # noqa: E402,F401
+from apex_vision.core.base_tool import ToolStatus  # noqa: E402
+from apex_vision.core.registry import list_all_tools, create_tool_instance  # noqa: E402
+import apex_vision.tools  # noqa: E402,F401
 
 #: Values chosen to break a numeric conversion in every way that matters.
 HOSTILE = [

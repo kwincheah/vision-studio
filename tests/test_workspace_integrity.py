@@ -6,9 +6,9 @@ import pytest
 from PyQt6.QtCore import QPointF
 from PyQt6.QtWidgets import QApplication
 
-import vm_clone.tools  # noqa: F401  (registers the tools)
-from vm_clone.core.pipeline import SolutionManager, VisionPipeline
-from vm_clone.ui.styles import initialize_app_fonts
+import apex_vision.tools  # noqa: F401  (registers the tools)
+from apex_vision.core.pipeline import SolutionManager, VisionPipeline
+from apex_vision.ui.styles import initialize_app_fonts
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DEMO = os.path.join(ROOT, "projects", "Precision_Measurement_Demo.vmp")
@@ -23,7 +23,7 @@ def qapp():
 
 @pytest.fixture
 def win(qapp):
-    from vm_clone.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import VisionMasterMainWindow
     w = VisionMasterMainWindow()
     w.show()
     yield w
@@ -58,7 +58,7 @@ def test_node_positions_survive_save_and_load(win, tmp_path):
 
 def test_pipeline_positions_round_trip_and_reject_junk():
     pipe = VisionPipeline("F")
-    from vm_clone.core.registry import create_tool_instance
+    from apex_vision.core.registry import create_tool_instance
     pipe.add_node(create_tool_instance("Image Source", "a", "a"))
     data = pipe.to_dict()
     data["positions"] = {"a": [10, 20], "ghost": [1, 2], "b": "junk"}
@@ -118,7 +118,7 @@ def test_replacing_solution_respects_cancel(win, monkeypatch):
     win.flow_scene.node_items[nid].setPos(QPointF(500, 400))
     monkeypatch.setattr(type(win), "_confirm_discard_changes", lambda self, when="": "cancel")
     before = win.solution
-    from vm_clone.samples.pcb_solution import create_pcb_inspection_solution
+    from apex_vision.samples.pcb_solution import create_pcb_inspection_solution
     assert win._load_solution_instance(create_pcb_inspection_solution()) is False
     assert win.solution is before
 
@@ -126,7 +126,7 @@ def test_replacing_solution_respects_cancel(win, monkeypatch):
 def test_template_load_does_not_inherit_previous_file_path(win):
     _load(win, DEMO)
     assert win.current_project_path == DEMO
-    from vm_clone.samples.pcb_solution import create_pcb_inspection_solution
+    from apex_vision.samples.pcb_solution import create_pcb_inspection_solution
     win._load_solution_instance(create_pcb_inspection_solution())
     assert win.current_project_path is None   # Ctrl+S must not overwrite the demo file
 
@@ -161,7 +161,7 @@ def test_solution_file_with_bom_loads(tmp_path):
 
 
 def test_project_path_matches_create_project(tmp_path):
-    from vm_clone.core.project_manager import ProjectManager
+    from apex_vision.core.project_manager import ProjectManager
     pm = ProjectManager(workspace_root=str(tmp_path))
     name, expected = pm.project_path("My: bad/name", str(tmp_path))
     _, created = pm.create_project("My: bad/name", str(tmp_path), template="blank")
@@ -169,7 +169,7 @@ def test_project_path_matches_create_project(tmp_path):
 
 
 def test_elided_label_elides_and_keeps_full_text_in_tooltip(qapp):
-    from vm_clone.ui.elided_label import ElidedLabel
+    from apex_vision.ui.elided_label import ElidedLabel
     lbl = ElidedLabel("a_very_long_image_name_that_cannot_fit_in_the_label.png")
     lbl.resize(90, 20)
     lbl.show()

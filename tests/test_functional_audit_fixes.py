@@ -26,9 +26,9 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from vm_clone.core.base_tool import ToolStatus, VisionToolBase  # noqa: E402
-from vm_clone.core.registry import create_tool_instance  # noqa: E402
-import vm_clone.tools  # noqa: E402,F401
+from apex_vision.core.base_tool import ToolStatus, VisionToolBase  # noqa: E402
+from apex_vision.core.registry import create_tool_instance  # noqa: E402
+import apex_vision.tools  # noqa: E402,F401
 
 
 def make(name: str):
@@ -357,7 +357,7 @@ def test_as_point_list_shapes():
 # ---------------------------------------------------------------------------
 def test_sample_solution_fails_a_board_with_defects():
     """The AOI verdict must reject a part whose defect count exceeds tolerance."""
-    from vm_clone.samples.pcb_solution import create_pcb_inspection_solution
+    from apex_vision.samples.pcb_solution import create_pcb_inspection_solution
 
     pipeline = create_pcb_inspection_solution()
     results = pipeline.execute_flow()
@@ -379,7 +379,7 @@ def test_sample_solution_propagates_the_verdict_to_the_plc():
     The message carries the configured terminator, so the verdict is matched after
     stripping the framing characters.
     """
-    from vm_clone.samples.pcb_solution import create_pcb_inspection_solution
+    from apex_vision.samples.pcb_solution import create_pcb_inspection_solution
 
     pipeline = create_pcb_inspection_solution()
     results = pipeline.execute_flow()
@@ -394,7 +394,7 @@ def test_sample_solution_propagates_the_verdict_to_the_plc():
 def test_every_sample_flow_executes_without_error():
     """Every built-in sample must run clean: no ERROR node anywhere."""
     import inspect
-    from vm_clone.samples import pcb_solution
+    from apex_vision.samples import pcb_solution
 
     factories = [
         (name, fn) for name, fn in inspect.getmembers(pcb_solution, inspect.isfunction)

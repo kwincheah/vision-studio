@@ -1,4 +1,4 @@
-<p align="center"><img src="vm_clone/assets/app_icon.png" alt="Apex Industrial Vision Studio" width="112"></p>
+<p align="center"><img src="apex_vision/assets/app_icon.png" alt="Apex Industrial Vision Studio" width="112"></p>
 
 <h1 align="center">Apex Industrial Vision Studio</h1>
 
@@ -118,10 +118,10 @@ The whole flow canvas can be used without a mouse. Help > Keyboard Shortcuts lis
 ```text
 main.py                 entry point (Qt Quick UI by default)
 qml/                    the interface; open qml/ApexVision.qmlproject in Qt Design Studio
-vm_clone/core/          flow engine, project files, shared run controller
-vm_clone/tools/         the 42 built-in modules
-vm_clone/flowgen/       AI Gen: module catalogue, spec validator, assistant, MCP server, reference docs
-vm_clone/ui/            the older widget interface
+apex_vision/core/          flow engine, project files, shared run controller
+apex_vision/tools/         the 42 built-in modules
+apex_vision/flowgen/       AI Gen: module catalogue, spec validator, assistant, MCP server, reference docs
+apex_vision/ui/            the older widget interface
 plugins/                sample plugin
 projects/               sample solutions
 tests/                  pytest suite (1,300+ tests)

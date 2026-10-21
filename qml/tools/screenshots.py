@@ -17,8 +17,8 @@ from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtQml import QQmlApplicationEngine
 from PyQt6.QtQuick import QQuickItem
 
-from vm_clone.qml_backend import AppBackend, FrameProvider
-from vm_clone.qml_services import install_services
+from apex_vision.qml_backend import AppBackend, FrameProvider
+from apex_vision.qml_services import install_services
 
 DIALOGS = ["globalVars", "flowSettings", "validation", "cameraSet", "lensCal", "plugins", "newProject"]
 

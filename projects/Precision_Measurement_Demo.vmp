@@ -25,7 +25,7 @@
           "enabled": true,
           "parameters": {
             "source_type": "Synthetic",
-            "file_path": "C:\\Users\\winch\\Downloads\\VMClone\\vm_clone\\samples\\pcb_sample.png",
+            "file_path": "apex_vision/samples/pcb_sample.png",
             "pattern_type": "Circles & Holes",
             "color_mode": "BGR",
             "camera_index": 0

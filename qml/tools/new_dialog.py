@@ -7,7 +7,7 @@ Edits     qml/ApexDialogs/qmldir                          (component registratio
           qml/ApexDialogs/DialogHost.qml                  (instance, shown by name)
           qml/ApexTheme/SampleData.qml                    (menu entry, when --menu is given)
           qml/screens/MainScreen.qml                      (invoke() case that opens it)
-Prints the Python backend stub to paste into vm_clone/qml_backend.py.
+Prints the Python backend stub to paste into apex_vision/qml_backend.py.
 Safe to re-run: anything already registered is left alone.
 """
 import argparse
@@ -129,12 +129,12 @@ def main() -> int:
     for line in done:
         print("+", line)
     print(f"""
-Next - add this to vm_clone/qml_backend.py (inside AppBackend):
+Next - add this to apex_vision/qml_backend.py (inside AppBackend):
 
     @pyqtSlot(str)
     def {slot}(self, value):
         self._push_undo()                      # makes the change undoable
-        # ... call the engine here (reuse vm_clone/core, do not copy logic) ...
+        # ... call the engine here (reuse apex_vision/core, do not copy logic) ...
         self._notify("{args.title}: done")
 
 Preview: open qml/ApexVision.qmlproject in Qt Design Studio and set DialogHost.current = "{key}".""")

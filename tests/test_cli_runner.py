@@ -13,13 +13,13 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from vm_clone.cli import build_parser, main  # noqa: E402
+from apex_vision.cli import build_parser, main  # noqa: E402
 
 
 @pytest.fixture()
 def dataset_dir(tmp_path):
     """A small labelled dataset on disk."""
-    from vm_clone.samples.pcb_defect_dataset import build_dataset
+    from apex_vision.samples.pcb_defect_dataset import build_dataset
 
     build_dataset(str(tmp_path / "ds"), count=6, seed=4242)
     return str(tmp_path / "ds" / "annotations.json")
@@ -71,7 +71,7 @@ def test_dataset_command_builds_a_loadable_dataset(tmp_path, capsys):
     assert payload["split"] == "test"
     assert set(payload["classes"]) <= {"scratch", "void", "missing_paste", "missing_cu"}
 
-    from vm_clone.evaluation import Dataset
+    from apex_vision.evaluation import Dataset
 
     ds = Dataset.load(str(out / "annotations.json"))
     assert len(ds) == 5
@@ -89,7 +89,7 @@ def test_dataset_split_is_recorded(tmp_path, capsys):
     out = tmp_path / "train"
     main(["dataset", "--out", str(out), "--count", "4", "--split", "train", "--quiet"])
     capsys.readouterr()
-    from vm_clone.evaluation import Dataset
+    from apex_vision.evaluation import Dataset
 
     assert Dataset.load(str(out / "annotations.json")).meta["split"] == "train"
 
@@ -112,7 +112,7 @@ def test_evaluate_writes_json_and_reports_metrics(dataset_dir, tmp_path, capsys)
 
 
 def test_evaluate_confidence_threshold_changes_predictions(dataset_dir, tmp_path):
-    from vm_clone.evaluation import Experiment
+    from apex_vision.evaluation import Experiment
 
     low = tmp_path / "low.json"
     high = tmp_path / "high.json"
@@ -131,7 +131,7 @@ def test_evaluate_saves_an_experiment(dataset_dir, tmp_path, capsys):
                  "--save-experiment", str(store), "--name", "cli run", "--quiet"])
     assert code == 0
     capsys.readouterr()
-    from vm_clone.evaluation import ExperimentStore
+    from apex_vision.evaluation import ExperimentStore
 
     records = ExperimentStore(str(store)).load_all()
     assert len(records) == 1
@@ -281,9 +281,9 @@ def test_compare_writes_json(dataset_dir, tmp_path, capsys):
 # run
 # ---------------------------------------------------------------------------
 def _save_workflow(path):
-    import vm_clone.tools  # noqa: F401
-    from vm_clone.core.pipeline import VisionPipeline
-    from vm_clone.core.registry import create_tool_instance
+    import apex_vision.tools  # noqa: F401
+    from apex_vision.core.pipeline import VisionPipeline
+    from apex_vision.core.registry import create_tool_instance
 
     pipe = VisionPipeline(name="CLI_Flow")
     pipe.add_node(create_tool_instance("Image Source", "src"))
@@ -296,7 +296,7 @@ def _save_workflow(path):
 def test_run_on_a_single_image(tmp_path, capsys):
     import cv2
 
-    from vm_clone.samples.pcb_defect_dataset import synth_board
+    from apex_vision.samples.pcb_defect_dataset import synth_board
 
     image, _ = synth_board(1000, allow_clean=False, force_clean=False)
     image_path = tmp_path / "board.png"
@@ -317,7 +317,7 @@ def test_run_on_a_single_image(tmp_path, capsys):
 def test_run_on_a_directory(tmp_path, capsys):
     import cv2
 
-    from vm_clone.samples.pcb_defect_dataset import synth_board
+    from apex_vision.samples.pcb_defect_dataset import synth_board
 
     folder = tmp_path / "imgs"
     folder.mkdir()
@@ -371,7 +371,7 @@ def test_run_fails_on_an_unreadable_image_unless_ignored(tmp_path, capsys):
 def test_run_reports_a_workflow_without_a_detector(tmp_path, capsys):
     workflow = _save_workflow(tmp_path / "flow.vmflow")
     # strip the detector: a flow of just a source has nothing to report
-    from vm_clone.core.pipeline import VisionPipeline
+    from apex_vision.core.pipeline import VisionPipeline
 
     pipe = VisionPipeline.import_from_file(str(workflow))
     pipe.remove_node("det")
@@ -379,7 +379,7 @@ def test_run_reports_a_workflow_without_a_detector(tmp_path, capsys):
 
     import cv2
 
-    from vm_clone.samples.pcb_defect_dataset import synth_board
+    from apex_vision.samples.pcb_defect_dataset import synth_board
 
     image, _ = synth_board(1)
     image_path = tmp_path / "b.png"

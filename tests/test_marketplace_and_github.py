@@ -19,13 +19,13 @@ import numpy as np
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt
 
-import vm_clone.tools
-from vm_clone.sdk.marketplace import MarketplaceService, MarketplacePluginItem
-from vm_clone.sdk.manager import PluginManager, PluginState
-from vm_clone.core.registry import _TOOL_REGISTRY, _CATEGORIES, get_tool_class
-from vm_clone.core.base_tool import ToolStatus
-from vm_clone.ui.plugin_dialog import PluginManagerDialog
-from vm_clone.ui.styles import initialize_app_fonts
+import apex_vision.tools
+from apex_vision.sdk.marketplace import MarketplaceService, MarketplacePluginItem
+from apex_vision.sdk.manager import PluginManager, PluginState
+from apex_vision.core.registry import _TOOL_REGISTRY, _CATEGORIES, get_tool_class
+from apex_vision.core.base_tool import ToolStatus
+from apex_vision.ui.plugin_dialog import PluginManagerDialog
+from apex_vision.ui.styles import initialize_app_fonts
 
 
 @pytest.fixture(scope="module")

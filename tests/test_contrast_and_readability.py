@@ -13,8 +13,8 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from vm_clone.ui.styles import THEME  # noqa: E402
-from vm_clone.ui.vm_theme import VM_THEME_QSS  # noqa: E402
+from apex_vision.ui.styles import THEME  # noqa: E402
+from apex_vision.ui.theme import VM_THEME_QSS  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

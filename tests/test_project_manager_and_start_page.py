@@ -15,9 +15,9 @@ import pytest
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt
 
-from vm_clone.core.project_manager import ProjectManager
-from vm_clone.core.pipeline import SolutionManager, VisionPipeline
-from vm_clone.ui.start_page import StartPageDialog, NewProjectDialog, ProjectRowWidget
+from apex_vision.core.project_manager import ProjectManager
+from apex_vision.core.pipeline import SolutionManager, VisionPipeline
+from apex_vision.ui.start_page import StartPageDialog, NewProjectDialog, ProjectRowWidget
 
 
 @pytest.fixture(scope="session")
@@ -173,7 +173,7 @@ def test_new_project_dialog(qapp, temp_workspace):
 
 def test_main_window_integration(qapp, temp_workspace):
     """Verify VisionMasterMainWindow integration with project_manager and start_page."""
-    from vm_clone.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import VisionMasterMainWindow
 
     win = VisionMasterMainWindow()
     assert hasattr(win, "project_manager")
@@ -200,8 +200,8 @@ def test_main_window_integration(qapp, temp_workspace):
 
 def test_main_window_not_shown_before_project_open_accepted(qapp, temp_workspace, monkeypatch):
     """Verify the main window is NOT visible before user finishes opening a project on the start page."""
-    from vm_clone.ui.main_window import VisionMasterMainWindow
-    from vm_clone.ui.start_page import StartPageDialog
+    from apex_vision.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.start_page import StartPageDialog
     from PyQt6.QtWidgets import QDialog
 
     pm = ProjectManager(workspace_root=temp_workspace)
@@ -234,8 +234,8 @@ def test_main_window_not_shown_before_project_open_accepted(qapp, temp_workspace
 
 def test_main_window_never_shown_when_startup_cancelled(qapp, temp_workspace, monkeypatch):
     """Verify the main window is NEVER shown if user cancels/closes the start page without opening a project."""
-    from vm_clone.ui.main_window import VisionMasterMainWindow
-    from vm_clone.ui.start_page import StartPageDialog
+    from apex_vision.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.start_page import StartPageDialog
     from PyQt6.QtWidgets import QDialog
 
     pm = ProjectManager(workspace_root=temp_workspace)
@@ -262,7 +262,7 @@ def test_main_window_never_shown_when_startup_cancelled(qapp, temp_workspace, mo
 
 def test_main_window_shown_directly_when_startup_disabled(qapp, temp_workspace):
     """Verify main window opens directly when show_on_startup preference is disabled."""
-    from vm_clone.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import VisionMasterMainWindow
 
     pm = ProjectManager(workspace_root=temp_workspace)
     win = VisionMasterMainWindow()

@@ -15,10 +15,10 @@ import pytest
 import numpy as np
 import cv2
 
-from vm_clone.core.registry import list_all_tools, create_tool_instance
-from vm_clone.core.base_tool import ToolStatus, DataType
-from vm_clone.core.pipeline import VisionPipeline
-from vm_clone.tools.object_detection import ObjectDetectionTool, _get_yolo_model
+from apex_vision.core.registry import list_all_tools, create_tool_instance
+from apex_vision.core.base_tool import ToolStatus, DataType
+from apex_vision.core.pipeline import VisionPipeline
+from apex_vision.tools.object_detection import ObjectDetectionTool, _get_yolo_model
 
 try:
     import ultralytics

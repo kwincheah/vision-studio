@@ -7,7 +7,7 @@ import sys
 import pytest
 
 pytest.importorskip("mcp")
-from vm_clone.flowgen import mcp_server
+from apex_vision.flowgen import mcp_server
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 SPEC = {"name": "M", "modules": [{"id": "src", "tool": "Image Source"}, {"id": "f", "tool": "Image Filter"}],

@@ -26,10 +26,10 @@ def run_widgets(argv) -> int:
     from PyQt6.QtWidgets import QApplication
     from PyQt6.QtCore import Qt
 
-    from vm_clone.core.logging_setup import setup_logging, install_global_excepthook
-    from vm_clone.ui.styles import initialize_app_fonts
-    from vm_clone.ui.vm_theme import VM_THEME_QSS
-    from vm_clone.ui.main_window import VisionMasterMainWindow
+    from apex_vision.core.logging_setup import setup_logging, install_global_excepthook
+    from apex_vision.ui.styles import initialize_app_fonts
+    from apex_vision.ui.theme import VM_THEME_QSS
+    from apex_vision.ui.main_window import VisionMasterMainWindow
 
     setup_logging()
     install_global_excepthook()
@@ -42,7 +42,7 @@ def run_widgets(argv) -> int:
     app = QApplication(argv)
     app.setApplicationName("Apex Industrial Vision Studio")
     app.setOrganizationName("ApexVision")
-    from vm_clone.app_icon import install as install_icon
+    from apex_vision.app_icon import install as install_icon
     install_icon(app)
 
     # Load system fonts cleanly
@@ -61,7 +61,7 @@ def run_widgets(argv) -> int:
         except Exception as e:
             from PyQt6.QtWidgets import QMessageBox
             import logging
-            logging.getLogger("vm_clone.main").exception(f"Error opening project: {e}")
+            logging.getLogger("apex_vision.main").exception(f"Error opening project: {e}")
             QMessageBox.critical(None, "Project Load Error", f"Failed to open project '{file_path}':\n\n{e}")
         win.show()
         return app.exec()
@@ -75,7 +75,7 @@ def run_widgets(argv) -> int:
 def run_mcp() -> int:
     """MCP server (stdio) for flow generation, for Claude Desktop / Claude Code and other MCP clients."""
     try:
-        from vm_clone.flowgen.mcp_server import run
+        from apex_vision.flowgen.mcp_server import run
     except ImportError as exc:
         print(f"The MCP server needs the 'mcp' package (pip install mcp): {exc}", file=sys.stderr)
         return 1
@@ -90,7 +90,7 @@ def main() -> int:
     if "--widgets" in sys.argv[1:]:
         return run_widgets([sys.argv[0]] + args)
     try:
-        from vm_clone.qml_app import run
+        from apex_vision.qml_app import run
     except ImportError as exc:                       # Qt Quick not installed: keep the app usable
         print(f"Qt Quick is unavailable ({exc}); starting the widget interface instead.", file=sys.stderr)
         return run_widgets([sys.argv[0]] + args)

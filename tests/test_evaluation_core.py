@@ -15,14 +15,14 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from vm_clone.evaluation import (  # noqa: E402
+from apex_vision.evaluation import (  # noqa: E402
     Annotation, Dataset, Detection, ImageRecord, box_area, detections_from_outputs,
     evaluate_records, iou, load_yolo_labels, render_text_report, save_yolo_labels,
 )
-from vm_clone.evaluation.matching import (  # noqa: E402
+from apex_vision.evaluation.matching import (  # noqa: E402
     DUPLICATE, FP, FN, DEFAULT_IOU_THRESHOLD, match_image,
 )
-from vm_clone.evaluation.metrics import EvaluationResult  # noqa: E402
+from apex_vision.evaluation.metrics import EvaluationResult  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

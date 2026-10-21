@@ -65,10 +65,10 @@ apex-vision = "main:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["vm_clone*"]
+include = ["apex_vision*"]
 
 [tool.setuptools.package-data]
-vm_clone = ["assets/*", "flowgen/reference/*.md", "flowgen/recipes/*.json"]
+apex_vision = ["assets/*", "flowgen/reference/*.md", "flowgen/recipes/*.json"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

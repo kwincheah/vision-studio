@@ -18,12 +18,12 @@ import pytest
 from PyQt6.QtWidgets import QApplication, QToolBar
 from PyQt6.QtCore import Qt, QSize
 
-import vm_clone.tools
-from vm_clone.ui.styles import initialize_app_fonts
-from vm_clone.ui.result_panel import ModuleResultPanel, ResultTreeWidget, COL_PARAM, COL_VALUE, COL_LINK
-from vm_clone.ui.main_window import VisionMasterMainWindow, FlowValidationDialog
-from vm_clone.ui import layout_metrics as LM
-from vm_clone.core.base_tool import ToolExecutionResult, ToolStatus
+import apex_vision.tools
+from apex_vision.ui.styles import initialize_app_fonts
+from apex_vision.ui.result_panel import ModuleResultPanel, ResultTreeWidget, COL_PARAM, COL_VALUE, COL_LINK
+from apex_vision.ui.main_window import VisionMasterMainWindow, FlowValidationDialog
+from apex_vision.ui import layout_metrics as LM
+from apex_vision.core.base_tool import ToolExecutionResult, ToolStatus
 
 SIZES = [(1600, 950), (1440, 900), (1280, 800), (1100, 720)]
 
@@ -263,7 +263,7 @@ def test_canvas_has_no_parameter_pane(qapp):
 
 def test_module_config_window_edits_parameters(qapp):
     """Parameters are edited in the per-module dialog, as in the reference."""
-    from vm_clone.ui.module_config import ModuleConfigDialog
+    from apex_vision.ui.module_config import ModuleConfigDialog
 
     win = _win(qapp)
     win.run_pipeline_step()

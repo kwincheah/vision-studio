@@ -19,8 +19,8 @@ import tempfile
 import pytest
 import numpy as np
 
-import vm_clone.tools
-from vm_clone.sdk import (
+import apex_vision.tools
+from apex_vision.sdk import (
     PluginMetadata,
     ParamDef,
     ParamType,
@@ -30,10 +30,10 @@ from vm_clone.sdk import (
     PluginToolBase,
     IVisionPlugin
 )
-from vm_clone.sdk.manager import PluginManager, PluginState
-from vm_clone.core.base_tool import DataType, ToolStatus, ToolPort, ToolExecutionResult
-from vm_clone.core.pipeline import VisionPipeline
-from vm_clone.core.registry import _TOOL_REGISTRY, _CATEGORIES, get_tool_class, unregister_tool
+from apex_vision.sdk.manager import PluginManager, PluginState
+from apex_vision.core.base_tool import DataType, ToolStatus, ToolPort, ToolExecutionResult
+from apex_vision.core.pipeline import VisionPipeline
+from apex_vision.core.registry import _TOOL_REGISTRY, _CATEGORIES, get_tool_class, unregister_tool
 
 
 # --- 1. SemVer & Version Compatibility Tests ---
@@ -328,7 +328,7 @@ def test_plugin_exception_containment():
 @pytest.fixture(scope="module")
 def qapp():
     from PyQt6.QtWidgets import QApplication
-    from vm_clone.ui.styles import initialize_app_fonts
+    from apex_vision.ui.styles import initialize_app_fonts
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
@@ -337,7 +337,7 @@ def qapp():
 
 
 def test_plugin_manager_dialog_ui(qapp):
-    from vm_clone.ui.plugin_dialog import PluginManagerDialog
+    from apex_vision.ui.plugin_dialog import PluginManagerDialog
 
     dialog = PluginManagerDialog()
     dialog._suppress_msgbox = True
@@ -357,7 +357,7 @@ def test_plugin_manager_dialog_ui(qapp):
 
 def test_toolbox_panel_dynamic_category_ui(qapp):
     from PyQt6.QtCore import Qt
-    from vm_clone.ui.toolbox import ToolBoxPanel
+    from apex_vision.ui.toolbox import ToolBoxPanel
 
     toolbox = ToolBoxPanel()
     # Check that category rail includes Custom Filters from the loaded plugin
@@ -374,7 +374,7 @@ def test_toolbox_panel_dynamic_category_ui(qapp):
 
 
 def test_main_window_plugin_manager_action(qapp):
-    from vm_clone.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import VisionMasterMainWindow
 
     window = VisionMasterMainWindow()
     assert hasattr(window, "on_open_plugin_manager")

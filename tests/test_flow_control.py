@@ -17,15 +17,15 @@ import pytest
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt, QPointF
 
-import vm_clone.tools
-from vm_clone.core.pipeline import VisionPipeline, SolutionManager, FlowConnection
-from vm_clone.core.registry import create_tool_instance
-from vm_clone.core.base_tool import ToolStatus
-from vm_clone.ui.flow_editor import (
+import apex_vision.tools
+from apex_vision.core.pipeline import VisionPipeline, SolutionManager, FlowConnection
+from apex_vision.core.registry import create_tool_instance
+from apex_vision.core.base_tool import ToolStatus
+from apex_vision.ui.flow_editor import (
     FlowScene, FlowEditorView, NodeSignals, PortItem, ConnectionItem,
     AddConnectionCommand, DeleteConnectionCommand, DeleteNodeCommand
 )
-from vm_clone.ui.styles import initialize_app_fonts
+from apex_vision.ui.styles import initialize_app_fonts
 
 
 @pytest.fixture(scope="session")
@@ -188,7 +188,7 @@ def test_flow_duplication_and_serialization():
 
 def test_flow_xml_export_and_import():
     """Verify XML flow export, import, and round-trip execution fidelity."""
-    from vm_clone.samples.pcb_solution import create_pcb_inspection_solution
+    from apex_vision.samples.pcb_solution import create_pcb_inspection_solution
 
     pipe = create_pcb_inspection_solution()
     pipe.name = "XML_Inspection_Flow"
@@ -279,7 +279,7 @@ def test_solution_manager_xml_flow_import_export():
 
 def test_main_window_xml_flow_export_and_import(qapp):
     """Verify MainWindow XML flow export and import capabilities."""
-    from vm_clone.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import VisionMasterMainWindow
 
     win = VisionMasterMainWindow()
     try:
@@ -368,7 +368,7 @@ def test_solution_manager_multi_flow_and_telemetry():
 
 def test_input_param_follows_connection_wire(qapp):
     """Verify that module configuration Input Params follows the connection wire."""
-    from vm_clone.ui.module_config import ModuleConfigDialog
+    from apex_vision.ui.module_config import ModuleConfigDialog
     from PyQt6.QtWidgets import QComboBox
 
     pipe = VisionPipeline()
@@ -401,7 +401,7 @@ def test_input_param_follows_connection_wire(qapp):
 
 def test_inspector_input_param_follows_connection_wire(qapp):
     """Verify that ParameterInspectorWidget displays input parameters bound to lines."""
-    from vm_clone.ui.inspector import ParameterInspectorWidget
+    from apex_vision.ui.inspector import ParameterInspectorWidget
     from PyQt6.QtWidgets import QComboBox
 
     pipe = VisionPipeline()
@@ -421,7 +421,7 @@ def test_inspector_input_param_follows_connection_wire(qapp):
 
 def test_menu_bar_corner_controls_and_telemetry(qapp):
     """Verify Figure 6-2 solution dropdown, role switchover, and flow telemetry."""
-    from vm_clone.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import VisionMasterMainWindow
 
     win = VisionMasterMainWindow()
     win.show()

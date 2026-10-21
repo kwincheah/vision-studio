@@ -4,7 +4,7 @@ import ApexTheme 1.0
 import ApexComponents 1.0
 
 /* Inspection & evaluation dock: Evaluate | Results | Failure Analysis | Experiments | Compare.
-   Live through `appInspection` (vm_clone/qml_services.py); sample data in Qt Design Studio. */
+   Live through `appInspection` (apex_vision/qml_services.py); sample data in Qt Design Studio. */
 Rectangle {
     id: root
     readonly property var svc: typeof appInspection !== "undefined" ? appInspection : null

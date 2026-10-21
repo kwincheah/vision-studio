@@ -5,12 +5,12 @@ import tempfile
 import pytest
 import numpy as np
 
-from vm_clone.core.pipeline import VisionPipeline, SolutionManager, FlowConnection
-from vm_clone.core.project_manager import ProjectManager
-from vm_clone.core.camera_manager import CameraManager, CameraDeviceInfo
-from vm_clone.core.xml_safe import safe_fromstring, safe_parse_file, DefusedXMLError
-from vm_clone.core.fileio import atomic_write_text, atomic_write_json
-from vm_clone.sdk.marketplace import MarketplaceService
+from apex_vision.core.pipeline import VisionPipeline, SolutionManager, FlowConnection
+from apex_vision.core.project_manager import ProjectManager
+from apex_vision.core.camera_manager import CameraManager, CameraDeviceInfo
+from apex_vision.core.xml_safe import safe_fromstring, safe_parse_file, DefusedXMLError
+from apex_vision.core.fileio import atomic_write_text, atomic_write_json
+from apex_vision.sdk.marketplace import MarketplaceService
 
 
 # =========================================================================
@@ -18,8 +18,8 @@ from vm_clone.sdk.marketplace import MarketplaceService
 # =========================================================================
 def test_lens_distortion_profile_file_mode(tmp_path):
     """Verify that Lens Distortion Calibration in Profile File mode works with imported os."""
-    from vm_clone.tools.calibration import CameraCalibrationTool
-    from vm_clone.core.lens_calibration import LensCalibrationModel
+    from apex_vision.tools.calibration import CameraCalibrationTool
+    from apex_vision.core.lens_calibration import LensCalibrationModel
 
     cal_path = str(tmp_path / "test_lens_cal.json")
     model = LensCalibrationModel()
@@ -235,7 +235,7 @@ def test_xml_strict_decode_raises_value_error():
 # =========================================================================
 def test_validate_flow_deep_chain_no_recursion_error():
     """Verify validate_flow handles 1,500-node linear DAG without RecursionError."""
-    from vm_clone.core.registry import create_tool_instance
+    from apex_vision.core.registry import create_tool_instance
     pipe = VisionPipeline(name="DeepChainFlow")
 
     prev_id = None
@@ -312,8 +312,8 @@ def test_camera_manager_user_streams_preserved():
 def test_inspector_safe_list_parsing():
     """Verify inspector parses lists safely using json / ast without executing arbitrary code."""
     from PyQt6.QtWidgets import QApplication
-    from vm_clone.ui.inspector import ParameterInspectorWidget
-    from vm_clone.core.registry import create_tool_instance
+    from apex_vision.ui.inspector import ParameterInspectorWidget
+    from apex_vision.core.registry import create_tool_instance
 
     _app = QApplication.instance() or QApplication([])
 

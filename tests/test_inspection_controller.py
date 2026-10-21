@@ -12,16 +12,16 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from vm_clone.evaluation import Experiment  # noqa: E402
-from vm_clone.evaluation.matching import DUPLICATE, FP, FN  # noqa: E402
-from vm_clone.ui.inspection_controller import (  # noqa: E402
+from apex_vision.evaluation import Experiment  # noqa: E402
+from apex_vision.evaluation.matching import DUPLICATE, FP, FN  # noqa: E402
+from apex_vision.ui.inspection_controller import (  # noqa: E402
     InspectionController, classify_failures, failure_summary, filter_failures,
 )
 
 
 @pytest.fixture()
 def dataset_dir(tmp_path):
-    from vm_clone.samples.pcb_defect_dataset import build_dataset
+    from apex_vision.samples.pcb_defect_dataset import build_dataset
 
     build_dataset(str(tmp_path / "ds"), count=8, seed=777)
     return str(tmp_path / "ds" / "annotations.json")
@@ -87,7 +87,7 @@ def test_run_without_a_dataset_raises(tmp_path):
 def test_metrics_table_prints_na_for_undefined_values(tmp_path):
     import json
 
-    from vm_clone.evaluation import Annotation, Dataset, ImageRecord
+    from apex_vision.evaluation import Annotation, Dataset, ImageRecord
 
     ds = Dataset(name="empty-truth", root=str(tmp_path), records=[
         ImageRecord("x.png", [], size=(32, 32))])
@@ -144,8 +144,8 @@ def test_cancellation_is_honoured(controller):
 # Failure classification and filtering
 # ---------------------------------------------------------------------------
 def _cases():
-    from vm_clone.evaluation import Annotation, Detection
-    from vm_clone.evaluation.metrics import EvaluationResult
+    from apex_vision.evaluation import Annotation, Detection
+    from apex_vision.evaluation.metrics import EvaluationResult
 
     result = EvaluationResult(dataset_name="d", iou_threshold=0.5)
     result.add("a.png", [Annotation((0, 0, 10, 10), "scratch")],
@@ -316,7 +316,7 @@ def test_compare_two_runs(controller):
 
 
 def test_compare_detects_incomparable_runs(controller):
-    from vm_clone.evaluation import IncomparableExperiments
+    from apex_vision.evaluation import IncomparableExperiments
 
     controller.run_evaluation(iou_threshold=0.5)
     a = controller.save_experiment(name="iou50")

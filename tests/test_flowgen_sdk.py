@@ -9,7 +9,7 @@ anthropic = pytest.importorskip("anthropic")
 httpx = pytest.importorskip("httpx")
 
 from test_flowgen import GOOD
-from vm_clone.flowgen.agent import FlowAgent
+from apex_vision.flowgen.agent import FlowAgent
 
 
 def sse(events):
@@ -104,5 +104,5 @@ def test_live_prompt_to_valid_flow():
     events = run(agent, "Measure the width between two edges and pass if it is between 100 and 300 pixels.")
     flows = [e for e in events if e["type"] == "flow"]
     assert flows and not any(e["type"] == "error" for e in events), events
-    from vm_clone.flowgen.api import dry_run
+    from apex_vision.flowgen.api import dry_run
     assert dry_run(flows[-1]["spec"])["ok"]

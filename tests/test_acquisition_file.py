@@ -7,10 +7,10 @@ import pytest
 import numpy as np
 from PyQt6.QtWidgets import QApplication, QPushButton
 
-from vm_clone.tools.acquisition import ImageSourceTool
-from vm_clone.core.base_tool import ToolStatus
-from vm_clone.ui.inspector import ParameterInspectorWidget
-from vm_clone.ui.styles import initialize_app_fonts
+from apex_vision.tools.acquisition import ImageSourceTool
+from apex_vision.core.base_tool import ToolStatus
+from apex_vision.ui.inspector import ParameterInspectorWidget
+from apex_vision.ui.styles import initialize_app_fonts
 
 
 @pytest.fixture(scope="session")
@@ -33,14 +33,14 @@ def test_image_source_file_resolution():
     assert "Image" in res1.outputs
 
     # 2. Path with surrounding quotes (standard Windows 'Copy as path')
-    sample_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "vm_clone", "samples", "pcb_sample.png"))
+    sample_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "apex_vision", "samples", "pcb_sample.png"))
     quoted = f'"{sample_path}"'
     tool.set_param("file_path", quoted)
     res2 = tool.execute({})
     assert res2.status == ToolStatus.OK
 
     # 3. Relative path resolution
-    tool.set_param("file_path", "vm_clone/samples/pcb_sample.png")
+    tool.set_param("file_path", "apex_vision/samples/pcb_sample.png")
     res3 = tool.execute({})
     assert res3.status == ToolStatus.OK
 
@@ -71,13 +71,13 @@ def test_inspector_browse_button_generation(qapp):
 def test_inspector_path_field_shows_abbreviated_path(qapp):
     """Long paths are abbreviated for display; the real value is preserved."""
     from PyQt6.QtWidgets import QLineEdit
-    from vm_clone.ui.inspector import abbreviate_path
+    from apex_vision.ui.inspector import abbreviate_path
 
     inspector = ParameterInspectorWidget()
     tool = ImageSourceTool("src_path")
     tool.set_param("source_type", "File")
     long_path = os.path.normpath(os.path.join(
-        os.path.dirname(__file__), "..", "vm_clone", "samples", "pcb_sample.png"))
+        os.path.dirname(__file__), "..", "apex_vision", "samples", "pcb_sample.png"))
     tool.set_param("file_path", long_path)
     inspector.set_tool(tool)
 
@@ -129,7 +129,7 @@ def test_inspector_path_value_commits_on_edit(qapp):
     assert field.property("realPath") == "old.png"
 
     sample = os.path.normpath(os.path.join(
-        os.path.dirname(__file__), "..", "vm_clone", "samples", "pcb_sample.png"))
+        os.path.dirname(__file__), "..", "apex_vision", "samples", "pcb_sample.png"))
     field.setText(sample)
     inspector._on_path_edited("file_path", field)
 

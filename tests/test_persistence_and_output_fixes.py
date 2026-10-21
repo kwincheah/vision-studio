@@ -21,10 +21,10 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from vm_clone.core.base_tool import ToolStatus  # noqa: E402
-from vm_clone.core.registry import create_tool_instance  # noqa: E402
-from vm_clone.core.xml_safe import safe_fromstring, DefusedXMLError  # noqa: E402
-import vm_clone.tools  # noqa: E402,F401
+from apex_vision.core.base_tool import ToolStatus  # noqa: E402
+from apex_vision.core.registry import create_tool_instance  # noqa: E402
+from apex_vision.core.xml_safe import safe_fromstring, DefusedXMLError  # noqa: E402
+import apex_vision.tools  # noqa: E402,F401
 
 
 @pytest.fixture(scope="module")
@@ -32,7 +32,7 @@ def qapp():
     """A single QApplication for the widget-level tests in this module."""
     from PyQt6.QtWidgets import QApplication
 
-    from vm_clone.ui.styles import initialize_app_fonts
+    from apex_vision.ui.styles import initialize_app_fonts
 
     app = QApplication.instance()
     if app is None:
@@ -201,7 +201,7 @@ def test_camera_dialog_preview_stylesheet_is_valid(qapp):
     A bare `THEME['vm_viewport']` inside the f-string made Qt reject the whole
     stylesheet, so the preview rendered unthemed.
     """
-    from vm_clone.ui.camera_dialog import CameraManagementDialog
+    from apex_vision.ui.camera_dialog import CameraManagementDialog
 
     dialog = CameraManagementDialog()
     try:
@@ -215,8 +215,8 @@ def test_camera_dialog_preview_stylesheet_is_valid(qapp):
 
 def test_camera_dialog_preview_ink_meets_contrast(qapp):
     """The preview label's ink must be readable on the dark viewport surface."""
-    from vm_clone.ui.camera_dialog import CameraManagementDialog
-    from vm_clone.ui.styles import THEME
+    from apex_vision.ui.camera_dialog import CameraManagementDialog
+    from apex_vision.ui.styles import THEME
 
     def srgb(c):
         c = c / 255.0
@@ -243,7 +243,7 @@ def test_camera_dialog_preview_ink_meets_contrast(qapp):
 
 def test_camera_dialog_table_columns_fit_the_viewport(qapp):
     """No column may be clipped behind a horizontal scrollbar at the default size."""
-    from vm_clone.ui.camera_dialog import CameraManagementDialog
+    from apex_vision.ui.camera_dialog import CameraManagementDialog
 
     dialog = CameraManagementDialog()
     try:
@@ -271,7 +271,7 @@ def test_camera_dialog_table_columns_fit_the_viewport(qapp):
 # ---------------------------------------------------------------------------
 def test_sample_flow_reports_a_defective_board_as_ng():
     """A board whose defect count exceeds the tolerance must not pass."""
-    from vm_clone.samples.pcb_solution import create_pcb_inspection_solution
+    from apex_vision.samples.pcb_solution import create_pcb_inspection_solution
 
     pipeline = create_pcb_inspection_solution()
     results = pipeline.execute_flow()

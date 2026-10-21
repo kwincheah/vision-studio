@@ -32,7 +32,7 @@ you are done. To change the provider or key, use the three-dot menu > Settings (
 
 The assistant works like an engineer with the manual open:
 
-1. It **looks things up** in the built-in reference (`vm_clone/flowgen/reference/flow_generation_reference.md`):
+1. It **looks things up** in the built-in reference (`apex_vision/flowgen/reference/flow_generation_reference.md`):
    concepts, port-type rules, worked recipes and one page per tool. The chat lists each lookup it made.
 2. It drafts a flow **spec** (modules, parameters, links) – never raw XML.
 3. It **validates** the spec. Unknown tools, ports or parameters, type mismatches, taken inputs and loops come
@@ -69,10 +69,10 @@ python main.py --mcp           # packaged build: ApexVisionStudio.exe --mcp
 Claude Desktop (`claude_desktop_config.json`):
 
 ```json
-{"mcpServers": {"apex-flow": {"command": "python", "args": ["C:\\path\\to\\VMClone\\main.py", "--mcp"]}}}
+{"mcpServers": {"apex-flow": {"command": "python", "args": ["C:\\path\\to\\vision-studio\\main.py", "--mcp"]}}}
 ```
 
-Claude Code: `claude mcp add apex-flow -- python C:\path\to\VMClone\main.py --mcp`
+Claude Code: `claude mcp add apex-flow -- python C:\path\to\vision-studio\main.py --mcp`
 
 Tools: `search_tools`, `get_tool_spec`, `search_docs`, `read_doc`, `validate_flow`, `build_flow_xml`, `dry_run`,
 `save_flow_xml` (writes only inside `projects/`); resource `apex://reference`; prompt `design_flow`.

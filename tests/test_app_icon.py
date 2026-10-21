@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from vm_clone import app_icon
+from apex_vision import app_icon
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -25,7 +25,7 @@ def test_icon_files_exist_and_the_ico_has_every_size():
 
 
 def test_the_qml_copy_matches_the_source_svg():
-    assert read(os.path.join("qml", "images", "app_icon.svg")) == read(os.path.join("vm_clone", "assets", "app_icon.svg"))
+    assert read(os.path.join("qml", "images", "app_icon.svg")) == read(os.path.join("apex_vision", "assets", "app_icon.svg"))
 
 
 def test_qicon_loads_and_install_sets_it_on_the_application():
@@ -39,15 +39,15 @@ def test_qicon_loads_and_install_sets_it_on_the_application():
 
 
 def test_both_front_ends_install_the_icon():
-    assert "install_icon(app)" in read(os.path.join("vm_clone", "qml_app.py"))
+    assert "install_icon(app)" in read(os.path.join("apex_vision", "qml_app.py"))
     assert "install_icon(app)" in read("main.py")
 
 
 def test_the_build_uses_the_icon():
-    assert "icon='vm_clone/assets/app_icon.ico'" in read("ApexVisionStudio.spec")
-    assert "('vm_clone/assets', 'vm_clone/assets')" in read("ApexVisionStudio.spec")
+    assert "icon='apex_vision/assets/app_icon.ico'" in read("ApexVisionStudio.spec")
+    assert "('apex_vision/assets', 'apex_vision/assets')" in read("ApexVisionStudio.spec")
     iss = read("installer_setup.iss")
-    assert ("SetupIconFile=vm_clone" + chr(92) + "assets" + chr(92) + "app_icon.ico") in iss and "UninstallDisplayIcon=" in iss
+    assert ("SetupIconFile=apex_vision" + chr(92) + "assets" + chr(92) + "app_icon.ico") in iss and "UninstallDisplayIcon=" in iss
     assert "app_icon.svg" in read(os.path.join("qml", "ApexVision.qrc"))
 
 

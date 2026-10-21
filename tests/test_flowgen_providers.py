@@ -8,10 +8,10 @@ import pytest
 httpx = pytest.importorskip("httpx")
 
 from test_flowgen import GOOD
-from vm_clone.flowgen import keystore, providers
-from vm_clone.flowgen.agent import FlowAgent, SYSTEM_PROMPT, _tool_defs
-from vm_clone.flowgen.openai_compat import OpenAICompatClient, to_openai_messages, to_openai_tools
-from vm_clone.flowgen.settings import AISettings
+from apex_vision.flowgen import keystore, providers
+from apex_vision.flowgen.agent import FlowAgent, SYSTEM_PROMPT, _tool_defs
+from apex_vision.flowgen.openai_compat import OpenAICompatClient, to_openai_messages, to_openai_tools
+from apex_vision.flowgen.settings import AISettings
 
 
 # ---------------------------------------------------------------- registry

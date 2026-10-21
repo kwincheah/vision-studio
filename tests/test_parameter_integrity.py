@@ -19,9 +19,9 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from vm_clone.core.base_tool import ToolStatus  # noqa: E402
-from vm_clone.core.registry import create_tool_instance  # noqa: E402
-import vm_clone.tools  # noqa: E402,F401
+from apex_vision.core.base_tool import ToolStatus  # noqa: E402
+from apex_vision.core.registry import create_tool_instance  # noqa: E402
+import apex_vision.tools  # noqa: E402,F401
 
 
 def make(name: str):
@@ -180,8 +180,8 @@ def test_load_dict_preserves_unknown_keys():
 
 
 def test_project_round_trip_preserves_parameter_values():
-    from vm_clone.core.pipeline import SolutionManager
-    from vm_clone.samples.pcb_solution import create_pcb_inspection_solution
+    from apex_vision.core.pipeline import SolutionManager
+    from apex_vision.samples.pcb_solution import create_pcb_inspection_solution
     import tempfile
 
     pipe = create_pcb_inspection_solution()
@@ -207,7 +207,7 @@ def test_project_round_trip_preserves_parameter_values():
 def test_bcr_reports_an_absent_decoder_as_an_error(monkeypatch):
     """A missing OpenCV module is not "no barcode found"."""
     import cv2
-    from vm_clone.tools import recognition
+    from apex_vision.tools import recognition
 
     tool = make("BCR Recognition")
 
