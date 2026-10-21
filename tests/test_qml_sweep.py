@@ -274,3 +274,13 @@ def test_strip_run_button_becomes_stop_and_back(ui):
     ui.spin(20)
     assert ui.texts("Run"), "the button did not return to Run after stopping"
     ui.be.loop = False
+
+
+def test_switching_straight_from_one_dialog_to_another_does_not_overflow_the_focus_handler(ui):
+    """Regression: two dialog frames pulled the keyboard focus back and forth until QML reported a stack overflow
+    (seen when Camera Set hands over to the Lens Calibration wizard)."""
+    for key in ("globalVars", "flowSettings", "validation", "cameraSet", "lensCal", "plugins", "newProject", "cameraSet", "lensCal"):
+        ui.host.setProperty("current", key)
+        ui.spin(25)
+        assert not ui.warnings, (key, ui.warnings)
+    ui.close_dialog()

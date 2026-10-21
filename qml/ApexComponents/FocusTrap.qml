@@ -12,6 +12,7 @@ Item {
     property Item scope: parent
     property bool active: false
     property int lastIdx: -1
+    property bool trapping: false
 
     function focusables(item, out) {
         var kids = item.children
@@ -34,19 +35,25 @@ Item {
     }
     onActiveChanged: lastIdx = -1
 
+    function keepFocusInside() {
+        var cur = root.Window.window ? root.Window.window.activeFocusItem : null
+        var list = root.focusables(root.scope, [])
+        if (cur === null || list.length === 0) return
+        if (root.inside(cur)) {
+            for (var i = 0; i < list.length; i++) if (list[i] === cur || list[i].activeFocus) root.lastIdx = i
+            return
+        }
+        var target = (root.lastIdx < 0 || root.lastIdx >= list.length - 1) ? 0 : list.length - 1
+        list[target].forceActiveFocus()
+    }
+
     Connections {
         target: root.Window.window
         enabled: root.active
         function onActiveFocusItemChanged() {
-            var cur = root.Window.window ? root.Window.window.activeFocusItem : null
-            var list = root.focusables(root.scope, [])
-            if (cur === null || list.length === 0) return
-            if (root.inside(cur)) {
-                for (var i = 0; i < list.length; i++) if (list[i] === cur || list[i].activeFocus) root.lastIdx = i
-                return
-            }
-            var target = (root.lastIdx < 0 || root.lastIdx >= list.length - 1) ? 0 : list.length - 1
-            list[target].forceActiveFocus()
+            if (!root.active || root.trapping) return                 // hidden, or already fixing the focus: never re-enter
+            root.trapping = true
+            try { root.keepFocusInside() } finally { root.trapping = false }
         }
     }
 }

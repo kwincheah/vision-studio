@@ -37,6 +37,7 @@ Item {
 
     // Keyboard focus stays inside a modal dialog: if Tab would leave it, wrap to the other end
     property int lastIdx: -1
+    property bool trapping: false
     function focusables(item, out) {
         var kids = item.children
         for (var i = 0; i < kids.length; i++) {
@@ -51,20 +52,28 @@ Item {
         for (var p = item; p; p = p.parent) if (p === root || (Overlay.overlay && p === Overlay.overlay)) return true     // popups opened from the dialog belong to it
         return false
     }
+    function keepFocusInside() {
+        var cur = root.Window.window ? root.Window.window.activeFocusItem : null
+        var list = root.focusables(panel, [])
+        if (cur === null || list.length === 0) return
+        if (root.inside(cur)) {
+            for (var i = 0; i < list.length; i++) if (list[i] === cur || list[i].activeFocus) root.lastIdx = i
+            return
+        }
+        // focus escaped the modal: Tab past the last control wraps to the first, Shift+Tab to the last
+        var target = (root.lastIdx < 0 || root.lastIdx >= list.length - 1) ? 0 : list.length - 1
+        list[target].forceActiveFocus()
+    }
+
     Connections {
         target: root.Window.window
         enabled: root.visible
         function onActiveFocusItemChanged() {
-            var cur = root.Window.window ? root.Window.window.activeFocusItem : null
-            var list = root.focusables(panel, [])
-            if (cur === null || list.length === 0) return
-            if (root.inside(cur)) {
-                for (var i = 0; i < list.length; i++) if (list[i] === cur || list[i].activeFocus) root.lastIdx = i
-                return
-            }
-            // focus escaped the modal: Tab past the last control wraps to the first, Shift+Tab to the last
-            var target = (root.lastIdx < 0 || root.lastIdx >= list.length - 1) ? 0 : list.length - 1
-            list[target].forceActiveFocus()
+            // not while hidden, and never re-entrantly: when one dialog opens as another closes, both would otherwise
+            // pull the focus back and forth until the call stack overflows
+            if (!root.visible || root.trapping) return
+            root.trapping = true
+            try { root.keepFocusInside() } finally { root.trapping = false }
         }
     }
 
