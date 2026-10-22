@@ -1,6 +1,6 @@
-"""VisionMaster-aligned Tool Box: left category rail + icon-grid flyout.
+"""reference- Tool Box: left category rail + icon-grid flyout.
 
-Structure verified against the bundled HikRobot Vision Master manual:
+Structure verified against the bundled the reference product manual:
 
 * p.72 "Tool Box"  - a narrow vertical rail down the left edge of the flow
   workspace showing one glyph per module category.
@@ -28,7 +28,7 @@ from apex_vision.ui.styles import THEME
 from apex_vision.ui.icons import get_tool_icon, get_action_icon
 from apex_vision.ui import layout_metrics as LM
 
-# VisionMaster orange accent applied to toolbox glyphs (manual p.74).
+# reference orange accent applied to toolbox glyphs (manual p.74).
 VM_ACCENT = QColor(THEME["vm_accent"])
 
 
@@ -63,7 +63,7 @@ CATEGORY_GLYPH = {
 
 
 # =============================================================================
-# Rail glyphs - original vector drawings in the VisionMaster icon language
+# Rail glyphs - original vector drawings in the reference icon language
 # =============================================================================
 def _rail_painter(size: int, color=None):
     """Painter for the category rail's glyphs.
@@ -219,7 +219,7 @@ class ToolGridWidget(QListWidget):
     #: The label's own size, set explicitly rather than inherited.  The cells were
     #: picking up the 13 px label size from the stylesheet cascade, which made
     #: 'Linear Edge Defect' wrap onto three lines and run past the bottom of the 84 px
-    #: cell (`scripts/audit_tool_cell.py` measured 91 px needed).  At 11 px a long
+    #: cell (an earlier audit script measured 91 px needed).  At 11 px a long
     #: name wraps to two lines and needs 70 px.  Setting
     #: it here also stops the printed text `image_canvas` uses from drifting from it.
     LABEL_PX = 11

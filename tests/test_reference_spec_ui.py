@@ -1,7 +1,7 @@
 """Tests for the reference-specification reproduction.
 
-Covers the surfaces specified in `docs/VISIONMASTER_REFERENCE_SPEC.md` from the
-vendor's annotated main-interface region map (Vision Master 4.3.0 manual
+Covers the surfaces specified in the reference specification from the
+vendor's annotated main-interface region map (the reference manual
 Fig. 5-2) and §8.1/§8.2:
 
 * the result display area (region 12) with its tabs and per-parameter columns
@@ -26,7 +26,7 @@ from apex_vision.ui.result_display import (
 from apex_vision.ui.image_display import ImageDisplayArea
 from apex_vision.ui.module_config import ModuleConfigDialog, RUN_PARAM_GROUPS
 from apex_vision.ui.flow_editor import FlowScene, FlowEditorView, NodeSignals, FlowZoomTool
-from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.main_window import ApexMainWindow
 
 
 @pytest.fixture(scope="session")
@@ -38,8 +38,8 @@ def qapp():
     return app
 
 
-def _win(qapp, size=(1600, 950)) -> VisionMasterMainWindow:
-    win = VisionMasterMainWindow()
+def _win(qapp, size=(1600, 950)) -> ApexMainWindow:
+    win = ApexMainWindow()
     win.resize(*size)
     win.show()
     for _ in range(8):

@@ -326,7 +326,7 @@ class LensCalibrationModel:
         root = ET.Element("HikrobotLensCalibration", attrib={
             "FormatVersion": "1.0",
             "Manufacturer": "Hikrobot",
-            "Software": "MVS / Vision Master"
+            "Software": "MVS / Apex Vision"
         })
         ET.SubElement(root, "RMS_Error").text = f"{self.rms_error:.6f}"
         ET.SubElement(root, "ImageWidth").text = str(self.image_size[0])

@@ -1,6 +1,6 @@
 """
 Comprehensive Robustness & Edge-Case Test Suite.
-Tests all registered Vision Master tools against invalid types, out-of-bounds ROIs,
+Tests all registered Apex Vision tools against invalid types, out-of-bounds ROIs,
 corrupted images, zero-dimension buffers, and UI undo macro atomic operations.
 """
 import pytest

@@ -1,4 +1,4 @@
-"""Plugin Manager & Extension Marketplace Dialog for Vision Master Clone.
+"""Plugin Manager & Extension Marketplace Dialog for Apex Vision Studio.
 
 Provides operators and third-party developers with:
 1. Installed Plugins Manager (Inspect, Load from local folder, Package .vmpkg, Unload)
@@ -30,7 +30,7 @@ class PluginManagerDialog(QDialog):
 
     def __init__(self, parent=None, initial_tab: int = 0):
         super().__init__(parent)
-        self.setWindowTitle("Extension Platform - Vision Master Studio")
+        self.setWindowTitle("Extension Platform - Apex Vision Studio")
         self.resize(880, 560)
         self.setMinimumSize(780, 480)
 
@@ -74,7 +74,7 @@ class PluginManagerDialog(QDialog):
 
         # Footer Dialog Buttons
         footer = QHBoxLayout()
-        hint = QLabel("Plugins run as modular extensions inside the Vision Master DAG pipeline.")
+        hint = QLabel("Plugins run as modular extensions inside the Apex Vision DAG pipeline.")
         hint.setStyleSheet(f"color: {THEME['text_muted']}; font-size: 12px;")
         footer.addWidget(hint, 1)
 
@@ -295,7 +295,7 @@ Exported Tools ({len(p.tools)}):
         save_path, _ = QFileDialog.getSaveFileName(
             self, "Save Distributable Plugin Package",
             os.path.join(os.path.dirname(p.directory_path), f"{pid}.vmpkg"),
-            "Vision Master Plugin Package (*.vmpkg);;ZIP Archive (*.zip)"
+            "Apex Vision Plugin Package (*.vmpkg);;ZIP Archive (*.zip)"
         )
         if save_path:
             ok, msg, out_file = self.marketplace_service.package_plugin(p.directory_path, save_path)
@@ -617,7 +617,7 @@ Overview:
         layout.setSpacing(10)
 
         header = QLabel(
-            "Scaffold a complete, ready-to-publish Vision Master plugin repository.\n"
+            "Scaffold a complete, ready-to-publish Apex Vision plugin repository.\n"
             "Generates 'plugin.json', typed 'PluginToolBase' template, 'README.md', and '.gitignore' ready to push to GitHub."
         )
         header.setStyleSheet(f"color: {THEME['text_secondary']}; font-size: 12px;")

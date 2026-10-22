@@ -17,7 +17,7 @@ from apex_vision.core.camera_manager import (
     CameraManager, CameraDeviceInfo, OpenCVCameraDriver, IndustrialCameraDriver, StreamCameraDriver
 )
 from apex_vision.core.registry import create_tool_instance
-from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.main_window import ApexMainWindow
 from apex_vision.ui.camera_dialog import CameraManagementDialog
 from apex_vision.ui.styles import initialize_app_fonts
 
@@ -114,7 +114,7 @@ def test_image_source_tool_camera_modes():
 
 def test_camera_management_dialog_and_pipeline_binding(qapp):
     """Verify CameraManagementDialog opens, lists devices, and binds selection to active flow."""
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1280, 800)
     win.show()
     qapp.processEvents()

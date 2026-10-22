@@ -1,5 +1,5 @@
 """
-Project and Solution Manager for Vision Master Clone.
+Project and Solution Manager for Apex Vision Studio.
 Provides persistent storage, recent projects history, project creation,
 template scaffolding, loading, saving, and physical file deletion.
 """
@@ -35,7 +35,7 @@ class ProjectManager:
                 ini_path = os.path.join(self.cache_dir, "test_settings.ini")
                 self.settings = QSettings(ini_path, QSettings.Format.IniFormat)
             else:
-                self.settings = QSettings("ApexVision", "VisionMasterStudio")
+                self.settings = QSettings("ApexVision", "ApexVisionStudio")
         else:
             local_proj = os.path.abspath("projects")
             is_frozen = getattr(sys, "frozen", False)
@@ -48,7 +48,7 @@ class ProjectManager:
                 self.workspace_root = user_root
                 self.default_projects_dir = os.path.join(os.path.expanduser("~"), "Documents", "ApexVision", "Projects")
                 self.cache_dir = os.path.join(user_root, "config")
-            self.settings = QSettings("ApexVision", "VisionMasterStudio")
+            self.settings = QSettings("ApexVision", "ApexVisionStudio")
 
         os.makedirs(self.default_projects_dir, exist_ok=True)
         os.makedirs(self.cache_dir, exist_ok=True)

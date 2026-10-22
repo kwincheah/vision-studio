@@ -1,6 +1,6 @@
 """
 Recognition & Defect Detection Tools.
-Matches HikRobot Vision Master Recognition and Defect Detection categories:
+Matches the reference product Recognition and Defect Detection categories:
 - 2D BCR Recognition (QR code & DataMatrix reading)
 - BCR Recognition (1D Barcode decoder with rotation tolerance)
 - OCR Recognition (Character recognition with dictionary matching)

@@ -1,6 +1,6 @@
-"""Camera Management and Device Configuration Dialog for Vision Master Clone.
+"""Camera Management and Device Configuration Dialog for Apex Vision Studio.
 
-Implements HikRobot Vision Master Camera Set / Camera Management (Manual Chapter 4).
+Implements the reference product Camera Set / Camera Management (Manual Chapter 4).
 Provides:
 1. Live device discovery across USB Webcams, GigE Vision, USB3 Vision, and IP/RTSP streams
 2. Real-time video preview window with live FPS indicator

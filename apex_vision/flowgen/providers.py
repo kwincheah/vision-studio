@@ -6,7 +6,7 @@ server speak.  Model lists are curated defaults; ``fetch_models`` asks the provi
 settings dialog also accepts any model id typed by hand.
 """
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 ANTHROPIC = "anthropic"
 

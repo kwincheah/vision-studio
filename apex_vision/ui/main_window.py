@@ -1,7 +1,7 @@
 """
 Apex Industrial Vision Studio - Main Application Window.
 
-Workspace architecture follows the HikRobot Vision Master reference
+Workspace architecture follows the the reference product reference
 (`HikRobotVMHelp_compressed.pdf`):
 
 * p.40 / p.70  - menu bar (File / Settings / Tools / System / Help) above a
@@ -190,7 +190,7 @@ class FlowValidationDialog(QDialog):
 
 
 
-class VisionMasterMainWindow(QMainWindow):
+class ApexMainWindow(QMainWindow):
     #: The flow tab bar grows with its tabs up to this width, then scrolls.  Chosen to fit
     #: one long tab label comfortably while leaving the run/add buttons beside it in place.
     FLOW_TAB_BAR_MAX_W = 420
@@ -696,7 +696,7 @@ class VisionMasterMainWindow(QMainWindow):
         btn.setObjectName("toolbarButton")
         # The toolbar buttons are transparent on the dark chrome strip, so the
         # glyph carries the contrast: a light ink is used here, matching the
-        # measured KEYENCE relationship (white labels on `#636e6d` = 5.2:1).
+        # measured reference relationship (white labels on `#636e6d` = 5.2:1).
         # Dark glyphs on this strip only reached 1.9:1.
         btn.setIcon(get_action_icon(
             action_key, 24, QColor(THEME["text_on_chrome"])))
@@ -720,7 +720,7 @@ class VisionMasterMainWindow(QMainWindow):
         """The reference's two visible chrome rows (manual 4.3.0 Fig. 5-2).
 
         Measured from the top-left crop of the uncropped figure
-        (`docs/references/external/ui_crops/r3_topleft.png`, 3x):
+        (the vendor reference screenshots, 3x):
 
         * the **brand mark sits on the first row at the far left**, then the icon
           strip (save, open, page, copy, lock, camera, controller, global
@@ -1109,9 +1109,9 @@ class VisionMasterMainWindow(QMainWindow):
     def _init_property_dock(self):
         """Right column, reproduced strictly from the vendor's annotated figure.
 
-        Reference: Vision Master 4.3.0 manual Fig. 5-2 (region 6 "图像显示区域" and
+        Reference: the reference manual Fig. 5-2 (region 6 "图像显示区域" and
         region 12 "结果显示区"), zoomed crop at
-        `docs/references/external/ui_crops/right_column_zoom.png`.
+        the vendor reference screenshots.
 
         The vendor's right column is a **two-row vertical stack, each row being its
         own tab widget with its own tab bar**:
@@ -1160,7 +1160,7 @@ class VisionMasterMainWindow(QMainWindow):
         # The reference's upper tab pair: `图像 | 结果` in the annotated figure and
         # `图像 | 模块结果` in the maintenance edition — the two pages of the display
         # block.  The heading follows the uncropped figure, which is the measurement
-        # source (see `docs/VISIONMASTER_STORYBOARD.md` §0).
+        # source (see the measured reference storyboard).
         self.data_tabs = QTabWidget()
         self.data_tabs.setObjectName("displayTabs")
         self.data_tabs.setDocumentMode(True)
@@ -1506,7 +1506,7 @@ class VisionMasterMainWindow(QMainWindow):
 
         Every ratio comes from `apex_vision/ui/layout_metrics.py`, which is derived
         from pixel measurements of the vendor figures (see
-        `docs/VISIONMASTER_STORYBOARD.md` §2).  The flanks are clamped to their
+        the measured reference storyboard).  The flanks are clamped to their
         minimum usable sizes so alignment survives at the smallest window.
 
         ``resizeDocks`` wants absolute widths for the lateral docks, and the dock
@@ -1860,7 +1860,7 @@ class VisionMasterMainWindow(QMainWindow):
             "Apex Industrial Vision Studio v4.3\n"
             "Engine: Python 3.12 / PyQt6 / OpenCV 4.x / NumPy\n"
             "Flow engine: typed multi-flow DAG executor\n"
-            "Build: reference-aligned workspace (VisionMaster-style UI)"
+            "Build: reference-aligned workspace (reference- UI)"
         )
 
     @pyqtSlot()
@@ -3057,7 +3057,7 @@ class VisionMasterMainWindow(QMainWindow):
             QMessageBox.critical(self, "Import Error", str(e))
 
     def show_start_page(self) -> bool:
-        """Displays the Vision Master Start Page dialog.
+        """Displays the Apex Vision Start Page dialog.
         If the main window is not yet visible, only shows the main window after the user
         finishes opening/creating a project or entering workspace.
         """
@@ -3272,5 +3272,5 @@ class VisionMasterMainWindow(QMainWindow):
 
 
 # Backward-compatible alias
-MainWindow = VisionMasterMainWindow
+MainWindow = ApexMainWindow
 

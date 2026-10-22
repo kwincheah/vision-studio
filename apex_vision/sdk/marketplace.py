@@ -1,4 +1,4 @@
-"""Marketplace and GitHub Extension Platform for Vision Master Clone.
+"""Marketplace and GitHub Extension Platform for Apex Vision Studio.
 
 Provides services for:
 1. Browsing and searching a curated community plugin catalog.
@@ -328,7 +328,7 @@ class MarketplaceService:
             logger.info(f"Downloading plugin from GitHub: {zip_url}...")
             req = urllib.request.Request(
                 zip_url,
-                headers={"User-Agent": "VisionMaster-Studio-PluginManager/1.0"}
+                headers={"User-Agent": "ApexVision-Studio-PluginManager/1.0"}
             )
             with urllib.request.urlopen(req, timeout=20.0) as resp, open(zip_path, "wb") as out_f:
                 shutil.copyfileobj(resp, out_f)
@@ -432,7 +432,7 @@ class MarketplaceService:
                 "name": name.strip() or clean_id,
                 "version": "1.0.0",
                 "author": author.strip() or "Third-Party Developer",
-                "description": description.strip() or f"{name} extension for Vision Master Studio.",
+                "description": description.strip() or f"{name} extension for Apex Vision Studio.",
                 "category": category.strip() or "Custom Plugins",
                 "min_sdk_version": min_sdk_version,
                 "entrypoint": "__init__.py",
@@ -447,7 +447,7 @@ class MarketplaceService:
             clean_class_name = re.sub(r"[^a-zA-Z0-9_]", "", tool_name.title().replace(" ", "")) + "Tool"
             clean_plugin_cls = re.sub(r"[^a-zA-Z0-9_]", "", name.title().replace(" ", "")) + "Plugin"
 
-            code = f'''"""Vision Master Plugin: {name}
+            code = f'''"""Apex Vision Plugin: {name}
 Author: {author}
 License: MIT
 """
@@ -536,7 +536,7 @@ class {clean_class_name}(PluginToolBase):
 
 
 class {clean_plugin_cls}(IVisionPlugin):
-    """Entry point plugin descriptor for Vision Master Studio."""
+    """Entry point plugin descriptor for Apex Vision Studio."""
 
     @classmethod
     def get_metadata(cls) -> PluginMetadata:
@@ -568,15 +568,15 @@ class {clean_plugin_cls}(IVisionPlugin):
             # 3. README.md with GitHub instructions
             readme = f"""# {name}
 
-A custom vision extension tool for **Vision Master Studio**.
+A custom vision extension tool for **Apex Vision Studio**.
 
 ## Features
 - **Tool:** `{tool_name}`
 - **Category:** `{category}`
-- **SDK Compatibility:** Requires Vision Master Studio SDK >= `{min_sdk_version}`
+- **SDK Compatibility:** Requires Apex Vision Studio SDK >= `{min_sdk_version}`
 
-## Installation via Vision Master Studio
-1. Open Vision Master Studio.
+## Installation via Apex Vision Studio
+1. Open Apex Vision Studio.
 2. Go to **Tools -> Plugin Manager...** -> **Install from GitHub**.
 3. Enter repository URL: `https://github.com/{author.lower().replace(' ', '')}/{clean_id}`
 4. Click **Install & Verify**.

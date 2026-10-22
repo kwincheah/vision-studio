@@ -1,6 +1,6 @@
-"""VisionMaster-aligned widget stylesheet.
+"""reference- widget stylesheet.
 
-Every token used here is grounded in the bundled HikRobot Vision Master manual
+Every token used here is grounded in the bundled the reference product manual
 (`HikRobotVMHelp_compressed.pdf`).  Reference pages used as measurable design
 evidence:
 
@@ -14,7 +14,7 @@ evidence:
 
 The original Industrial Light/Dark identity of this project is preserved: the
 same single restrained engineering blue remains the focus/selection hue for
-inspector inputs, while the sampled VisionMaster orange is used strictly for
+inspector inputs, while the sampled reference orange is used strictly for
 module numbering, flow mapping and dependency wires.
 """
 from apex_vision.ui.styles import THEME

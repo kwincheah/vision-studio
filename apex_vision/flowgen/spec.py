@@ -12,7 +12,6 @@ Spec shape::
      "links":   [{"from": "src", "from_port": "Image", "to": "blur", "to_port": "Image"}]}
 """
 import difflib
-import math
 import re
 from typing import Any, Dict, List, Optional, Tuple
 

@@ -1,6 +1,6 @@
 """
 Industrial Communication & Hardware I/O Tools.
-Matches HikRobot Vision Master Communication category:
+Matches the reference product Communication category:
 - TCP/IP Communication (Client/Server protocol sender for sending inspection results, coordinates, and OK/NG verdicts to robot/PLC)
 - Modbus TCP / Serial Protocol Simulation
 - Camera IO Communication (Digital Trigger In & Pass/Fail Strobe Out)

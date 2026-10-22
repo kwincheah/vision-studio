@@ -17,11 +17,11 @@ def _never_block_on_unsaved_changes_prompt(monkeypatch):
     Tests that exercise the prompt itself monkeypatch ``_confirm_discard_changes`` again.
     """
     try:
-        from apex_vision.ui.main_window import VisionMasterMainWindow
+        from apex_vision.ui.main_window import ApexMainWindow
     except Exception:  # pragma: no cover - UI stack unavailable
         return
-    monkeypatch.setattr(VisionMasterMainWindow, "run_async", False)
-    monkeypatch.setattr(VisionMasterMainWindow, "_confirm_discard_changes",
+    monkeypatch.setattr(ApexMainWindow, "run_async", False)
+    monkeypatch.setattr(ApexMainWindow, "_confirm_discard_changes",
                         lambda self, when="before closing": "discard")
 
 

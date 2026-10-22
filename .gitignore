@@ -94,3 +94,6 @@ Thumbs.db
 
 # Qt Design Studio per-user project state
 *.qtds
+
+# Third-party vendor manual excerpts (kept locally for reference, not redistributed)
+docs/references/

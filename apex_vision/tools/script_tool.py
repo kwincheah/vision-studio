@@ -1,6 +1,6 @@
 """
 Script and Custom Logic Tools.
-Matches HikRobot Vision Master Global Script / Python Script Tool.
+Matches the reference product Global Script / Python Script Tool.
 Allows industrial vision engineers to write custom Python/OpenCV logic inline.
 """
 from typing import Dict, Any, List

@@ -5,7 +5,6 @@ typographic channels.  These tests keep the token layer authoritative: every tok
 exist and be on its own scale, both font channels must agree, every declared length must
 be on-scale, and the load-bearing state rules must stay in place.
 
-See `docs/DESIGN_SYSTEM.md`.
 """
 import os
 import re

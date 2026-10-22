@@ -1,6 +1,6 @@
 """
 Acquisition Tools: Image Source, Synthetic Generator, Camera / Video capture.
-Matches HikRobot Vision Master Acquisition category.
+Matches the reference product Acquisition category.
 """
 import os
 import cv2

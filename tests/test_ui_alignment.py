@@ -26,9 +26,9 @@ def qapp():
 
 @pytest.fixture()
 def win(qapp):
-    from apex_vision.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import ApexMainWindow
 
-    window = VisionMasterMainWindow()
+    window = ApexMainWindow()
     window.resize(1400, 760)
     window.show()
     for _ in range(24):
@@ -49,9 +49,9 @@ def test_flow_tab_is_expanding(qapp):
     203 px for content needing 222 px - which elided the cycle time.  With an expanding
     bar the tab takes the width the bar has instead.
     """
-    from apex_vision.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import ApexMainWindow
 
-    window = VisionMasterMainWindow()
+    window = ApexMainWindow()
     assert window.flow_tab_bar.expanding() is True
     window.close()
     window.deleteLater()

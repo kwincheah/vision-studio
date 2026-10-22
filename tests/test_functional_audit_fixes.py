@@ -2,7 +2,7 @@
 
 Each test pins a defect that was reproduced and fixed, so it cannot silently return.
 The defects were found by executing every tool with degraded inputs
-(`scripts/audit_tool_contracts.py`) rather than by reading the code.
+(an earlier audit script) rather than by reading the code.
 
 Covered here:
   * `L2L Measure` crashed on a malformed / absent line instead of reporting it.

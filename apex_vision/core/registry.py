@@ -1,5 +1,5 @@
 """
-Tool Registry and Factory for Vision Master Clone.
+Tool Registry and Factory for Apex Vision Studio.
 Allows dynamic discovery, instancing, and registration of tools.
 """
 import uuid
@@ -27,7 +27,7 @@ def register_tool(cls: Type[VisionToolBase]):
 
 def get_tool_class(tool_name: str) -> Type[VisionToolBase]:
     if tool_name not in _TOOL_REGISTRY:
-        raise KeyError(f"Tool '{tool_name}' not registered in Vision Master registry.")
+        raise KeyError(f"Tool '{tool_name}' not registered in Apex Vision registry.")
     return _TOOL_REGISTRY[tool_name]
 
 
@@ -41,7 +41,7 @@ def create_tool_instance(
         if allow_placeholder:
             from apex_vision.core.base_tool import MissingPluginPlaceholderTool
             return MissingPluginPlaceholderTool(instance_id=instance_id, name=name, missing_tool_name=tool_name)
-        raise KeyError(f"Tool '{tool_name}' not registered in Vision Master registry.")
+        raise KeyError(f"Tool '{tool_name}' not registered in Apex Vision registry.")
     cls = _TOOL_REGISTRY[tool_name]
     return cls(instance_id=instance_id, name=name)
 

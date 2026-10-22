@@ -1,5 +1,5 @@
 """
-Vision Master Startup & Welcome Page Dialog.
+Apex Vision Startup & Welcome Page Dialog.
 Provides industrial-grade project creation, file loading, recent projects list
 with real-time search, file deletion (disk vs list removal), and template scaffolding.
 """
@@ -21,7 +21,7 @@ from apex_vision.ui.styles import THEME
 
 
 class NewProjectDialog(QDialog):
-    """Modal dialog for creating a new Vision Master solution project."""
+    """Modal dialog for creating a new Apex Vision solution project."""
 
     def __init__(self, project_manager: ProjectManager, parent=None):
         super().__init__(parent)
@@ -368,7 +368,7 @@ class ProjectRowWidget(QWidget):
 
 class StartPageDialog(QDialog):
     """
-    Vision Master Startup / Welcome Page Dialog.
+    Apex Vision Startup / Welcome Page Dialog.
     Allows user to create new solutions, open existing solutions, launch templates,
     and inspect/search/delete recent projects.
     """
@@ -809,7 +809,7 @@ class StartPageDialog(QDialog):
             self,
             "Open Vision Project File",
             self.pm.default_projects_dir,
-            "Vision Master Files (*.vmp *.sol *.json *.xml);;All Files (*.*)"
+            "Apex Vision Files (*.vmp *.sol *.json *.xml);;All Files (*.*)"
         )
         if filepath:
             self.load_project_path(filepath)

@@ -18,7 +18,7 @@ import apex_vision.tools
 from apex_vision.core.base_tool import ToolStatus
 from apex_vision.core.pipeline import VisionPipeline, SolutionManager
 from apex_vision.core.registry import create_tool_instance
-from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.main_window import ApexMainWindow
 from apex_vision.ui.styles import initialize_app_fonts
 
 
@@ -48,7 +48,7 @@ def test_e2e_load_image_and_execute_pipeline(qapp, sample_image_file):
 
     and displays the result on ImageCanvasWidget.
     """
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1280, 800)
     win.show()
     qapp.processEvents()
@@ -79,7 +79,7 @@ def test_e2e_chain_processing_and_node_selection_inspection(qapp, sample_image_f
     Switching node selection on the canvas must switch the image canvas output
     and the result panel display to that specific node's data.
     """
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1280, 800)
     win.show()
     qapp.processEvents()
@@ -143,7 +143,7 @@ def test_e2e_error_handling_invalid_file(qapp, tmp_path):
 
     graceful error handling, empty state watermark, and no unhandled exceptions.
     """
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1280, 800)
     win.show()
     qapp.processEvents()
@@ -170,7 +170,7 @@ def test_e2e_save_and_reload_solution(qapp, sample_image_file, tmp_path):
 
     reloading it from disk, and re-executing it to ensure deterministic output.
     """
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1280, 800)
     win.show()
     qapp.processEvents()
@@ -202,7 +202,7 @@ def test_e2e_save_and_reload_solution(qapp, sample_image_file, tmp_path):
     assert os.path.exists(xml_path)
 
     # Reload into a fresh window
-    win2 = VisionMasterMainWindow()
+    win2 = ApexMainWindow()
     win2.resize(1280, 800)
     win2.show()
     qapp.processEvents()

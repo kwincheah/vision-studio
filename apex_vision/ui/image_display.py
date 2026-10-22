@@ -1,7 +1,7 @@
 """Image display area — the reference's "图像显示区域" (manual region 6).
 
-From the annotated main-interface figure in the Vision Master 4.3.0 manual
-(`docs/references/external/ui_crops/main_interface_map.png`) and §5.2.3 of that
+From the annotated main-interface figure in the the reference manual
+(the vendor reference screenshots) and §5.2.3 of that
 manual, the vendor's image area is a vertical stack:
 
     Image | Module Results            <- tabs

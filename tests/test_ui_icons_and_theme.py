@@ -7,7 +7,7 @@ from PyQt6.QtGui import QIcon
 from apex_vision.ui.icons import get_category_icon, get_tool_icon, get_action_icon
 from apex_vision.ui.styles import THEME, INDUSTRIAL_THEME_QSS
 from apex_vision.core.registry import list_categories, get_tool_class
-from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.main_window import ApexMainWindow
 
 
 @pytest.fixture(scope="session")
@@ -29,8 +29,8 @@ def test_theme_tokens_complete():
         assert key in THEME, f"Missing required theme token: {key}"
         assert isinstance(THEME[key], str) and THEME[key].startswith("#")
 
-    # Palette constraints: the accent is the blue measured from the KEYENCE
-    # references (docs/KEYENCE_DESIGN_SPEC.md §2), not an arbitrary blue.
+    # Palette constraints: the accent is the blue measured from the reference
+    # references (the sampled reference palette), not an arbitrary blue.
     assert THEME["accent_primary"] == "#0078b0"
     # The signature selection colour is the measured amber.
     assert THEME["vm_accent"] == "#e4b030"
@@ -86,7 +86,7 @@ def test_toolbar_action_icons(qapp):
 
 def test_main_window_tool_tree_icons_and_tooltips(qapp):
     """Verify that MainWindow initializes the tool tree with icons and informative tooltips."""
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     tree = win.tool_tree
     assert tree.topLevelItemCount() > 0
 

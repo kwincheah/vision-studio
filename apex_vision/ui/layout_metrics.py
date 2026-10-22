@@ -1,8 +1,8 @@
-"""Measured layout metrics for the VisionMaster-aligned workspace.
+"""Measured layout metrics for the reference- workspace.
 
 Every constant here is derived from a pixel measurement of the vendor reference
-figures — see `docs/VISIONMASTER_STORYBOARD.md` §2 and the raw data in
-`docs/references/external/storyboard_geometry.json`.  Nothing in this module is a
+figures — see the measured reference storyboard and the raw data in
+the vendor reference screenshots.  Nothing in this module is a
 guess; where a value had to be adapted for usability that is recorded in the
 storyboard's "Documented deviations" list.
 

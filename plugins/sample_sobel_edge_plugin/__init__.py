@@ -1,4 +1,4 @@
-"""Sample Third-Party Vision Plugin for Vision Master Clone.
+"""Sample Third-Party Vision Plugin for Apex Vision Studio.
 
 Demonstrates:
 - IVisionPlugin interface implementation

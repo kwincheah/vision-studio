@@ -1,6 +1,6 @@
 """Regression tests for the second-pass bug-pattern sweep.
 
-`scripts/audit_bug_patterns.py` scans for the *code shapes* that produced the defects
+an earlier audit script scans for the *code shapes* that produced the defects
 the first audit found, rather than for specific values.  These tests pin the two
 actionable results of that sweep:
 

@@ -14,7 +14,7 @@ from PyQt6.QtGui import QFontDatabase, QFont
 from PyQt6.QtWidgets import QApplication
 
 THEME = {
-    # --- Surfaces & backgrounds (KEYENCE light: K1 panel / K2 canvas) --------
+    # --- Surfaces & backgrounds (reference light: K1 panel / K2 canvas) --------
     "bg_app": "#e4e7ea",           # window field
     "bg_surface": "#ecf0f0",       # panels, sidebars, dock containers   (K1 0.17)
     "bg_surface_alt": "#f8fafb",   # card surfaces, parameter groups
@@ -40,7 +40,7 @@ THEME = {
     "text_on_chrome": "#f0f2f4",   # labels on the dark chrome           (K2)
     "text_on_menu": "#1a2120",     # dark ink on the lighter menu strip  (K1 4.99:1)
 
-    # --- Accents (KEYENCE: blue primary, amber selection) -------------------
+    # --- Accents (reference: blue primary, amber selection) -------------------
     "accent_primary": "#0078b0",   # active glyphs, links                (K1)
     "accent_hover": "#2f96ce",
     "accent_dim": "#f6dcae",       # amber selection wash                (K1 0.07)
@@ -67,7 +67,7 @@ THEME = {
     "status_running_bg": "#d4e8f4",
     "status_running_border": "#0078b0",
 
-    # --- Vision-workspace tokens (Apex identity on a KEYENCE-derived base) --
+    # --- Vision-workspace tokens (Apex identity on a reference-derived base) --
     "vm_chrome": "#848c94",          # menu strip            (measured K1 0.46)
     "vm_chrome_dark": "#646c6c",     # toolbar + status bar  (measured K2 0.39)
     #: The rail carries light glyphs, so it uses the darker end of the measured chrome
@@ -110,7 +110,7 @@ THEME = {
 # inline in each widget because a measured audit found 383 hardcoded visual constants
 # across `apex_vision/ui` - 24 distinct margin tuples, 29 padding shorthands, 12 spacings,
 # 5 radii and 6 font sizes - which is what made equivalent controls differ between
-# panels.  See `docs/DESIGN_SYSTEM.md`.
+# panels.
 #
 # Sizes are CSS pixels because Qt's stylesheet channel (`font-size: Npx`) is what
 # resolves for styled widgets; `initialize_app_fonts` drives the application-font

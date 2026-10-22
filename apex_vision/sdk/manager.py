@@ -265,7 +265,7 @@ class PluginManager:
                     author="Developer"
                 )
 
-            # Register discovered tools into the core Vision Master registry
+            # Register discovered tools into the core Apex Vision registry
             registered_tools = []
             for tool_cls in discovered_tools:
                 # Assign default category from plugin metadata if tool category is generic

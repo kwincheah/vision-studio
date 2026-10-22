@@ -1,7 +1,7 @@
 """Result display area — the reference's "结果显示区" (manual region 12).
 
-Reference: Vision Master 4.3.0 manual Fig. 5-2, zoomed at
-`docs/references/external/ui_crops/right_column_zoom.png`.  The vendor's result
+Reference: the reference manual Fig. 5-2, zoomed at
+the vendor reference screenshots.  The vendor's result
 block is a tab widget with exactly three tabs:
 
     当前结果 | 历史结果 | 帮助          (Current Result | History Result | Help)

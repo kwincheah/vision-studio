@@ -105,8 +105,8 @@ def test_unknown_xml_tool_becomes_placeholder_and_keeps_its_parameters(tmp_path)
 def test_window_saves_and_reopens_xml_in_place(tmp_path):
     from PyQt6.QtWidgets import QApplication
     app = QApplication.instance() or QApplication([])
-    from apex_vision.ui.main_window import VisionMasterMainWindow
-    win = VisionMasterMainWindow()
+    from apex_vision.ui.main_window import ApexMainWindow
+    win = ApexMainWindow()
     try:
         path = str(tmp_path / "ui.xml")
         win.current_project_path = path

@@ -1,6 +1,6 @@
 """
 Image Processing Tools: Binarization, Morphology, Filtering, Enhancement, Affine/Fixture.
-Matches HikRobot Vision Master Image Processing category.
+Matches the reference product Image Processing category.
 """
 import cv2
 import numpy as np

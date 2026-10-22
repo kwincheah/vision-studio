@@ -1,6 +1,6 @@
 """The operations the assistant (and the MCP server) can call.  Everything returns plain JSON-able data."""
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from apex_vision.core.base_tool import ToolStatus
 from apex_vision.core.registry import list_all_tools

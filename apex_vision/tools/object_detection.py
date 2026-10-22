@@ -225,7 +225,7 @@ class ObjectDetectionTool(VisionToolBase):
                 overlays.append({
                     "type": "rect",
                     "box": box_rect,
-                    "color": (232, 121, 43),  # Vision Master orange #e4b030
+                    "color": (232, 121, 43),  # Apex Vision orange #e4b030
                     "label": f"{cls_name} {score:.2f}",
                     "thickness": 2
                 })

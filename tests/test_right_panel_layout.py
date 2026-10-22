@@ -18,7 +18,7 @@ from PyQt6.QtCore import Qt
 import apex_vision.tools
 from apex_vision.ui.styles import initialize_app_fonts
 from apex_vision.ui.inspector import ParameterInspectorWidget, abbreviate_path, LABEL_W
-from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.main_window import ApexMainWindow
 from apex_vision.ui import layout_metrics as LM
 from apex_vision.tools.acquisition import ImageSourceTool
 from apex_vision.tools.image_output import ImageOutputTool
@@ -33,8 +33,8 @@ def qapp():
     return app
 
 
-def _win(qapp, size=(1600, 950)) -> VisionMasterMainWindow:
-    win = VisionMasterMainWindow()
+def _win(qapp, size=(1600, 950)) -> ApexMainWindow:
+    win = ApexMainWindow()
     win.resize(*size)
     win.show()
     for _ in range(8):

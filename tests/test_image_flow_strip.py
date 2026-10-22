@@ -16,7 +16,7 @@ import pytest
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt
 
-from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.main_window import ApexMainWindow
 from apex_vision.ui.styles import initialize_app_fonts
 
 
@@ -31,7 +31,7 @@ def qapp():
 
 def test_image_strip_shows_flow_of_added_images_not_diff_nodes(qapp):
     """The image bar must list the input images added, not intermediate DAG nodes."""
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.run_pipeline_step()
     for _ in range(3):
         qapp.processEvents()
@@ -57,7 +57,7 @@ def test_image_strip_shows_flow_of_added_images_not_diff_nodes(qapp):
 
 
 def test_add_image_to_flow_updates_strip_and_thumbnails(qapp, tmp_path):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     initial_count = win.image_display.strip.count()
 
     # Create dummy images on disk
@@ -84,7 +84,7 @@ def test_add_image_to_flow_updates_strip_and_thumbnails(qapp, tmp_path):
 
 
 def test_switching_image_in_strip_executes_pipeline_with_selected_image(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     for _ in range(3):
         qapp.processEvents()
 
@@ -110,7 +110,7 @@ def test_switching_image_in_strip_executes_pipeline_with_selected_image(qapp):
 
 def test_auto_switch_cycles_added_images(qapp):
     """Auto switch + 'Run all' + Continuously: every cycle takes the next image."""
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.image_display.btn_auto.setChecked(True)
     assert win.image_display.cbo_run_scope.currentText() == "Run all"
     n = len(win._image_flow)
@@ -136,7 +136,7 @@ def test_auto_switch_cycles_added_images(qapp):
 
 
 def test_run_all_processes_every_image_once(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     n = len(win._image_flow)
     visited = []
     real = win.engine.request_run
@@ -155,7 +155,7 @@ def test_run_all_processes_every_image_once(qapp):
 
 
 def test_run_selected_scope_runs_only_the_current_image(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.image_display.cbo_run_scope.setCurrentText("Run selected")
     win.on_strip_run_requested()
     assert win._batch is None
@@ -174,7 +174,7 @@ def test_load_folder_adds_every_image_in_natural_order(qapp, tmp_path):
             path.write_bytes(b"not an image")
         else:
             cv2.imwrite(str(path), np.full((20, 30, 3), 90, np.uint8))
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     before = len(win._image_flow)
     assert win.image_display.btn_add_folder.toolTip()
     added = win.load_image_folder(str(tmp_path))
@@ -188,7 +188,7 @@ def test_load_folder_adds_every_image_in_natural_order(qapp, tmp_path):
 
 
 def test_clear_image_flow(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     assert win.image_display.strip.count() > 0
 
     win.on_clear_image_flow()
@@ -212,7 +212,7 @@ def _spin_until(qapp, predicate, timeout=5.0):
 
 
 def test_run_button_becomes_stop_and_returns_only_after_finishing(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     n = len(win._image_flow)
     btn = win.image_display.btn_play
     assert btn.text().strip() == "Run" and btn.isEnabled()
@@ -230,7 +230,7 @@ def test_run_button_becomes_stop_and_returns_only_after_finishing(qapp):
 
 
 def test_loop_repeats_all_images_until_stop(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     n = len(win._image_flow)
     win.image_display.btn_auto.setChecked(True)
     assert win.image_display.lbl_auto.text() == "Loop"
@@ -253,7 +253,7 @@ def test_loop_repeats_all_images_until_stop(qapp):
 
 
 def test_loop_with_run_selected_repeats_the_current_image(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.image_display.btn_auto.setChecked(True)
     win.image_display.cbo_run_scope.setCurrentText("Run selected")
     win.pipeline.run_interval_ms = 1
@@ -271,7 +271,7 @@ def test_loop_with_run_selected_repeats_the_current_image(qapp):
 
 def test_stop_button_shows_stopping_until_the_cycle_in_flight_ends(qapp, monkeypatch):
     import time
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.run_async = True
     _spin_until(qapp, lambda: not win.is_running_flow())
     real = win.pipeline.execute_flow

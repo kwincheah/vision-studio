@@ -1,5 +1,5 @@
 """
-Aggregates and registers all Vision Master tools across all industrial categories.
+Aggregates and registers all Apex Vision tools across all industrial categories.
 """
 from apex_vision.tools.acquisition import ImageSourceTool
 from apex_vision.tools.image_output import ImageOutputTool, ImageBufferTool

@@ -1,5 +1,5 @@
 """
-Measurement Tools matching HikRobot Vision Master Measurement category:
+Measurement Tools matching the reference product Measurement category:
 - L2L Measure (Line to Line distance & angle difference)
 - P2P Measure (Point to Point distance, delta X, delta Y)
 - Intensity Measure (Mean, StdDev, Min, Max grayscale within ROI)

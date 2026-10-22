@@ -1,6 +1,6 @@
 """End-to-end workflow-editing and layout-resilience regression tests.
 
-These exercise the operator workflow documented in the Vision Master manual
+These exercise the operator workflow documented in the Apex Vision manual
 chapters implemented by this project:
 
 1. insert a module from the Tool Box (p.74)
@@ -24,7 +24,7 @@ import apex_vision.tools
 from apex_vision.core.base_tool import ToolStatus
 from apex_vision.core.pipeline import VisionPipeline
 from apex_vision.ui.styles import initialize_app_fonts
-from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.main_window import ApexMainWindow
 from apex_vision.ui import layout_metrics as LM
 
 
@@ -37,8 +37,8 @@ def qapp():
     return app
 
 
-def _new_window(qapp) -> VisionMasterMainWindow:
-    win = VisionMasterMainWindow()
+def _new_window(qapp) -> ApexMainWindow:
+    win = ApexMainWindow()
     win.resize(1600, 950)
     win.show()
     for _ in range(3):

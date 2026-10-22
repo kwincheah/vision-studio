@@ -1,6 +1,6 @@
 """Prove the parameter-type invariant holds by fuzzing every tool's public API.
 
-`scripts/audit_bug_patterns.py` reports ~80 unguarded `int()`/`float()` conversions of
+an earlier audit script reports ~80 unguarded `int()`/`float()` conversions of
 parameters.  Those are safe only if a parameter can never *hold* a wrong-typed value,
 which is what `VisionToolBase._coerce_param` guarantees.  This test attacks the
 invariant from the outside: it drives `set_param` and `load_dict` with hostile values

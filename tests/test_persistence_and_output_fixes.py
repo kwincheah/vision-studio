@@ -1,7 +1,7 @@
 """Regression tests for the persistence, output and styling defects found by audit.
 
-Pins the defects that were reproduced by `scripts/audit_persistence.py` and
-`scripts/audit_qt_warnings.py`:
+Pins the defects that were reproduced by an earlier audit script and
+an earlier audit script:
 
   * `Image Output` reported "Saved image to: ..." even when `cv2.imwrite` had failed
     (it returns False rather than raising), and its `save_mode` and `Trigger` port

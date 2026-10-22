@@ -1,4 +1,4 @@
-"""End-to-End Acceptance Test Suite for Vision Master Modular Plugin System.
+"""End-to-End Acceptance Test Suite for Apex Vision Modular Plugin System.
 
 Validates:
 1. Full Application Launch & Plugin Auto-Discovery (sample Sobel Edge plugin)
@@ -37,7 +37,7 @@ from apex_vision.core.registry import _TOOL_REGISTRY, _CATEGORIES, get_tool_clas
 from apex_vision.core.base_tool import MissingPluginPlaceholderTool
 from apex_vision.core.pipeline import VisionPipeline, SolutionManager
 from apex_vision.core.project_manager import ProjectManager
-from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.main_window import ApexMainWindow
 from apex_vision.ui.plugin_dialog import PluginManagerDialog
 from apex_vision.ui.styles import initialize_app_fonts
 
@@ -56,7 +56,7 @@ def qapp():
 # =============================================================================
 
 def test_app_launch_and_plugin_discovery(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     pm = PluginManager.get_instance()
 
     # Verify plugin auto-discovered on app startup
@@ -94,7 +94,7 @@ def test_app_launch_and_plugin_discovery(qapp):
 # =============================================================================
 
 def test_e2e_canvas_workflow_execution(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     pipeline = win.pipeline
 
     # 1. Insert Image Source and Sobel Edge Detector
@@ -210,7 +210,7 @@ def test_e2e_project_save_and_restore_with_plugin(qapp, tmp_path):
 # =============================================================================
 
 def test_e2e_unload_without_stale_ui_or_registry(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     pm = PluginManager.get_instance()
 
     # Ensure plugin is loaded first

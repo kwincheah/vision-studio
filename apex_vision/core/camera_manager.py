@@ -1,4 +1,4 @@
-"""Industrial and Standard Camera Driver System for Vision Master Clone.
+"""Industrial and Standard Camera Driver System for Apex Vision Studio.
 
 Provides unified device enumeration, parameter configuration, acquisition,
 and live streaming across:
@@ -8,7 +8,7 @@ and live streaming across:
 3. Network Video & Industrial HTTP / RTSP Streams (Hikvision, Dahua, Axis, generic IP cameras)
 4. Virtual / Mock Industrial Camera (Simulated trigger, exposure, gain, test chart, live frames)
 
-Designed following HikRobot Vision Master Camera Management (Manual Chapter 4 & 5).
+Designed following the reference product Camera Management (Manual Chapter 4 & 5).
 """
 import os
 import sys

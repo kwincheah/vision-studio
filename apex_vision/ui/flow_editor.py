@@ -261,7 +261,7 @@ class PortItem(QGraphicsRectItem):
 class ConnectionItem(QGraphicsPathItem):
     """Module dependency wire.
 
-    Rendered in the VisionMaster language: orthogonal routed wire with smooth
+    Rendered in the reference language: orthogonal routed wire with smooth
     rounded corners (fillets), collision-avoiding gutters for backward / wrapped
     links, and an arrowhead at the target port accurately aligned with the
     incoming arrival vector.
@@ -499,7 +499,7 @@ class ConnectionItem(QGraphicsPathItem):
 
 
 class FlowNodeItem(QGraphicsItem):
-    """VisionMaster module card (manual p.74 / p.95).
+    """reference module card (manual p.74 / p.95).
 
     White rounded card with a category icon in the top-right corner, the module
     display name (the numeric ``NN_`` execution index is picked out in the
@@ -587,7 +587,7 @@ class FlowNodeItem(QGraphicsItem):
     def paint(self, painter: QPainter, option, widget=None):
         """Paint the module card in the reference's pill style.
 
-        Measured from `docs/references/external/ui_crops/card_zoom.png`: a white
+        Measured from the vendor reference screenshots: a white
         rounded pill with a green capsule badge on the left edge holding the
         category glyph, the ``index name`` text beside it, the port names on the
         left/right edges, and a thin accent strip on the right carrying the

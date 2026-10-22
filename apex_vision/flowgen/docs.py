@@ -4,7 +4,6 @@ The reference is split into sections (one per ``##`` / ``###`` heading, so every
 its own section).  Retrieval is lexical - word overlap with the section title weighted above the body -
 which is exact, needs no index or embedding model, and is deterministic.
 """
-import os
 import re
 from functools import lru_cache
 from typing import Dict, List, Optional

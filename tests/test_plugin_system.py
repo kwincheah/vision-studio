@@ -1,4 +1,4 @@
-"""Automated Tests for Vision Master Clone Plugin Architecture & SDK.
+"""Automated Tests for Apex Vision Studio Plugin Architecture & SDK.
 
 Verifies:
 1. SemVer parsing & compatibility rules (exact, caret ^, >=, <=, ==)
@@ -374,9 +374,9 @@ def test_toolbox_panel_dynamic_category_ui(qapp):
 
 
 def test_main_window_plugin_manager_action(qapp):
-    from apex_vision.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import ApexMainWindow
 
-    window = VisionMasterMainWindow()
+    window = ApexMainWindow()
     assert hasattr(window, "on_open_plugin_manager")
 
     # Find the Plugin Manager action in Tools menu

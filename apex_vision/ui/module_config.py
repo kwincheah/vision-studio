@@ -1,8 +1,8 @@
 """Module configuration dialog — the vendor's per-module parameter window.
 
-Reference: Vision Master 4.3.0 user manual §8.1 and §8.2
-(`docs/references/external/ui_crops/module_common_config.png` and
-`docs/references/external/ui_chapters_cn.txt`).  The vendor's module window is a
+Reference: the reference manual §8.1 and §8.2
+(the vendor reference screenshots and
+the vendor reference screenshots).  The vendor's module window is a
 modal dialog titled with the module id and name, carrying four tabs and a footer
 of execution buttons:
 

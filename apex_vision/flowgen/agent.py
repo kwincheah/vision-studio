@@ -12,7 +12,6 @@ import logging
 import threading
 from typing import Any, Callable, Dict, List, Optional
 
-from apex_vision.core.registry import list_all_tools
 from apex_vision.flowgen import api
 from apex_vision.flowgen.catalog import SIDE_EFFECT_TOOLS
 from apex_vision.flowgen.spec import SPEC_SCHEMA, has_errors, spec_to_xml, validate_spec

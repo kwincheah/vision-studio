@@ -1,8 +1,8 @@
-"""Pin the measured VisionMaster layout geometry.
+"""Pin the measured reference layout geometry.
 
 Every expected value here comes from a pixel measurement of the vendor figures,
-recorded in `docs/VISIONMASTER_STORYBOARD.md` §2 with the raw data in
-`docs/references/external/storyboard_geometry.json`.  The tests serve two
+recorded in the measured reference storyboard with the raw data in
+the vendor reference screenshots.  The tests serve two
 purposes: they keep the constants honest, and they assert that the *applied*
 layout actually lands on the measured ratios rather than on a guess.
 """
@@ -11,7 +11,7 @@ import pytest
 from PyQt6.QtWidgets import QApplication
 
 from apex_vision.ui.styles import initialize_app_fonts
-from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.main_window import ApexMainWindow
 from apex_vision.ui import layout_metrics as LM
 
 
@@ -25,7 +25,7 @@ def qapp():
 
 
 def _win(qapp, size):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(*size)
     win.show()
     # The measured split is applied in two passes (the first before Qt finalises

@@ -29,7 +29,7 @@ def run_widgets(argv) -> int:
     from apex_vision.core.logging_setup import setup_logging, install_global_excepthook
     from apex_vision.ui.styles import initialize_app_fonts
     from apex_vision.ui.theme import VM_THEME_QSS
-    from apex_vision.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import ApexMainWindow
 
     setup_logging()
     install_global_excepthook()
@@ -50,7 +50,7 @@ def run_widgets(argv) -> int:
     # Theme the whole application so parentless dialogs and message boxes match the main window.
     app.setStyleSheet(VM_THEME_QSS)
 
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
 
     # If project file passed on command line, open directly
     if len(argv) > 1 and os.path.isfile(argv[1]):

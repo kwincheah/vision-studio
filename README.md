@@ -144,7 +144,6 @@ More reading:
 [Parameter editors](docs/PARAMETER_EDITORS.md) ·
 [XML format](docs/XML_FORMAT.md) ·
 [QML conversion notes](docs/QML_CONVERSION.md) ·
-[Design system](docs/DESIGN_SYSTEM.md) ·
 [Plugin guide](docs/PLUGIN_DEVELOPMENT_GUIDE.md) ·
 [Release notes](docs/RELEASE_NOTES_v4.3.0.md)
 
@@ -160,8 +159,7 @@ iscc installer_setup.iss                                  # installer (needs Inn
 - AI-generated flows can be wrong. Check regions and thresholds against your own images before running a line with them.
 - Only your messages, the lookups the assistant makes and the flow it is working on go to the AI provider; images never do.
   API keys stay on your machine (optionally in the Windows Credential Manager / Keychain) and never enter project files.
-- The look is a light industrial theme; the palette was sampled from screenshots of commercial vision software, see
-  [docs/KEYENCE_DESIGN_SPEC.md](docs/KEYENCE_DESIGN_SPEC.md). Product names and manuals mentioned belong to their owners.
+- The look is a light industrial theme. Product names and manuals mentioned belong to their owners.
 
 ## License
 

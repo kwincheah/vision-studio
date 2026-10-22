@@ -1,6 +1,6 @@
 """
 Location and Geometric Search Tools.
-Implements HikRobot Vision Master Location modules:
+Implements the reference product Location modules:
 - Template Match (NCC with multi-angle rotation search, sub-pixel peak, match score, angle, bounding box)
 - Circle Search (Caliper radial rays + sub-pixel edge points extraction + algebraic/Kasa circle fitting)
 - Line Search (Perpendicular caliper rakes + sub-pixel edge transition detection + M-estimator line fitting)

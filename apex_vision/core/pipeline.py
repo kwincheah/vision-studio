@@ -1,7 +1,7 @@
 """
-Execution Engine & Multi-Flow Solution Manager for Vision Master Clone.
+Execution Engine & Multi-Flow Solution Manager for Apex Vision Studio.
 Manages Multi-Flows, Connections, Execution Order, Global Variables, and Flow Run / Continuous Run.
-Matches HikRobot Vision Master Multi-Flow (Manual p. 93-97) and Global Variables (Manual p. 108-112).
+Matches the reference product Multi-Flow (Manual p. 93-97) and Global Variables (Manual p. 108-112).
 """
 import os
 import math
@@ -54,8 +54,8 @@ _XML_UNSAFE_TEXT = __import__("re").compile("[\x00-\x08\x0b-\x1f\ufffe\uffff\ud8
 
 class VisionPipeline:
     """
-    Represents a single execution flow graph in Vision Master.
-    Matches HikRobot Vision Master Flow Control & Multi-Flow (Manual p. 93-97).
+    Represents a single execution flow graph in Apex Vision.
+    Matches the reference product Flow Control & Multi-Flow (Manual p. 93-97).
     """
     def __init__(self, name: str = "Flow1"):
         self.name: str = name
@@ -257,7 +257,7 @@ class VisionPipeline:
     def duplicate(self, new_name: Optional[str] = None) -> "VisionPipeline":
         """
         Creates an exact duplicate of this flow with all tools and connections.
-        Matches HikRobot Vision Master 'Copy Flow' (Manual p. 93).
+        Matches the reference product 'Copy Flow' (Manual p. 93).
         """
         from apex_vision.core.registry import create_tool_instance
         copy_name = new_name or f"{self.name}_Copy"
@@ -696,7 +696,7 @@ class _GlobalScriptContext:
 
 class SolutionManager:
     """
-    Manages complete Vision Master solution containing multiple Flows and Global Variables.
+    Manages complete Apex Vision solution containing multiple Flows and Global Variables.
     (Manual p. 93-97 Multi-Flow & p. 108-112 Global Variables)
     """
     def __init__(self, name: str = "Solution1"):
@@ -932,7 +932,7 @@ class SolutionManager:
             sol.set_trigger_flow(pipe.name)
             return sol
         if root.tag != "VisionMasterSolution":
-            raise ValueError(f"Not a Vision Master document: root element is <{root.tag}>")
+            raise ValueError(f"Not a Apex Vision document: root element is <{root.tag}>")
         sol = cls(name=root.attrib.get("name", "Solution1"))
         sol.active_flow_name = root.attrib.get("active_flow", "Flow1")
         sol.trigger_flow_name = root.attrib.get("trigger_flow", sol.active_flow_name)

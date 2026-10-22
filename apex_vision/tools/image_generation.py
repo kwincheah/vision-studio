@@ -1,6 +1,6 @@
 """
 Image Generation & Geometry Tools.
-Matches HikRobot Vision Master Image Generation category:
+Matches the reference product Image Generation category:
 - Geometry Fit (Circle Fit, Ellipse Fit, Line Fit on the basis of 3+ feature points)
 - Geometry Generation (Auxiliary fixture graphics: synthetic datum lines, center points, reference circles)
 """

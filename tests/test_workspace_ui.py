@@ -1,4 +1,4 @@
-"""Tests for the VisionMaster-aligned workspace shell.
+"""Tests for the reference- workspace shell.
 
 Covers the structures that were verified against the reference manual
 (`HikRobotVMHelp_compressed.pdf`):
@@ -29,7 +29,7 @@ from apex_vision.ui.toolbox import (
 )
 from apex_vision.ui.result_panel import ModuleResultPanel, COL_PARAM, COL_VALUE, COL_LINK
 from apex_vision.ui.flow_overview import FlowOverviewWidget, FlowCardItem
-from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.main_window import ApexMainWindow
 
 
 @pytest.fixture(scope="session")
@@ -45,9 +45,9 @@ def qapp():
 # Theme
 # =========================================================================
 def test_vm_theme_tokens_match_sampled_reference():
-    """The workspace tokens are the palette measured from the KEYENCE references.
+    """The workspace tokens are the palette measured from the reference references.
 
-    Values trace to `docs/KEYENCE_DESIGN_SPEC.md` §2 / `keyence/tokens.json`.
+    Values trace to the sampled reference palette / the sampled palette.
     """
     required = [
         "vm_chrome", "vm_chrome_dark", "vm_rail", "vm_flyout", "vm_canvas",
@@ -99,7 +99,7 @@ def test_vm_theme_tokens_match_sampled_reference():
     for key in ("vm_canvas", "vm_canvas_dot", "vm_node", "vm_node_text", "vm_wire"):
         assert f'"{key}"' in painter_sources, f"{key} is not consumed by any painter"
 
-    # The focus-ring accent is the blue measured from the KEYENCE references.
+    # The focus-ring accent is the blue measured from the reference references.
     assert THEME["accent_primary"] == "#0078b0"
 
 
@@ -309,7 +309,7 @@ def _press(card, button_key):
 # Main window chrome (manual p.40 / p.70)
 # =========================================================================
 def test_control_toolbar_inventory_and_order(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1600, 950)
 
     # Row 1 carries the brand + file/resource group then execution, exactly as the
@@ -342,7 +342,7 @@ def test_control_toolbar_inventory_and_order(qapp):
 
 
 def test_menu_structure_matches_reference(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     titles = [a.text().replace("&", "") for a in win.menuBar().actions()]
     for expected in ("File", "Settings", "Tools", "System", "View", "Help"):
         assert expected in titles
@@ -350,7 +350,7 @@ def test_menu_structure_matches_reference(qapp):
 
 
 def test_lock_protection_blocks_editing(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1400, 900)
 
     assert win.flow_scene.is_locked() is False
@@ -384,7 +384,7 @@ def test_lock_protection_blocks_editing(qapp):
 
 
 def test_undo_redo_from_toolbar(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1400, 900)
 
     before = len(win.pipeline.nodes)
@@ -399,7 +399,7 @@ def test_undo_redo_from_toolbar(qapp):
 
 
 def test_segmented_status_bar_updates_after_run(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1400, 900)
     win.run_pipeline_step()
 
@@ -412,7 +412,7 @@ def test_segmented_status_bar_updates_after_run(qapp):
 
 
 def test_history_tab_records_one_row_per_cycle(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1400, 900)
 
     win.run_pipeline_step()
@@ -425,7 +425,7 @@ def test_history_tab_records_one_row_per_cycle(qapp):
 
 
 def test_flow_tab_label_and_tooltip_expose_verdict(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1400, 900)
     win.run_pipeline_step()
 
@@ -439,7 +439,7 @@ def test_flow_tab_label_and_tooltip_expose_verdict(qapp):
 
 
 def test_workspace_tabs_include_reference_screens(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     labels = [win.tab_workspace.tabText(i) for i in range(win.tab_workspace.count())]
     assert labels == ["Flow Diagram", "Operation Interface", "Multi-Flow"]
 
@@ -451,7 +451,7 @@ def test_workspace_tabs_include_reference_screens(qapp):
 
 
 def test_operation_panel_layer_switches_drive_canvas(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1400, 900)
 
     win.act_layer_metrics.setChecked(False)
@@ -479,7 +479,7 @@ def test_operation_panel_layer_switches_drive_canvas(qapp):
 
 
 def test_histogram_toggle_stays_in_sync(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1400, 900)
 
     win.btn_hist.setChecked(True)
@@ -495,7 +495,7 @@ def test_histogram_toggle_stays_in_sync(qapp):
 
 
 def test_overview_flow_activation_switches_workspace(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1400, 900)
 
     win.on_add_flow_tab()
@@ -506,7 +506,7 @@ def test_overview_flow_activation_switches_workspace(qapp):
 
 
 def test_continuous_toggle_both_buttons_in_sync(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1400, 900)
 
     win.btn_continuous.setChecked(True)
@@ -527,7 +527,7 @@ def test_toolbox_is_permanent_part_of_main_window(qapp):
     functioning seamlessly within the main window layout.
     """
     from PyQt6.QtWidgets import QDockWidget
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1400, 900)
     win.show()
     qapp.processEvents()

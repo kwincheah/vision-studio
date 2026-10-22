@@ -1,6 +1,6 @@
 """
 Global Variables Management Dialog.
-Matches HikRobot Vision Master Global Variables (Manual p. 108-112).
+Matches the reference product Global Variables (Manual p. 108-112).
 Allows vision engineers to define, view, edit, and bind up to 32 global solution variables.
 """
 from PyQt6.QtWidgets import (

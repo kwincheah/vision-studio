@@ -23,8 +23,8 @@ def qapp():
 
 @pytest.fixture
 def win(qapp):
-    from apex_vision.ui.main_window import VisionMasterMainWindow
-    w = VisionMasterMainWindow()
+    from apex_vision.ui.main_window import ApexMainWindow
+    w = ApexMainWindow()
     w.show()
     yield w
     w.close()

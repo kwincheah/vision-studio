@@ -1,12 +1,12 @@
 """
-Automated unit tests for Vision Master Project Manager and Start Page.
+Automated unit tests for Apex Vision Project Manager and Start Page.
 Verifies:
 - ProjectManager recent projects tracking, filtering, persistence, and deletion
 - Solution creation across templates (Blank, PCB, Measurement, YOLO, Calibration)
 - Physical file deletion vs list removal
 - StartPageDialog rendering, search filtering, and event signals
 - NewProjectDialog project generation
-- Integration with VisionMasterMainWindow
+- Integration with ApexMainWindow
 """
 import os
 import shutil
@@ -172,10 +172,10 @@ def test_new_project_dialog(qapp, temp_workspace):
 
 
 def test_main_window_integration(qapp, temp_workspace):
-    """Verify VisionMasterMainWindow integration with project_manager and start_page."""
-    from apex_vision.ui.main_window import VisionMasterMainWindow
+    """Verify ApexMainWindow integration with project_manager and start_page."""
+    from apex_vision.ui.main_window import ApexMainWindow
 
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     assert hasattr(win, "project_manager")
     assert win.project_manager is not None
 
@@ -200,14 +200,14 @@ def test_main_window_integration(qapp, temp_workspace):
 
 def test_main_window_not_shown_before_project_open_accepted(qapp, temp_workspace, monkeypatch):
     """Verify the main window is NOT visible before user finishes opening a project on the start page."""
-    from apex_vision.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import ApexMainWindow
     from apex_vision.ui.start_page import StartPageDialog
     from PyQt6.QtWidgets import QDialog
 
     pm = ProjectManager(workspace_root=temp_workspace)
     sol, fpath = pm.create_project("AcceptedStartupSolution", template="pcb")
 
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.project_manager = pm
     win.project_manager.set_show_on_startup(True)
 
@@ -234,12 +234,12 @@ def test_main_window_not_shown_before_project_open_accepted(qapp, temp_workspace
 
 def test_main_window_never_shown_when_startup_cancelled(qapp, temp_workspace, monkeypatch):
     """Verify the main window is NEVER shown if user cancels/closes the start page without opening a project."""
-    from apex_vision.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import ApexMainWindow
     from apex_vision.ui.start_page import StartPageDialog
     from PyQt6.QtWidgets import QDialog
 
     pm = ProjectManager(workspace_root=temp_workspace)
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.project_manager = pm
     win.project_manager.set_show_on_startup(True)
 
@@ -262,10 +262,10 @@ def test_main_window_never_shown_when_startup_cancelled(qapp, temp_workspace, mo
 
 def test_main_window_shown_directly_when_startup_disabled(qapp, temp_workspace):
     """Verify main window opens directly when show_on_startup preference is disabled."""
-    from apex_vision.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import ApexMainWindow
 
     pm = ProjectManager(workspace_root=temp_workspace)
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.project_manager = pm
     win.project_manager.set_show_on_startup(False)
 

@@ -184,7 +184,7 @@ class OpenAICompatClient:
                         yield json.loads(data)
                     except ValueError:
                         continue
-        except httpx.TransportError as exc:
+        except httpx.TransportError:
             err = APIConnectionError(f"Could not reach {self.base_url}")
             err.user_message = f"Could not reach {self.base_url}. Check the address and your connection."
             raise err from None

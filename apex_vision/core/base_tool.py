@@ -1,5 +1,5 @@
 """
-Core data structures for the Vision Master Clone.
+Core data structures for the Apex Vision Studio.
 Provides Tool base class, Execution Context, Status, and Pin definitions.
 """
 from dataclasses import dataclass, field
@@ -60,7 +60,7 @@ class ToolExecutionResult:
 
 
 class VisionToolBase:
-    """Base class for all Vision Master tools (both built-in and plugin extensions)."""
+    """Base class for all Apex Vision tools (both built-in and plugin extensions)."""
     category: str = "General"
     tool_name: str = "BaseTool"
     description: str = ""

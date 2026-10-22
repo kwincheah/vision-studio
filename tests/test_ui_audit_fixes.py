@@ -21,7 +21,7 @@ from PyQt6.QtCore import Qt, QSize
 import apex_vision.tools
 from apex_vision.ui.styles import initialize_app_fonts
 from apex_vision.ui.result_panel import ModuleResultPanel, ResultTreeWidget, COL_PARAM, COL_VALUE, COL_LINK
-from apex_vision.ui.main_window import VisionMasterMainWindow, FlowValidationDialog
+from apex_vision.ui.main_window import ApexMainWindow, FlowValidationDialog
 from apex_vision.ui import layout_metrics as LM
 from apex_vision.core.base_tool import ToolExecutionResult, ToolStatus
 
@@ -37,8 +37,8 @@ def qapp():
     return app
 
 
-def _win(qapp, size=(1600, 950)) -> VisionMasterMainWindow:
-    win = VisionMasterMainWindow()
+def _win(qapp, size=(1600, 950)) -> ApexMainWindow:
+    win = ApexMainWindow()
     win.resize(*size)
     win.show()
     for _ in range(6):
@@ -322,7 +322,7 @@ def test_central_canvas_keeps_working_area(qapp, size):
     """The measured reference proportions must hold at every window size.
 
     Ratios come from `layout_metrics`, which is derived from pixel measurements of
-    the vendor figures (see `docs/VISIONMASTER_STORYBOARD.md` §2): rail 0.0513,
+    the vendor figures (see the measured reference storyboard): rail 0.0513,
     canvas 0.5452, right column 0.4034 of the window interior.
     """
     win = _win(qapp, size)

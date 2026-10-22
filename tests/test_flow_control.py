@@ -279,9 +279,9 @@ def test_solution_manager_xml_flow_import_export():
 
 def test_main_window_xml_flow_export_and_import(qapp):
     """Verify MainWindow XML flow export and import capabilities."""
-    from apex_vision.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import ApexMainWindow
 
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     try:
         assert hasattr(win, "on_export_flow_xml")
         assert hasattr(win, "on_import_flow_xml")
@@ -421,9 +421,9 @@ def test_inspector_input_param_follows_connection_wire(qapp):
 
 def test_menu_bar_corner_controls_and_telemetry(qapp):
     """Verify Figure 6-2 solution dropdown, role switchover, and flow telemetry."""
-    from apex_vision.ui.main_window import VisionMasterMainWindow
+    from apex_vision.ui.main_window import ApexMainWindow
 
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.show()
     qapp.processEvents()
     assert hasattr(win, "btn_project") and win.btn_project.menu() is not None

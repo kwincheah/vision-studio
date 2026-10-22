@@ -1,4 +1,4 @@
-"""Property Inspector Panel for Vision Master Clone.
+"""Property Inspector Panel for Apex Vision Studio.
 
 Layout mirrors the reference module panel (manual p.96): identity header,
 aligned parameter form, and a compact live verification strip.  The full

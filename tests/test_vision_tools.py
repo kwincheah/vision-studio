@@ -1,5 +1,5 @@
 """
-Automated unit and integration test suite for Vision Master Clone.
+Automated unit and integration test suite for Apex Vision Studio.
 Verifies:
 - Tool registration and catalog integrity
 - Pipeline execution, topological sort, and data passing

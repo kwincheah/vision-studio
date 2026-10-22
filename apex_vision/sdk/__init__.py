@@ -1,4 +1,4 @@
-"""SDK for Third-Party and Built-in Vision Master Clone Plugins.
+"""SDK for Third-Party and Built-in Apex Vision Studio Plugins.
 
 Provides stable, typed contracts for:
 1. Plugin Metadata & SemVer compatibility checking
@@ -136,7 +136,7 @@ class ParamDef:
 
 @dataclass
 class PluginMetadata:
-    """Standard metadata descriptor for a Vision Master plugin package."""
+    """Standard metadata descriptor for a Apex Vision plugin package."""
     plugin_id: str
     name: str
     version: str
@@ -169,7 +169,7 @@ class PluginMetadata:
 
 
 class PluginToolBase(VisionToolBase):
-    """Refined Base Class for Vision Master Tools (both Built-in and Third-Party Plugins).
+    """Refined Base Class for Apex Vision Tools (both Built-in and Third-Party Plugins).
 
     Inherits from VisionToolBase to maintain 100% compatibility with existing Pipeline DAG,
     FlowScene canvas, PropertyInspector, and serialization.

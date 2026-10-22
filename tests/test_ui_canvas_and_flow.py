@@ -9,7 +9,7 @@ from PyQt6.QtCore import Qt, QPoint, QPointF, QEvent
 from PyQt6.QtGui import QMouseEvent, QPixmap
 
 from apex_vision.ui.image_canvas import ImageCanvasWidget
-from apex_vision.ui.main_window import VisionMasterMainWindow
+from apex_vision.ui.main_window import ApexMainWindow
 from apex_vision.samples.pcb_solution import create_pcb_inspection_solution
 from apex_vision.core.base_tool import ToolStatus
 from apex_vision.ui.styles import initialize_app_fonts
@@ -122,7 +122,7 @@ def test_image_canvas_layer_filtering_and_render(qapp):
 
 
 def test_sub_flow_tab_bar_and_solution(qapp):
-    win = VisionMasterMainWindow()
+    win = ApexMainWindow()
     win.resize(1200, 800)
 
     # Check initial flow tab

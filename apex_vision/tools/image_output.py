@@ -1,6 +1,6 @@
 """
 Image Output and Traceability Tools.
-Matches HikRobot Vision Master Acquisition & Image Output category:
+Matches the reference product Acquisition & Image Output category:
 - Image Output (Saves original or processed inspection images to disk with formatted timestamp naming)
 - Image Buffer (Circular FIFO memory buffer storing recent and NG defect frames for offline inspection)
 """

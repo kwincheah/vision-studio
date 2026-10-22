@@ -1,6 +1,6 @@
 """
 Logic and Control Tools: Condition Branch, Variable Calculation, Script.
-Matches HikRobot Vision Master Logic Tools category.
+Matches the reference product Logic Tools category.
 """
 from typing import Dict, Any
 from apex_vision.core.base_tool import VisionToolBase, ToolExecutionResult, ToolStatus, ToolPort, DataType
