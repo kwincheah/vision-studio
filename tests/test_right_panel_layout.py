@@ -149,7 +149,7 @@ def test_image_strip_selection_switches_the_module_result(qapp):
     strip.setCurrentRow(1)
     for _ in range(3):
         qapp.processEvents()
-    assert "(2/" in win.image_display.lbl_strip.text()
+    assert "(2/" in win.image_display.lbl_strip.full_text()
     assert win.result_display.table.rowCount() >= 0
     win.close()
     win.deleteLater()

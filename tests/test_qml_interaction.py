@@ -9,6 +9,7 @@ import pytest
 pytest.importorskip("PyQt6.QtQml")
 from PyQt6.QtCore import QPoint, QPointF, Qt, QUrl
 from PyQt6.QtGui import QGuiApplication
+from PyQt6.QtWidgets import QApplication
 from PyQt6.QtQml import QQmlApplicationEngine
 from PyQt6.QtTest import QTest
 
@@ -25,7 +26,7 @@ class Ui:
         from apex_vision.core.project_manager import ProjectManager
         from apex_vision.qml_backend import AppBackend, FrameProvider
         from apex_vision.qml_services import install_services
-        self.app = QGuiApplication.instance() or QGuiApplication(sys.argv)
+        self.app = QApplication.instance() or QApplication(sys.argv)  # widgets tests may share this process
         self.engine = QQmlApplicationEngine()
         self.warnings = []
         self.engine.warnings.connect(lambda ws: self.warnings.extend(w.toString() for w in ws))

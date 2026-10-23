@@ -48,7 +48,7 @@ ml = [
 ]
 ai = [
     "keyring>=24.0.0",      # remember API keys in the OS credential store
-    "mcp>=1.2.0",           # python main.py --mcp
+    "mcp>=1.2.0,<2",         # python main.py --mcp
 ]
 dev = [
     "pytest>=7.4.0",

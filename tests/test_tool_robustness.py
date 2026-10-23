@@ -89,9 +89,10 @@ def test_tools_out_of_bounds_rois():
     ]
 
     for name in roi_tools:
-        if name == "Object Detection":
+        engine = {"Object Detection": "ultralytics", "OCR Recognition": "rapidocr_onnxruntime"}.get(name)
+        if engine:
             try:
-                import ultralytics  # noqa: F401
+                __import__(engine)
             except ImportError:
                 continue
 

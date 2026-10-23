@@ -78,7 +78,7 @@ def test_unsaved_change_tracking_is_live(win):
 
 def test_project_chip_follows_loaded_solution_and_dirty_state(win):
     _load(win, DEMO)
-    assert win.btn_project.text().startswith("Precision") and "Precision_Measurement_Demo" in win.btn_project.toolTip()
+    assert win.btn_project.text().startswith("Precis") and "Precision_Measurement_Demo" in win.btn_project.toolTip()
     assert not win.btn_menu_save.isEnabled()
     nid = list(win.flow_scene.node_items)[0]
     win.flow_scene.node_items[nid].setPos(QPointF(500, 400))

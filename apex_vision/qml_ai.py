@@ -104,7 +104,7 @@ class AIGenService(QObject):
     def settingsError(self):  # noqa: N802
         return self._error
 
-    @pyqtProperty(bool, constant=True)
+    @pyqtProperty(bool, notify=changed)
     def canRemember(self):  # noqa: N802
         return self._store.can_remember()
 

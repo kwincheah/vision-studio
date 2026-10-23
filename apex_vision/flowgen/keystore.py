@@ -38,7 +38,7 @@ def can_remember() -> bool:
 
 def load_saved(provider: str = "anthropic") -> str:
     kr = _keyring()
-    if kr is None:
+    if kr is None or not can_remember():
         return ""
     try:
         return kr.get_password(SERVICE, _account(provider)) or ""

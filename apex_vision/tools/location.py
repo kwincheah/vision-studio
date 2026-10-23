@@ -506,7 +506,7 @@ class LineSearchTool(VisionToolBase):
         edges = cv2.Canny(gray, 50, 150)
         lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=40, minLineLength=50, maxLineGap=15)
         if lines is not None and len(lines) > 0:
-            l = lines[0][0]
+            l = np.asarray(lines).reshape(-1, 4)[0]
             angle = float(np.degrees(np.arctan2(l[3] - l[1], l[2] - l[0])))
             return ToolExecutionResult(
                 status=ToolStatus.OK,

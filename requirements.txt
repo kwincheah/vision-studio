@@ -14,4 +14,4 @@ anthropic>=0.86.0
 # Optional: remember the API key in the OS credential store (Windows Credential Manager / Keychain)
 keyring>=24.0.0
 # Optional: run the flow tools as an MCP server (python main.py --mcp)
-mcp>=1.2.0
+mcp>=1.2.0,<2

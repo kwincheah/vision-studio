@@ -121,10 +121,15 @@ def test_side_effect_tools_are_flagged_and_warnings_do_not_block_building():
 
 # ---------------------------------------------------------------- recipes and reference
 RECIPES = reference_gen.load_recipes()
+# recipes whose modules need an optional engine to pass when run for real
+OPTIONAL_ENGINES = {"object_detection": "ultralytics", "read_label": "rapidocr_onnxruntime"}
 
 
 @pytest.mark.parametrize("name", sorted(RECIPES))
 def test_every_recipe_validates_builds_and_runs(name):
+    engine = OPTIONAL_ENGINES.get(name)
+    if engine:
+        pytest.importorskip(engine)
     spec = RECIPES[name]["spec"]
     assert not has_errors(validate_spec(spec)), validate_spec(spec)
     xml, _ = spec_to_xml(spec)

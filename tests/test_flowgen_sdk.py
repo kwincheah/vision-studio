@@ -6,7 +6,11 @@ import os
 import pytest
 
 anthropic = pytest.importorskip("anthropic")
-httpx = pytest.importorskip("httpx")
+# anthropic 2.x ships its own httpx fork (httpx2); older SDKs use httpx
+try:
+    import httpx2 as httpx
+except ImportError:
+    httpx = pytest.importorskip("httpx")
 
 from test_flowgen import GOOD
 from apex_vision.flowgen.agent import FlowAgent
@@ -37,7 +41,7 @@ def message(blocks, stop):
 def make_client(script, seen):
     def handler(request: httpx.Request):
         body = json.loads(request.content)
-        seen.append((request.headers.get("x-api-key"), body))
+        seen.append((request.headers.get("x-api-key") or request.headers.get("authorization", "").removeprefix("Bearer ") or None, body))
         status, payload = script.pop(0)
         return httpx.Response(status, content=payload, headers={"content-type": "text/event-stream" if status == 200 else "application/json"})
     return lambda key: anthropic.Anthropic(api_key=key, max_retries=0, http_client=httpx.Client(transport=httpx.MockTransport(handler)))
