@@ -9,7 +9,8 @@ import os
 import sys
 
 # OpenCV prints a warning for every camera index it probes when no camera is attached; keep the console for real problems.
-os.environ.setdefault("OPENCV_LOG_LEVEL", "ERROR")
+os.environ.setdefault("OPENCV_LOG_LEVEL", "SILENT")
+os.environ.setdefault("OPENCV_VIDEOIO_PRIORITY_OBSENSOR", "0")
 os.environ.setdefault("OPENCV_VIDEOIO_PRIORITY_MSMF", "0")
 
 # Ensure root directory is on Python search path
