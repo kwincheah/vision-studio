@@ -9,6 +9,13 @@ import json
 import time
 import copy
 from typing import Dict, List, Any, Optional, Callable
+
+# Root elements of the saved XML. Files written before the rename use the legacy names and are still read.
+FLOW_TAG = "ApexFlow"
+SOLUTION_TAG = "ApexSolution"
+LEGACY_FLOW_TAG = "VisionMasterFlow"
+LEGACY_SOLUTION_TAG = "VisionMasterSolution"
+FLOW_TAGS = (FLOW_TAG, LEGACY_FLOW_TAG)
 from apex_vision.core.base_tool import (
     VisionToolBase, ToolExecutionResult, ToolStatus, is_compatible_type
 )
@@ -371,7 +378,7 @@ class VisionPipeline:
         """Serialize flow pipeline into standard XML format (Manual p. 93 / §7.4)."""
         import xml.etree.ElementTree as ET
 
-        root = ET.Element("VisionMasterFlow", attrib={
+        root = ET.Element(FLOW_TAG, attrib={
             "version": "4.3",
             "name": self.name
         })
@@ -439,11 +446,11 @@ class VisionPipeline:
 
     @classmethod
     def from_xml_element(cls, root) -> "VisionPipeline":
-        """Build a flow from a parsed ``<VisionMasterFlow>`` element."""
+        """Build a flow from a parsed ``<ApexFlow>`` (or legacy ``<VisionMasterFlow>``) element."""
         from apex_vision.core.registry import create_tool_instance
 
-        if root.tag != "VisionMasterFlow":
-            raise ValueError(f"Expected a <VisionMasterFlow> element, found <{root.tag}>")
+        if root.tag not in FLOW_TAGS:
+            raise ValueError(f"Expected an <{FLOW_TAG}> element, found <{root.tag}>")
         name = root.attrib.get("name", "ImportedFlow")
         pipe = cls(name=name)
 
@@ -901,7 +908,7 @@ class SolutionManager:
     def to_xml(self) -> str:
         """The whole solution - flows, layout, global variables and script - as XML."""
         import xml.etree.ElementTree as ET
-        root = ET.Element("VisionMasterSolution", attrib={
+        root = ET.Element(SOLUTION_TAG, attrib={
             "version": "4.3", "name": self.name,
             "active_flow": self.active_flow_name, "trigger_flow": self.trigger_flow_name})
         vars_el = ET.SubElement(root, "GlobalVariables")
@@ -918,21 +925,21 @@ class SolutionManager:
 
     @classmethod
     def from_xml(cls, xml_str: str) -> "SolutionManager":
-        """Parse a ``<VisionMasterSolution>`` (or a single ``<VisionMasterFlow>``) document."""
+        """Parse an ``<ApexSolution>`` (or a single ``<ApexFlow>``) document; the legacy ``VisionMaster*`` names also load."""
         from apex_vision.core.xml_safe import safe_fromstring
         return cls.from_xml_element(safe_fromstring(xml_str))
 
     @classmethod
     def from_xml_element(cls, root) -> "SolutionManager":
-        if root.tag == "VisionMasterFlow":
+        if root.tag in FLOW_TAGS:
             pipe = VisionPipeline.from_xml_element(root)
             sol = cls(name=pipe.name)
             sol.flows = {pipe.name: pipe}
             sol.active_flow_name = pipe.name
             sol.set_trigger_flow(pipe.name)
             return sol
-        if root.tag != "VisionMasterSolution":
-            raise ValueError(f"Not a Apex Vision document: root element is <{root.tag}>")
+        if root.tag not in (SOLUTION_TAG, LEGACY_SOLUTION_TAG):
+            raise ValueError(f"Not an Apex Vision document: root element is <{root.tag}>")
         sol = cls(name=root.attrib.get("name", "Solution1"))
         sol.active_flow_name = root.attrib.get("active_flow", "Flow1")
         sol.trigger_flow_name = root.attrib.get("trigger_flow", sol.active_flow_name)
@@ -951,7 +958,7 @@ class SolutionManager:
         flows_el = root.find("Flows")
         if flows_el is not None:
             sol.flows.clear()
-            for f_el in flows_el.findall("VisionMasterFlow"):
+            for f_el in (e for e in flows_el if e.tag in FLOW_TAGS):
                 flow = VisionPipeline.from_xml_element(f_el)
                 sol.flows[flow.name] = flow
         if sol.active_flow_name not in sol.flows and sol.flows:

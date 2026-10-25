@@ -7,6 +7,7 @@ Build machine-vision inspections by wiring blocks together, or just describe the
 </p>
 
 <p align="center">
+<a href="https://github.com/kwincheah/vision-studio/actions/workflows/ci.yml"><img src="https://github.com/kwincheah/vision-studio/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
 <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-brightgreen.svg" alt="Python 3.10-3.12">
 <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg" alt="Platform">

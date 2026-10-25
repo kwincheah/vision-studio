@@ -119,3 +119,13 @@ def test_window_saves_and_reopens_xml_in_place(tmp_path):
     finally:
         win.close()
         win.deleteLater()
+
+
+def test_saved_xml_uses_the_apex_root_names_and_the_legacy_names_still_load(tmp_path):
+    from apex_vision.core.pipeline import SolutionManager as SM
+    sol = SM.load_from_file(os.path.join(os.path.dirname(__file__), "..", "projects", "PCB_Inspection_Demo.vmp"))
+    xml = sol.to_xml()
+    assert "<ApexSolution" in xml and "<ApexFlow" in xml and "VisionMaster" not in xml
+    legacy = xml.replace("ApexSolution", "VisionMasterSolution").replace("ApexFlow", "VisionMasterFlow")
+    back = SM.from_xml(legacy)
+    assert list(back.flows) == list(sol.flows)

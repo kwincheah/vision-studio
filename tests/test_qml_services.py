@@ -186,3 +186,18 @@ def test_inspection_service_can_cancel_and_reports_bad_dataset(gui, app_backend,
     svc.saveExperiment("after-cancel")
     # a cancelled run is either saved or the user is told why - never silently dropped
     assert any(e["name"] == "after-cancel" for e in svc.experiments) or svc.error != ""
+
+
+def test_recent_projects_hide_files_that_no_longer_exist(gui, tmp_path):
+    from apex_vision.core.project_manager import ProjectManager
+    pm = ProjectManager(workspace_root=str(tmp_path))
+    here = tmp_path / "kept.vmp"
+    here.write_text("{}", encoding="utf-8")
+    gone = tmp_path / "gone.vmp"
+    gone.write_text("{}", encoding="utf-8")
+    pm.add_recent_project(str(here))
+    pm.add_recent_project(str(gone))
+    gone.unlink()
+    shown = AppBackend(FrameProvider(), project_manager=pm).recentProjects
+    assert [r["path"] for r in shown] == [os.path.normpath(str(here))]
+    assert len(pm.get_recent_projects()) == 2, "the record is kept, so a reconnected drive brings it back"

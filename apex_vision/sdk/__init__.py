@@ -136,7 +136,7 @@ class ParamDef:
 
 @dataclass
 class PluginMetadata:
-    """Standard metadata descriptor for a Apex Vision plugin package."""
+    """Standard metadata descriptor for an Apex Vision plugin package."""
     plugin_id: str
     name: str
     version: str

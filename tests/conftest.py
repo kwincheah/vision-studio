@@ -9,6 +9,14 @@ if "QT_QPA_PLATFORM" not in os.environ:
 
 import pytest
 
+# One QApplication for the whole run: a bare QGuiApplication created first by a QML test makes every later
+# widget test abort the process, so the widgets-capable application always comes first.
+try:
+    from PyQt6.QtWidgets import QApplication
+    _APP = QApplication.instance() or QApplication([])
+except ImportError:  # pragma: no cover - PyQt6 is a hard dependency; only guards odd environments
+    _APP = None
+
 
 @pytest.fixture(autouse=True)
 def _never_block_on_unsaved_changes_prompt(monkeypatch):

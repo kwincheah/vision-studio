@@ -85,9 +85,9 @@ the defaults. The builder turns a valid spec into the application's solution XML
 ## Solution XML (what the application stores)
 
 ```xml
-<VisionMasterSolution version="4.3" name="Demo" active_flow="Flow1" trigger_flow="Flow1">
+<ApexSolution version="4.3" name="Demo" active_flow="Flow1" trigger_flow="Flow1">
   <Flows>
-    <VisionMasterFlow version="4.3" name="Flow1">
+    <ApexFlow version="4.3" name="Flow1">
       <Nodes>
         <Node instance_id="src" tool_name="Image Source" name="01_ImageSource" category="Acquisition" enabled="true">
           <Parameters><Parameter name="source_type" type="str">Synthetic</Parameter></Parameters>
@@ -97,9 +97,9 @@ the defaults. The builder turns a valid spec into the application's solution XML
         <Connection from_node="src" from_port="Image" to_node="blur" to_port="Image"/>
       </Connections>
       <Layout><Position node="src" x="50.0" y="50.0"/></Layout>
-    </VisionMasterFlow>
+    </ApexFlow>
   </Flows>
-</VisionMasterSolution>
+</ApexSolution>
 ```
 
 Parameter `type` is one of `str`, `int`, `float`, `bool`, `json` (lists and dictionaries), `null`.

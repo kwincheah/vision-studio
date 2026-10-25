@@ -210,7 +210,7 @@ class AppBackend(QObject):
     def recentProjects(self):  # noqa: N802
         return [{"name": r.get("name", ""), "path": r.get("path", ""),
                  "when": str(r.get("last_opened", ""))}
-                for r in self._pm.get_recent_projects()]
+                for r in self._pm.get_recent_projects() if r.get("file_exists", True)]
 
     @pyqtProperty("QVariantList", notify=changed)
     def imagePool(self):  # noqa: N802
