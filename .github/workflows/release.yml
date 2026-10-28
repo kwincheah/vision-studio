@@ -55,6 +55,6 @@ jobs:
         files: |
           ApexVisionStudio-*-Windows-x64.zip
           installer_output/*.exe
-        body_path: docs/RELEASE_NOTES_v4.3.0.md
+        body_path: docs/RELEASE_NOTES_v1.0.0-beta.1.md
         draft: false
-        prerelease: false
+        prerelease: true

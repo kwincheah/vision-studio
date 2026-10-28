@@ -36,7 +36,7 @@ Rectangle {
             x: 24
             spacing: 2
             Text { text: "APEX VISION STUDIO"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontTitle; font.weight: Font.Bold; font.letterSpacing: 1.5; color: Theme.textPrimary }
-            Text { text: "Modular Industrial Machine Vision Platform & Flow Orchestration v4.3"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textMuted }
+            Text { text: "Modular Industrial Machine Vision Platform & Flow Orchestration " + (backend ? backend.version : ""); font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textMuted }
         }
     }
 

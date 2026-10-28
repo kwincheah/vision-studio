@@ -15,7 +15,7 @@ Window {
     minimumWidth: 1024
     minimumHeight: 640
     visible: true
-    title: "Apex Industrial Vision Studio v4.3"
+    title: "Apex Industrial Vision Studio " + (backend ? backend.version : "")
     color: Theme.appBg
 
     readonly property var backend: typeof appBackend !== "undefined" ? appBackend : null

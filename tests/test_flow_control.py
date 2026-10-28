@@ -26,6 +26,7 @@ from apex_vision.ui.flow_editor import (
     AddConnectionCommand, DeleteConnectionCommand, DeleteNodeCommand
 )
 from apex_vision.ui.styles import initialize_app_fonts
+from apex_vision.version import DISPLAY as APP_VERSION
 
 
 @pytest.fixture(scope="session")
@@ -433,7 +434,7 @@ def test_menu_bar_corner_controls_and_telemetry(qapp):
     assert hasattr(win.flow_view, "telemetry_bar")
     assert win.flow_view.telemetry_bar.isVisible()
     assert hasattr(win, "lbl_vm_version")
-    assert "V4.3.0" in win.lbl_vm_version.text()
+    assert APP_VERSION in win.lbl_vm_version.text()
 
     win.close()
     win.deleteLater()

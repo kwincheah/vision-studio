@@ -24,5 +24,5 @@ If applicable, add screenshots or console trace to help explain your problem.
 
 **Environment:**
 - OS: [e.g. Windows 11, Ubuntu 22.04, macOS Sonoma]
-- App Version: [e.g. 4.3.0 standalone or source]
+- App Version: [e.g. 1.0.0-beta.1 standalone or source]
 - Python Version: [e.g. 3.12]

@@ -18,6 +18,7 @@ from apex_vision.core.pipeline import SolutionManager
 from apex_vision.core.project_manager import ProjectManager
 from apex_vision.ui.theme import check_icon_url
 from apex_vision.ui.styles import THEME
+from apex_vision.version import DISPLAY as APP_VERSION
 
 
 class NewProjectDialog(QDialog):
@@ -432,7 +433,7 @@ class StartPageDialog(QDialog):
         """)
         title_box.addWidget(brand_lbl)
 
-        sub_title = QLabel("Modular Industrial Machine Vision Platform & Flow Orchestration v4.3")
+        sub_title = QLabel("Modular Industrial Machine Vision Platform & Flow Orchestration " + APP_VERSION)
         sub_title.setStyleSheet(f"font-size: 12px; color: {THEME['text_muted']};")
         title_box.addWidget(sub_title)
         h_layout.addLayout(title_box)

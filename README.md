@@ -146,7 +146,7 @@ More reading:
 [XML format](docs/XML_FORMAT.md) ·
 [QML conversion notes](docs/QML_CONVERSION.md) ·
 [Plugin guide](docs/PLUGIN_DEVELOPMENT_GUIDE.md) ·
-[Release notes](docs/RELEASE_NOTES_v4.3.0.md)
+[Release notes](docs/RELEASE_NOTES_v1.0.0-beta.1.md)
 
 ### Building the Windows app
 

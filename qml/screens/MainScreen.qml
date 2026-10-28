@@ -533,9 +533,9 @@ Drag a connected input to move its wire; drop on empty canvas to remove it (Ctrl
 Drag from a free input to link backwards to an output.   Esc cancels.   Click a wire to select it; its x button or Del removes it."); break
         case "language": dialogs.showInfo("Language", "Chinese localisation resources are not bundled with this build. The interface stays in English."); break
         case "version": dialogs.showInfo("Version Information",
-            "Apex Industrial Vision Studio v4.3\nEngine: Python / PyQt6 / OpenCV / NumPy\nUser interface: Qt Quick (QML)"); break
+            "Apex Industrial Vision Studio " + (backend ? backend.version : "") + "\nEngine: Python / PyQt6 / OpenCV / NumPy\nUser interface: Qt Quick (QML)"); break
         case "about": dialogs.showInfo("About Apex Industrial Vision Studio",
-            "Apex Industrial Vision Studio v4.3\nA modular machine-vision platform and visual flow studio."); break
+            "Apex Industrial Vision Studio " + (backend ? backend.version : "") + "\nA modular machine-vision platform and visual flow studio."); break
         default: say(key)
         }
     }
@@ -1355,7 +1355,7 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
             Text { text: "Flow " + root.flowMs.toFixed(2) + "ms"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary }
             Text { text: "Tools " + root.toolCount; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary }
             Text { text: "Algorithm " + root.algoMs.toFixed(2) + "ms"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary }
-            Text { text: "V4.3.0"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontMicro; color: Theme.textPrimary }
+            Text { text: "v" + (backend ? backend.version : ""); font.family: Theme.fontFamily; font.pixelSize: Theme.fontMicro; color: Theme.textPrimary }
         }
     }
 

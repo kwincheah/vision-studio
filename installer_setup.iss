@@ -3,7 +3,7 @@
 ; Compile with: iscc installer_setup.iss
 
 #define MyAppName "Apex Industrial Vision Studio"
-#define MyAppVersion "4.3.0"
+#define MyAppVersion "1.0.0-beta.1"
 #define MyAppPublisher "Apex Vision Technologies"
 #define MyAppURL "https://github.com/kwincheah/vision-studio"
 #define MyAppExeName "ApexVisionStudio.exe"

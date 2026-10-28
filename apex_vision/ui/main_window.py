@@ -57,6 +57,7 @@ from apex_vision.ui.image_display import ImageDisplayArea
 from apex_vision.ui.flow_editor import FlowScene, FlowEditorView, NodeSignals, AddNodeCommand
 from apex_vision.ui.global_vars_dialog import GlobalVariablesDialog
 from apex_vision.ui.styles import THEME
+from apex_vision.version import DISPLAY as APP_VERSION
 from apex_vision.ui.theme import VM_THEME_QSS
 from apex_vision.ui.icons import get_category_icon, get_tool_icon, get_action_icon
 from apex_vision.ui.toolbox import ToolBoxPanel, get_brand_mark
@@ -264,7 +265,7 @@ class ApexMainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Apex Industrial Vision Studio v4.3")
+        self.setWindowTitle(f"Apex Industrial Vision Studio {APP_VERSION}")
         self.resize(1600, 950)
 
         # Multi-flow solution manager
@@ -1427,7 +1428,7 @@ class ApexMainWindow(QMainWindow):
         self.lbl_algo_time.setObjectName("statusSegment")
         sb.addPermanentWidget(self.lbl_algo_time)
 
-        self.lbl_vm_version = QLabel("V4.3.0 Build20230510")
+        self.lbl_vm_version = QLabel(f"v{APP_VERSION}")
         self.lbl_vm_version.setObjectName("statusVersion")
         # Ink comes from the `statusVersion` QSS rule so it tracks the chrome
         # surface; an inline colour here would go stale if the surface changed.
@@ -1857,7 +1858,7 @@ class ApexMainWindow(QMainWindow):
     def on_version_info(self):
         self._info(
             "Version Information",
-            "Apex Industrial Vision Studio v4.3\n"
+            f"Apex Industrial Vision Studio {APP_VERSION}\n"
             "Engine: Python 3.12 / PyQt6 / OpenCV 4.x / NumPy\n"
             "Flow engine: typed multi-flow DAG executor\n"
             "Build: reference-aligned workspace (reference- UI)"
@@ -3094,14 +3095,14 @@ class ApexMainWindow(QMainWindow):
         self.solution = solution
         self.current_project_path = filepath
         if not filepath:
-            self.setWindowTitle(f"Apex Industrial Vision Studio v4.3 - [{solution.name}]")
+            self.setWindowTitle(f"Apex Industrial Vision Studio {APP_VERSION} - [{solution.name}]")
         if filepath:
             self.project_manager.add_recent_project(
                 filepath,
                 name=solution.name,
                 flow_count=len(solution.flows)
             )
-            self.setWindowTitle(f"Apex Industrial Vision Studio v4.3 - [{solution.name}]")
+            self.setWindowTitle(f"Apex Industrial Vision Studio {APP_VERSION} - [{solution.name}]")
 
         active_name = solution.active_flow_name
         if active_name not in solution.flows and solution.flows:
@@ -3178,7 +3179,7 @@ class ApexMainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Save Error", f"Failed to save solution: {str(e)}")
             return False
-        self.setWindowTitle(f"Apex Industrial Vision Studio v4.3 - [{self.solution.name}]")
+        self.setWindowTitle(f"Apex Industrial Vision Studio {APP_VERSION} - [{self.solution.name}]")
         self._set_hint(f"Saved solution to {fpath}", 5000)
         return True
 
@@ -3264,7 +3265,7 @@ class ApexMainWindow(QMainWindow):
         QMessageBox.about(
             self,
             "About Apex Industrial Vision Studio",
-            "<h3>Apex Industrial Vision Studio v4.3</h3>"
+            f"<h3>Apex Industrial Vision Studio {APP_VERSION}</h3>"
             "<p>Professional desktop machine vision development and deployment platform.</p>"
             "<p><b>Architecture:</b> Multi-Flow DAG Execution, High-Density Diagnostic Grid, Subpixel Vision Canvas.</p>"
             "<p><b>Engine:</b> Python 3.12, OpenCV 4.x, NumPy, PyQt6</p>"

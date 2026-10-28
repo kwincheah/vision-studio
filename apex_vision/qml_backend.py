@@ -24,6 +24,7 @@ from apex_vision.core.controller import (ImagePool, ProjectState, RunEngine, add
                                       connect_ports)
 from apex_vision.core.pipeline import SolutionManager
 from apex_vision.core.project_manager import ProjectManager
+from apex_vision.version import DISPLAY as APP_VERSION
 from apex_vision.core.registry import create_tool_instance, new_instance_id
 
 ROLES = ["Administrator", "Engineer", "Operator"]
@@ -201,6 +202,10 @@ class AppBackend(QObject):
         image, overlays = self._view_image_and_overlays()
         self._provider.set_array(render_overlays(image, overlays, self._layers))
         self._token += 1
+
+    @pyqtProperty(str, constant=True)
+    def version(self):
+        return APP_VERSION
 
     @pyqtProperty("QVariantList", notify=changed)
     def results(self):
