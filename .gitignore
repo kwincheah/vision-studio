@@ -1,0 +1,98 @@
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# C / C++ extensions
+*.so
+*.dylib
+*.dll
+
+# Packaging & PyInstaller build outputs
+build/
+dist/
+installer_output/
+*.egg-info/
+*.egg
+*.spec.bak
+
+# Testing & Coverage
+.pytest_cache/
+.pytest_tmp/
+.coverage
+htmlcov/
+testreport.txt
+*.coverage.*
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Local User Settings & Runtime Caches (stored separately in ~/.apex_vision for production)
+.apex_config/
+saved_images/
+*.log
+
+# Large Binary Weights & Models (Distributed via GitHub Releases or Model Hub)
+*.pt
+*.pth
+*.onnx
+
+# Proprietary External Vendor Documentation (Not redistributable)
+*.pdf
+docs/references/external/*.pdf
+docs/references/*.pdf
+
+# IDEs & Editor Configuration
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# Environment / Secrets
+.env
+.env.*
+!.env.example
+
+# Local scratch / audit output
+audit.json
+_internal/
+.claude/
+
+# Internal audit / research reports (kept locally, not published)
+/*_REPORT.md
+UI_UX_AUDIT_REPORT.md
+AUDIT_CHECKLIST.md
+docs/FUNCTIONAL_AUDIT_REPORT.md
+docs/UI_POLISH_AUDIT.md
+docs/USABILITY_REPORT.md
+docs/audit/
+
+# Misc local junk
+out.txt
+o.txt
+*.tmp
+*.bak
+*.orig
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Qt Design Studio per-user project state
+*.qtds
+
+# Third-party vendor manual excerpts (kept locally for reference, not redistributed)
+docs/references/

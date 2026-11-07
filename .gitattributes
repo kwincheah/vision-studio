@@ -1,0 +1,8 @@
+# Normalise line endings in the repository; Windows-only scripts keep CRLF
+* text=auto
+*.bat text eol=crlf
+*.iss text eol=crlf
+*.png binary
+*.ico binary
+*.pt binary
+*.pdf binary

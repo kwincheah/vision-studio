@@ -1,0 +1,43 @@
+{
+ "title": "Colour presence check",
+ "when": "The user wants to verify that a colour (green, red, blue, yellow or a custom HSV range) covers enough of the image.",
+ "spec": {
+  "name": "Colour_Check",
+  "modules": [
+   {
+    "id": "src",
+    "tool": "Image Source"
+   },
+   {
+    "id": "col",
+    "tool": "Color Extraction",
+    "params": {
+     "preset_color": "Green",
+     "min_ratio": 5.0
+    }
+   },
+   {
+    "id": "judge",
+    "tool": "Condition Branch",
+    "params": {
+     "operator": ">=",
+     "threshold_low": 5.0
+    }
+   }
+  ],
+  "links": [
+   {
+    "from": "src",
+    "from_port": "Image",
+    "to": "col",
+    "to_port": "Image"
+   },
+   {
+    "from": "col",
+    "from_port": "Color_Ratio",
+    "to": "judge",
+    "to_port": "Val_In"
+   }
+  ]
+ }
+}

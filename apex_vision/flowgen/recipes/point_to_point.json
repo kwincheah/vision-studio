@@ -1,0 +1,68 @@
+{
+ "title": "Distance between two measured points",
+ "when": "The user wants the distance between two features; points come from a Caliper (Edge1 / Edge2) or similar POINT outputs.",
+ "spec": {
+  "name": "Point_Distance",
+  "modules": [
+   {
+    "id": "src",
+    "tool": "Image Source"
+   },
+   {
+    "id": "cal",
+    "tool": "Caliper",
+    "params": {
+     "line_p1": [
+      100,
+      300
+     ],
+     "line_p2": [
+      500,
+      300
+     ]
+    }
+   },
+   {
+    "id": "p2p",
+    "tool": "P2P Measure",
+    "params": {
+     "scale_factor": 1.0
+    }
+   },
+   {
+    "id": "tol",
+    "tool": "Condition Branch",
+    "params": {
+     "operator": "<=",
+     "threshold_low": 400.0
+    }
+   }
+  ],
+  "links": [
+   {
+    "from": "src",
+    "from_port": "Image",
+    "to": "cal",
+    "to_port": "Image"
+   },
+   {
+    "from": "cal",
+    "from_port": "Edge1",
+    "to": "p2p",
+    "to_port": "Point1"
+   },
+   {
+    "from": "cal",
+    "from_port": "Edge2",
+    "to": "p2p",
+    "to_port": "Point2"
+   },
+   {
+    "from": "p2p",
+    "from_port": "Distance",
+    "to": "tol",
+    "to_port": "Val_In"
+   }
+  ]
+ }
+}

@@ -1,0 +1,46 @@
+"""Pytest configuration and global fixtures for Vision Studio test suite."""
+import os
+
+# Default to offscreen platform for headless and CI test execution so that
+# top-level Qt windows are not constrained by host/runner desktop resolutions (e.g. 1024x768).
+if "QT_QPA_PLATFORM" not in os.environ:
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
+
+
+import pytest
+
+# One QApplication for the whole run: a bare QGuiApplication created first by a QML test makes every later
+# widget test abort the process, so the widgets-capable application always comes first.
+try:
+    from PyQt6.QtWidgets import QApplication
+    _APP = QApplication.instance() or QApplication([])
+except ImportError:  # pragma: no cover - PyQt6 is a hard dependency; only guards odd environments
+    _APP = None
+
+
+@pytest.fixture(autouse=True)
+def _never_block_on_unsaved_changes_prompt(monkeypatch):
+    """Windows closed by a test often hold edits; answer the modal prompt instead of hanging.
+
+    Tests that exercise the prompt itself monkeypatch ``_confirm_discard_changes`` again.
+    """
+    try:
+        from apex_vision.ui.main_window import ApexMainWindow
+    except Exception:  # pragma: no cover - UI stack unavailable
+        return
+    monkeypatch.setattr(ApexMainWindow, "run_async", False)
+    monkeypatch.setattr(ApexMainWindow, "_confirm_discard_changes",
+                        lambda self, when="before closing": "discard")
+
+
+@pytest.fixture(autouse=True)
+def _isolate_default_project_manager(monkeypatch, tmp_path_factory):
+    """A window built by a test must not write into the developer's real recent-projects list."""
+    try:
+        import apex_vision.ui.main_window as mw
+        from apex_vision.core.project_manager import ProjectManager as _PM
+    except Exception:  # pragma: no cover
+        return
+    workspace = str(tmp_path_factory.mktemp("apex_workspace"))
+    monkeypatch.setattr(mw, "ProjectManager", lambda *a, **k: _PM(*a, **({"workspace_root": workspace} | k)
+                                                                    if not a and "workspace_root" not in k else k))
