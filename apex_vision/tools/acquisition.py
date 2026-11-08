@@ -10,6 +10,10 @@ from apex_vision.core.base_tool import VisionToolBase, ToolExecutionResult, Tool
 from apex_vision.core.registry import register_tool
 
 
+#: the device a new Image Source starts with (a simulated Hikrobot camera); not what "Camera" should open
+DEFAULT_CAMERA_DEVICE = "mvs_gige_0"
+
+
 @register_tool
 class ImageSourceTool(VisionToolBase):
     category = "Acquisition"
@@ -28,7 +32,7 @@ class ImageSourceTool(VisionToolBase):
             "file_path": default_sample,
             "pattern_type": "PCB Inspection",  # PCB Inspection, Calibration Grid, Circles & Holes, Barcode Sample
             "color_mode": "BGR",  # BGR or Grayscale
-            "camera_device": "mvs_gige_0",  # Device ID or Camera name
+            "camera_device": DEFAULT_CAMERA_DEVICE,  # Device ID or Camera name
             "camera_index": 0,  # Legacy USB camera index
             "exposure_time_us": 20000.0,  # Exposure time in microseconds
             "gain": 1.0,  # Camera gain factor
@@ -175,6 +179,10 @@ class ImageSourceTool(VisionToolBase):
                 else:
                     cidx = int(self.get_param("camera_index", 0))
                     target_device_id = f"webcam_{cidx}"
+            elif src_type == "Camera" and target_device_id == DEFAULT_CAMERA_DEVICE:
+                # "Camera" means a webcam. The untouched default device is the simulated Hikrobot camera,
+                # so choosing Camera alone must not silently keep producing a test picture.
+                target_device_id = f"webcam_{int(self.get_param('camera_index', 0))}"
 
             stream_url = str(self.get_param("stream_url", "")).strip()
             driver = cm.get_or_create_driver(target_device_id, stream_url=stream_url)

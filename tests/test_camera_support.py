@@ -149,3 +149,35 @@ def test_camera_management_dialog_and_pipeline_binding(qapp):
     assert selected_device_id == "virtual_usb3_0"
     assert "exposure_time_us" in selected_params
     assert "gain" in selected_params
+
+
+def test_camera_source_with_the_untouched_default_device_opens_the_webcam(monkeypatch):
+    """Choosing Source Type "Camera" must not silently keep using the simulated Hikrobot default device."""
+    from apex_vision.core.camera_manager import CameraManager
+    from apex_vision.core.registry import create_tool_instance
+    asked = []
+    real = CameraManager.get_or_create_driver
+
+    def spy(self, device_id, *a, **kw):
+        asked.append(device_id)
+        return real(self, device_id, *a, **kw)
+
+    monkeypatch.setattr(CameraManager, "get_or_create_driver", spy)
+    src = create_tool_instance("Image Source", "s", "S")
+    src.set_param("source_type", "Camera")
+    assert src.get_param("camera_device") == "mvs_gige_0"      # the default a new module starts with
+    src.execute({})
+    assert asked[0] == "webcam_0"
+    asked.clear()
+    src.set_param("camera_index", 1)
+    src.execute({})
+    assert asked[0] == "webcam_1"
+    asked.clear()
+    src.set_param("camera_device", "virtual_gige_0")           # an explicit choice is respected
+    src.execute({})
+    assert asked[0] == "virtual_gige_0"
+    asked.clear()
+    src.set_param("source_type", "Hikrobot MVS")
+    src.set_param("camera_device", "mvs_gige_0")               # and the Hikrobot source still means Hikrobot
+    src.execute({})
+    assert asked[0] == "mvs_gige_0"
