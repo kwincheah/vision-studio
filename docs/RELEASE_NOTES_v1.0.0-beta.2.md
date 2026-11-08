@@ -1,8 +1,15 @@
-# Apex Industrial Vision Studio 1.0.0-beta.1
+# Apex Industrial Vision Studio 1.0.0-beta.2
 
-The first public beta of **Apex Industrial Vision Studio**: a desktop tool for building machine-vision inspections by wiring modules together on a canvas, or by describing the inspection to an AI assistant that builds the flow for you.
+A public beta of **Apex Industrial Vision Studio**: a desktop tool for building machine-vision inspections by wiring modules together on a canvas, or by describing the inspection to an AI assistant that builds the flow for you.
 
 This is a **beta**. It is feature-complete for the first release and well tested (about 1,400 automated tests, run on Windows and Linux), but it has had little time in front of real users. Expect rough edges, and please report them.
+
+---
+
+## What changed since beta.1
+
+- **Fixed a crash when creating a project.** The New Project dialog started with a placeholder save location, so **Create Project** failed and closed the app on a normal PC. It now starts in your own projects folder, **Browse...** works, and a folder that cannot be written shows a message instead of crashing.
+- Projects are now saved as readable XML in `.apex` files. Older `.vmp`, `.sol`, `.json` and `.xml` files still open.
 
 ---
 
@@ -18,9 +25,9 @@ This is a **beta**. It is feature-complete for the first release and well tested
 
 ## Install
 
-**Windows installer.** Download `ApexVisionStudio_Setup_v1.0.0-beta.1.exe` from the assets below and run it.
+**Windows installer.** Download `ApexVisionStudio_Setup_v1.0.0-beta.2.exe` from the assets below and run it.
 
-**Portable ZIP.** Download `ApexVisionStudio-v1.0.0-beta.1-Windows-x64.zip`, extract it anywhere and run `ApexVisionStudio.exe`. No administrator rights or Python needed.
+**Portable ZIP.** Download `ApexVisionStudio-v1.0.0-beta.2-Windows-x64.zip`, extract it anywhere and run `ApexVisionStudio.exe`. No administrator rights or Python needed.
 
 **From source** (Windows, Linux, macOS):
 
