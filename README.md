@@ -71,6 +71,7 @@ chat's title bar at any time. Details, privacy notes and the MCP server are in [
   compare experiments.
 - **Calibrate cameras.** A lens-distortion wizard (chessboard, circle grids) and N-point pixel-to-world calibration.
 - **Save everything as plain files.** Projects are saved as `.apex` files, which are readable **XML** (older `.vmp` JSON projects still open); see [docs/XML_FORMAT.md](docs/XML_FORMAT.md).
+- **Call it from other programs.** `python main.py serve` runs your saved flows behind a local HTTP API: send an image, get PASS / FAIL and every measurement back as JSON ([docs/API.md](docs/API.md)).
 - **Extend it.** Drop a plugin into `plugins/` to add your own modules ([docs/PLUGIN_DEVELOPMENT_GUIDE.md](docs/PLUGIN_DEVELOPMENT_GUIDE.md)).
 
 ## Install and run
@@ -142,6 +143,7 @@ opening menus) and fail on any Qt warning, so what you see in the screenshots is
 
 More reading:
 [AI Gen](docs/AI_GEN.md) ·
+[HTTP API](docs/API.md) ·
 [Parameter editors](docs/PARAMETER_EDITORS.md) ·
 [XML format](docs/XML_FORMAT.md) ·
 [Plugin guide](docs/PLUGIN_DEVELOPMENT_GUIDE.md) ·

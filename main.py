@@ -4,6 +4,8 @@ Main entry point for Apex Industrial Vision Studio.
     python main.py [solution file]      start the Qt Quick (QML) interface   <- default
     python main.py --widgets [file]     start the classic widget interface
     python main.py --mcp                run the flow-generation MCP server (stdio)
+    python main.py serve [--flows DIR]  local HTTP API: other programs run your saved flows (docs/API.md)
+    python main.py run|evaluate|...     the command-line runner (python -m apex_vision.cli --help)
 """
 import os
 import sys
@@ -84,9 +86,15 @@ def run_mcp() -> int:
     return 0
 
 
+CLI_COMMANDS = ("serve", "run", "evaluate", "compare", "list", "dataset", "demo")
+
+
 def main() -> int:
     if "--mcp" in sys.argv[1:]:
         return run_mcp()
+    if len(sys.argv) > 1 and sys.argv[1] in CLI_COMMANDS:     # headless: python main.py serve ...
+        from apex_vision.cli import main as cli_main
+        return cli_main(sys.argv[1:])
     args = [a for a in sys.argv[1:] if a != "--widgets"]
     if "--widgets" in sys.argv[1:]:
         return run_widgets([sys.argv[0]] + args)

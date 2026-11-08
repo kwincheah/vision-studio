@@ -13,6 +13,7 @@ Subcommands
 ``list``       list saved experiments
 ``dataset``    build or describe a labelled dataset
 ``demo``       generate a dataset and run the whole evaluation end to end
+``serve``      start the local HTTP API so other programs can run saved flows (see docs/API.md)
 
 Exit status
 -----------
@@ -182,6 +183,43 @@ def cmd_run(args) -> int:
     if failures and not args.ignore_errors:
         return _fail(f"{failures} of {len(targets)} image(s) failed", 1)
     LOG.info("ran %s on %d image(s): %d ok, %d failed", label, len(targets), ok, failures)
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# serve
+# ---------------------------------------------------------------------------
+def _default_flows_dir() -> str:
+    local = os.path.abspath("projects")
+    if os.path.isdir(local):
+        return local
+    return os.path.join(os.path.expanduser("~"), "Documents", "ApexVision", "Projects")
+
+
+def cmd_serve(args) -> int:
+    """Start the local HTTP API and block until Ctrl+C."""
+    from apex_vision.server import make_server
+
+    api_key = args.api_key or os.environ.get("APEX_API_KEY") or None
+    flows_dir = args.flows or _default_flows_dir()
+    try:
+        server = make_server(flows_dir, host=args.host, port=args.port, api_key=api_key,
+                             image_root=args.image_root, max_image_mb=args.max_image_mb,
+                             cors_origins=args.cors_origin or ())
+    except (ValueError, OSError) as exc:
+        return _fail(str(exc), 2)
+    names = [f["name"] for f in server.service.list_flows()]
+    host, port = server.server_address[:2]
+    LOG.info("Apex Vision API on http://%s:%d/v1  (flows: %s)", host, port, flows_dir)
+    LOG.info("%d flow(s) available: %s", len(names), ", ".join(names) or "none yet - save a project into that folder")
+    LOG.info("API key: %s;  image_path: %s", "required" if api_key else "not required (this computer only)",
+             args.image_root or "disabled")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        LOG.info("stopping")
+    finally:
+        server.server_close()
     return 0
 
 
@@ -459,6 +497,19 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--ignore-errors", action="store_true",
                    help="exit 0 even if some images failed")
     p.set_defaults(func=cmd_run)
+
+    # serve ----------------------------------------------------------------
+    p = child("serve", help="start the local HTTP API (run saved flows from other programs)")
+    p.add_argument("--flows", help="folder of saved flows to expose (default: ./projects or your ApexVision/Projects folder)")
+    p.add_argument("--host", default="127.0.0.1", help="address to listen on (default 127.0.0.1: this computer only)")
+    p.add_argument("--port", type=int, default=8800, help="port (default 8800)")
+    p.add_argument("--api-key", help="require this key (Authorization: Bearer ... or X-API-Key); also read from APEX_API_KEY. "
+                                     "Mandatory when --host is not 127.0.0.1")
+    p.add_argument("--image-root", help="folder callers may read images from with image_path (off by default)")
+    p.add_argument("--max-image-mb", type=float, default=50.0, help="largest accepted image upload (default 50)")
+    p.add_argument("--cors-origin", action="append",
+                   help="allow a browser web app at this origin to call the API, e.g. http://localhost:3000 (repeatable)")
+    p.set_defaults(func=cmd_serve)
 
     # evaluate -------------------------------------------------------------
     p = child("evaluate", help="evaluate a detector over a labelled dataset")
