@@ -201,3 +201,16 @@ def test_recent_projects_hide_files_that_no_longer_exist(gui, tmp_path):
     shown = AppBackend(FrameProvider(), project_manager=pm).recentProjects
     assert [r["path"] for r in shown] == [os.path.normpath(str(here))]
     assert len(pm.get_recent_projects()) == 2, "the record is kept, so a reconnected drive brings it back"
+
+
+def test_new_project_survives_an_unwritable_folder_and_offers_the_real_default(gui, tmp_path):
+    from apex_vision.core.project_manager import ProjectManager
+    pm = ProjectManager(workspace_root=str(tmp_path))
+    b = AppBackend(FrameProvider(), project_manager=pm)
+    assert b.projectsFolder == pm.default_projects_dir and "you" not in b.projectsFolder.split(os.sep)
+    blocker = tmp_path / "a_file"
+    blocker.write_text("x", encoding="utf-8")
+    b.createProject("P", str(blocker / "sub"), 0)          # makedirs under a file -> OSError, must not raise
+    assert b.solutionName != "P"
+    b.createProject("P", str(tmp_path / "ok"), 0)
+    assert os.path.exists(tmp_path / "ok" / "P.apex") and b.solutionName == "P"

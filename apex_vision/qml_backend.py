@@ -207,6 +207,11 @@ class AppBackend(QObject):
     def version(self):
         return APP_VERSION
 
+    @pyqtProperty(str, constant=True)
+    def projectsFolder(self):  # noqa: N802
+        """Where new projects go unless the user picks another folder (shown in the New Project dialog)."""
+        return self._pm.default_projects_dir
+
     @pyqtProperty("QVariantList", notify=changed)
     def results(self):
         return self._results
@@ -576,14 +581,22 @@ class AppBackend(QObject):
         template = ["pcb", "measurement", "yolo", "calibration"][max(0, min(index, 3))]
 
         def do():
-            sol, path = self._pm.create_project(f"Solution_{template.upper()}", template=template)
+            try:
+                sol, path = self._pm.create_project(f"Solution_{template.upper()}", template=template)
+            except OSError as exc:
+                self._notify(f"Could not create the project: {exc}")
+                return
             self.load_solution(sol, path)
         self._guard(do)
 
     @pyqtSlot(str, str, int)
     def createProject(self, name, folder, template):  # noqa: N802
         def do():
-            sol, path = self._pm.create_project(name, folder, template=TEMPLATE_KEYS[max(0, min(template, 4))])
+            try:
+                sol, path = self._pm.create_project(name, folder, template=TEMPLATE_KEYS[max(0, min(template, 4))])
+            except OSError as exc:        # unwritable or missing drive: tell the user instead of crashing
+                self._notify(f"Could not create the project in '{folder}': {exc}")
+                return
             self.load_solution(sol, path)
         self._guard(do)
 
