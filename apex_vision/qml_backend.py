@@ -9,6 +9,7 @@ Everything here is Qt-widget free, so it works with ``QGuiApplication`` only.
 """
 import json
 import os
+import time
 from typing import Any, Dict, List, Optional
 
 import numpy as np
@@ -17,6 +18,7 @@ from PyQt6.QtGui import QImage
 from PyQt6.QtQuick import QQuickImageProvider
 
 import apex_vision.tools  # noqa: F401  (registers the tools)
+from apex_vision.core import param_schema
 from apex_vision.core.base_tool import DataType, ToolStatus
 from apex_vision.core.formatting import format_flow_outputs
 from apex_vision.core.overlays import DEFAULT_LAYERS, render_overlays
@@ -90,6 +92,7 @@ class AppBackend(QObject):
         self._pending = None                      # action waiting for the unsaved-changes answer
         self._last_image = None
         self._last_results: Dict[str, Any] = {}
+        self._history: List[Dict[str, Any]] = []   # one entry per finished run, oldest first
         self._layers: Dict[str, bool] = dict(DEFAULT_LAYERS)
         self._formatted = ""
         # run / loop / stop / image pool are the shared controller - the same code the widget UI uses
@@ -215,6 +218,98 @@ class AppBackend(QObject):
     @pyqtProperty("QVariantList", notify=changed)
     def results(self):
         return self._results
+
+    # ---- the Result tab, History and Help pages ------------------------------------
+    HISTORY_LIMIT = 100
+    _BAD_STATUSES = (ToolStatus.NG, ToolStatus.ERROR, ToolStatus.TIMEOUT)
+
+    @staticmethod
+    def _summary(outputs: Dict[str, Any], limit: int = 4) -> str:
+        """The first few plain values of a module's outputs, e.g. ``Mean=54.8  StdDev=41.4``."""
+        parts = []
+        for key, value in outputs.items():
+            if isinstance(value, bool) or isinstance(value, (int, str)) and not (isinstance(value, str) and len(value) > 24):
+                parts.append(f"{key}={value}")
+            elif isinstance(value, float):
+                parts.append(f"{key}={value:.4g}")
+            if len(parts) >= limit:
+                break
+        return "  ".join(parts)
+
+    def _module_rows(self, results: Dict[str, Any]) -> List[Dict[str, Any]]:
+        pipe = self._pipeline
+        rows = []
+        for nid in pipe.execution_order:
+            node = pipe.nodes.get(nid)
+            if node is None:
+                continue
+            res = results.get(nid)
+            name = node.name.replace("_", " ", 1)
+            if res is None:
+                rows.append({"id": nid, "name": name, "tool": node.tool_name, "status": "-", "ms": 0.0,
+                             "message": "not run yet", "summary": "", "bad": False})
+                continue
+            rows.append({"id": nid, "name": name, "tool": node.tool_name, "status": res.status.value,
+                         "ms": float(res.elapsed_ms), "message": res.message, "summary": self._summary(res.outputs),
+                         "bad": res.status in self._BAD_STATUSES})
+        return rows
+
+    @pyqtProperty("QVariantList", notify=changed)
+    def moduleResults(self):  # noqa: N802
+        """Every module's last result, in run order (the top Result tab)."""
+        return self._module_rows(self._pipeline.last_results)
+
+    @pyqtProperty("QVariantList", notify=changed)
+    def history(self):
+        """Finished runs, newest first (the History tab)."""
+        return list(reversed(self._history))
+
+    @pyqtSlot()
+    def clearHistory(self):  # noqa: N802
+        self._history = []
+        self._notify("History cleared")
+
+    def _record_history(self, results: Dict[str, Any]) -> None:
+        rows = self._module_rows(results)
+        source = ""
+        for nid, node in self._pipeline.nodes.items():
+            res = results.get(nid)
+            if node.tool_name == "Image Source" and res is not None and " from " in res.message:
+                source = res.message.split(" from ", 1)[1]
+                break
+        number = (self._history[-1]["n"] + 1) if self._history else 1
+        self._history.append({
+            "n": number, "time": time.strftime("%H:%M:%S"), "source": source,
+            "verdict": self._verdict, "flowMs": round(self._flow_ms, 2),
+            "failed": ", ".join(r["name"] for r in rows if r["bad"]), "modules": rows,
+        })
+        del self._history[:-self.HISTORY_LIMIT]
+
+    @pyqtProperty("QVariantMap", notify=changed)
+    def selectedHelp(self):  # noqa: N802
+        """What the selected module is and what each of its settings means (the Help tab)."""
+        node = self._pipeline.nodes.get(self._selected)
+        if node is None:
+            return {}
+        params = []
+        for key, current in node.parameters.items():
+            spec = param_schema.spec_for(node.tool_name, key, current)
+            item = {"name": spec.get("label", key), "kind": spec["kind"], "value": str(current)[:40], "limits": ""}
+            unit = f" {spec['unit']}" if spec.get("unit") else ""
+            if spec.get("choices"):
+                item["limits"] = " / ".join(str(c) for c in spec["choices"])
+            elif "min" in spec and "max" in spec and abs(spec["min"]) < 1e11 and abs(spec["max"]) < 1e11:
+                item["limits"] = f"{spec['min']:g} to {spec['max']:g}{unit}"
+            elif unit:
+                item["limits"] = unit.strip()
+            params.append(item)
+        return {
+            "title": node.name.replace("_", " ", 1), "tool": node.tool_name, "category": node.category,
+            "description": node.description or "",
+            "inputs": [f"{n} ({p.data_type.value})" + (f" - {p.description}" if p.description else "") for n, p in node.inputs.items()],
+            "outputs": [f"{n} ({p.data_type.value})" + (f" - {p.description}" if p.description else "") for n, p in node.outputs.items()],
+            "parameters": params,
+        }
 
     @pyqtProperty("QVariantList", notify=changed)
     def recentProjects(self):  # noqa: N802
@@ -404,6 +499,7 @@ class AppBackend(QObject):
         self._project.path = path
         self._selected = next(iter(self._pipeline.execution_order), "")
         self._results = []
+        self._history = []
         self._undo.clear()
         self._redo.clear()
         self._freeze_layout()
@@ -1104,6 +1200,7 @@ class AppBackend(QObject):
                 image = res.outputs["Image"]
         self._last_image = image
         self._last_results = dict(results)
+        self._record_history(results)
         self._formatted = format_flow_outputs(pipe, results)
         self._render_view()
         self._refresh_results()

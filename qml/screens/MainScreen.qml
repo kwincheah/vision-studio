@@ -34,6 +34,10 @@ Rectangle {
 
     property int workspaceTab: 0              // 0 flow, 1 operation, 2 multi-flow
     property int resultTab: 0
+    property string viewTab: "image"          // the top tab pair: "image" or "result"
+    readonly property var moduleRows: backend ? backend.moduleResults : []
+    readonly property var runHistory: backend ? backend.history : []
+    readonly property var helpInfo: backend ? backend.selectedHelp : ({})
     property string selectedNode: nodes.length ? nodes[0].id : ""
     readonly property bool loopOn: backend ? backend.loop : designLoop
     property bool designLoop: false
@@ -1148,11 +1152,63 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
 
             Row {
                 id: rcTabs
-                TabButton2 { text: "Image"; selected: true }
-                TabButton2 { text: "Result" }
+                TabButton2 { objectName: "tabImage";  text: "Image";  selected: root.viewTab === "image";  onClicked: root.viewTab = "image" }
+                TabButton2 { objectName: "tabResult"; text: "Result"; selected: root.viewTab === "result"; onClicked: root.viewTab = "result" }
+            }
+            Rectangle {      // the Result tab: every module's result in one table, in place of the image viewer
+                id: resultPage
+                objectName: "resultPage"
+                visible: root.viewTab === "result"
+                anchors.top: rcTabs.bottom
+                width: parent.width
+                height: 350                   // the room the image header, viewer and read-out use
+                color: Theme.panelAlt
+                Rectangle {
+                    id: rpHead
+                    width: parent.width; height: 28
+                    color: Theme.panelHeader
+                    Text { x: 8; anchors.verticalCenter: parent.verticalCenter
+                           text: "Module Results  ·  " + root.verdict + "  ·  " + root.flowMs.toFixed(1) + " ms"
+                           font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; font.weight: Font.DemiBold; color: Theme.textPrimary }
+                }
+                Rectangle {
+                    id: rpCols
+                    anchors.top: rpHead.bottom
+                    width: parent.width; height: 24
+                    color: "#e6eaec"
+                    Text { x: 10;  anchors.verticalCenter: parent.verticalCenter; text: "Module"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    Text { x: 196; anchors.verticalCenter: parent.verticalCenter; text: "Status"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    Text { x: 262; anchors.verticalCenter: parent.verticalCenter; text: "Time";   font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    Text { x: 330; anchors.verticalCenter: parent.verticalCenter; text: "Result"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                }
+                ListView {
+                    id: rpList
+                    objectName: "resultList"
+                    anchors.top: rpCols.bottom
+                    anchors.bottom: parent.bottom
+                    width: parent.width
+                    clip: true
+                    model: root.moduleRows
+                    delegate: Rectangle {
+                        width: ListView.view.width; height: 36
+                        color: root.selectedNode === modelData.id ? Theme.accentDim : (index % 2 ? "#f1f4f5" : Theme.panelAlt)
+                        Text { x: 10; width: 178; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
+                               text: modelData.name; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; font.weight: Font.DemiBold; color: Theme.textPrimary }
+                        Text { x: 196; width: 60; anchors.verticalCenter: parent.verticalCenter
+                               text: modelData.status; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; font.weight: Font.Bold
+                               color: modelData.bad ? Theme.errorText : modelData.status === "OK" ? Theme.okText : Theme.textMuted }
+                        Text { x: 262; width: 60; anchors.verticalCenter: parent.verticalCenter
+                               text: modelData.status === "-" ? "" : modelData.ms.toFixed(1) + " ms"; font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textSecondary }
+                        Text { x: 330; width: 300; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
+                               text: modelData.summary !== "" ? modelData.summary : modelData.message
+                               font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textPrimary }
+                        MouseArea { anchors.fill: parent; onClicked: root.selectModule(modelData.id) }
+                    }
+                }
             }
             Rectangle {      // image header
                 id: imgHeader
+                visible: root.viewTab === "image"
                 anchors.top: rcTabs.bottom
                 width: parent.width; height: 28
                 color: Theme.panelHeader
@@ -1175,6 +1231,7 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
             }
             Rectangle {      // viewport
                 id: viewport
+                visible: root.viewTab === "image"
                 anchors.top: imgHeader.bottom
                 width: parent.width
                 height: 300
@@ -1241,6 +1298,7 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
             }
             Rectangle {      // cursor read-out
                 id: readout
+                visible: root.viewTab === "image"
                 anchors.top: viewport.bottom
                 width: parent.width; height: 22
                 color: Theme.panelHeader
@@ -1314,6 +1372,8 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                 }
             }
             Column {
+                objectName: "currentResultPane"
+                visible: root.resultTab === 0
                 anchors.top: resTabs.bottom
                 anchors.bottom: parent.bottom
                 width: parent.width
@@ -1334,6 +1394,109 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                         color: index % 2 ? "#f1f4f5" : Theme.panelAlt
                         Text { x: 10; anchors.verticalCenter: parent.verticalCenter; text: modelData.name; font.pixelSize: Theme.fontBody; font.family: Theme.fontFamily; color: Theme.textPrimary }
                         Text { x: 190; anchors.verticalCenter: parent.verticalCenter; text: modelData.value; font.pixelSize: Theme.fontBody; font.family: Theme.monoFamily; color: Theme.textPrimary }
+                    }
+                }
+            }
+            Item {           // History tab: one line per finished run, newest first
+                id: historyPane
+                objectName: "historyPane"
+                visible: root.resultTab === 1
+                anchors.top: resTabs.bottom
+                anchors.bottom: parent.bottom
+                width: parent.width
+                Rectangle {
+                    id: hHead
+                    width: parent.width; height: 26
+                    color: Theme.panelHeader
+                    Text { x: 10;  anchors.verticalCenter: parent.verticalCenter; text: "#";       font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    Text { x: 44;  anchors.verticalCenter: parent.verticalCenter; text: "Time";    font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    Text { x: 118; anchors.verticalCenter: parent.verticalCenter; text: "Source";  font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    Text { x: 300; anchors.verticalCenter: parent.verticalCenter; text: "Result";  font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    Text { x: 362; anchors.verticalCenter: parent.verticalCenter; text: "Flow";    font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    Text { x: 440; anchors.verticalCenter: parent.verticalCenter; text: "Failed modules"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    Text {
+                        objectName: "historyClear"
+                        anchors.right: parent.right; anchors.rightMargin: 10; anchors.verticalCenter: parent.verticalCenter
+                        text: "Clear"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; font.underline: true; color: Theme.textMuted
+                        MouseArea { anchors.fill: parent; anchors.margins: -6; onClicked: if (root.backend) root.backend.clearHistory() }
+                    }
+                }
+                ListView {
+                    objectName: "historyList"
+                    anchors.top: hHead.bottom
+                    anchors.bottom: parent.bottom
+                    width: parent.width
+                    clip: true
+                    model: root.runHistory
+                    delegate: Rectangle {
+                        width: ListView.view.width; height: 26
+                        color: index % 2 ? "#f1f4f5" : Theme.panelAlt
+                        Text { x: 10;  anchors.verticalCenter: parent.verticalCenter; text: modelData.n;    font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textSecondary }
+                        Text { x: 44;  anchors.verticalCenter: parent.verticalCenter; text: modelData.time; font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textPrimary }
+                        Text { x: 118; width: 174; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight; text: modelData.source
+                               font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary }
+                        Text { x: 300; anchors.verticalCenter: parent.verticalCenter; text: modelData.verdict
+                               font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; font.weight: Font.Bold
+                               color: modelData.verdict === "PASS" ? Theme.okText : Theme.errorText }
+                        Text { x: 362; anchors.verticalCenter: parent.verticalCenter; text: modelData.flowMs.toFixed(1) + " ms"
+                               font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textPrimary }
+                        Text { x: 440; width: 190; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight; text: modelData.failed
+                               font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.errorText }
+                    }
+                    Text {
+                        visible: root.runHistory.length === 0
+                        anchors.centerIn: parent
+                        text: "No runs yet. Press Run."
+                        font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textMuted
+                    }
+                }
+            }
+            Flickable {      // Help tab: what the selected module is and what its settings mean
+                id: helpPane
+                objectName: "helpPane"
+                visible: root.resultTab === 2
+                anchors.top: resTabs.bottom
+                anchors.bottom: parent.bottom
+                width: parent.width
+                clip: true
+                contentWidth: width
+                contentHeight: helpColumn.height + 16
+                Column {
+                    id: helpColumn
+                    x: 10; y: 8
+                    width: parent.width - 20
+                    spacing: 6
+                    Text { width: parent.width; wrapMode: Text.WordWrap
+                           text: root.helpInfo.title ? root.helpInfo.title : "Select a module to see its help"
+                           font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody + 2; font.weight: Font.DemiBold; color: Theme.textPrimary }
+                    Text { visible: !!root.helpInfo.tool; width: parent.width
+                           text: (root.helpInfo.tool || "") + "  ·  " + (root.helpInfo.category || "")
+                           font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption; color: Theme.textMuted }
+                    Text { visible: !!root.helpInfo.description; width: parent.width; wrapMode: Text.WordWrap; text: root.helpInfo.description || ""
+                           font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary }
+                    Text { visible: !!(root.helpInfo.inputs && root.helpInfo.inputs.length); width: parent.width; wrapMode: Text.WordWrap
+                           text: "Inputs: " + (root.helpInfo.inputs || []).join(",  ")
+                           font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    Text { visible: !!(root.helpInfo.outputs && root.helpInfo.outputs.length); width: parent.width; wrapMode: Text.WordWrap
+                           text: "Outputs: " + (root.helpInfo.outputs || []).join(",  ")
+                           font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    Rectangle { visible: !!(root.helpInfo.parameters && root.helpInfo.parameters.length); width: parent.width; height: 24; color: Theme.panelHeader
+                        Text { x: 6;   anchors.verticalCenter: parent.verticalCenter; text: "Setting";       font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                        Text { x: 200; anchors.verticalCenter: parent.verticalCenter; text: "Current value"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                        Text { x: 330; anchors.verticalCenter: parent.verticalCenter; text: "Allowed";       font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    }
+                    Repeater {
+                        model: root.helpInfo.parameters || []
+                        delegate: Rectangle {
+                            width: helpColumn.width; height: 26
+                            color: index % 2 ? "#f1f4f5" : Theme.panelAlt
+                            Text { x: 6;   width: 188; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight; text: modelData.name
+                                   font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary }
+                            Text { x: 200; width: 124; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight; text: modelData.value
+                                   font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textPrimary }
+                            Text { x: 330; width: 280; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight; text: modelData.limits
+                                   font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption; color: Theme.textMuted }
+                        }
                     }
                 }
             }
