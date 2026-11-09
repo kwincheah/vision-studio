@@ -142,12 +142,13 @@ The UI tests operate the actual QML window with real mouse and keyboard events (
 opening menus) and fail on any Qt warning, so what you see in the screenshots is what the tests drive.
 
 More reading:
+[User guide](docs/USER_GUIDE.md) ·
 [AI Gen](docs/AI_GEN.md) ·
 [HTTP API](docs/API.md) ·
 [Parameter editors](docs/PARAMETER_EDITORS.md) ·
 [XML format](docs/XML_FORMAT.md) ·
 [Plugin guide](docs/PLUGIN_DEVELOPMENT_GUIDE.md) ·
-[Release notes](docs/RELEASE_NOTES_v1.0.0-beta.2.md)
+[Release notes](docs/RELEASE_NOTES_v1.0.0-beta.3.md)
 
 ### Building the Windows app
 

@@ -3,5 +3,5 @@
 ``DISPLAY`` is what people see (window titles, About, installer, release tag); ``PACKAGE`` is the same
 number in the form Python packaging requires (pyproject.toml). ``tests/test_version.py`` keeps them in step.
 """
-DISPLAY = "1.0.0-beta.2"
-PACKAGE = "1.0.0b2"
+DISPLAY = "1.0.0-beta.3"
+PACKAGE = "1.0.0b3"
