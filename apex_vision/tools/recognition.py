@@ -250,7 +250,8 @@ class OCRRecognitionTool(VisionToolBase):
 class DefectDetectionTool(VisionToolBase):
     category = "Defect Detection"
     tool_name = "Defect Detection"
-    description = "Inspects surfaces for scratches, burrs, dirt, cracks, or surface anomalies."
+    description = ("Finds defects such as scratches, burrs, dirt and cracks. Method 'Classical' compares each spot with its surroundings; "
+                   "'Deep learning' uses your own ONNX model (segmentation, anomaly or detection) trained on your parts.")
 
     def _init_ports(self):
         self.inputs["Image"] = ToolPort("Image", DataType.IMAGE, "Input image")
@@ -276,16 +277,23 @@ class DefectDetectionTool(VisionToolBase):
     def _init_parameters(self):
         self.parameters = {
             "roi": [260, 240, 180, 120],  # x, y, w, h
+            "method": "Classical (contrast)",   # or 'Deep learning (ONNX model)'
             "defect_type": "Dark / Scratch",
             "sensitivity": 35,
             "min_defect_area": 10,
-            "max_defect_area": 500
+            "max_defect_area": 500,
+            "model_path": "",             # deep learning: the .onnx file
+            "model_task": "Segmentation",  # deep learning: Segmentation, Anomaly or Detection
+            "dl_threshold": 0.0           # deep learning: 0 = automatic (0.5, or the model's own .json)
         }
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
         img = self.get_input_image(context)
         if img is None:
             return ToolExecutionResult(status=ToolStatus.NG, message="No valid input image provided", outputs={"Image": None, "Defect_Count": 0, "Max_Defect_Area": 0.0})
+
+        if str(self.get_param("method", "Classical (contrast)")).startswith("Deep"):
+            return self._execute_deep_learning(img)
 
         gray = self.to_grayscale(img)
         rx, ry, rw, rh = self.get_roi("roi", [260, 240, 180, 120], img_shape=gray.shape)
@@ -364,50 +372,134 @@ class DefectDetectionTool(VisionToolBase):
         )
 
 
+def _dl_defect_result(self, img):
+    """Defect Detection with a deep-learning model; same outputs as the classical method."""
+    from apex_vision.core import dl_engine as dl
+    from apex_vision.tools import deep_learning as dlt
+    empty = {"Image": img, "Defect_Count": 0, "Max_Defect_Area": 0.0, "Boxes": [], "Classes": [], "Scores": [], "Detections": []}
+    bgr = dl._to_bgr(img)
+    try:
+        model = dlt.open_model(self)
+        task = str(self.get_param("model_task", "Segmentation"))
+        thr = self.as_float(self.get_param("dl_threshold", 0.0))
+        min_a = int(self.as_float(self.get_param("min_defect_area", 10), 10))
+        if task == "Anomaly":
+            res = dlt.analyse_anomaly(self, model, bgr, thr, min_a, str(model.meta.get("output_type", "Anomaly map")))
+        elif task == "Detection":
+            res = dlt.analyse_detection(self, model, bgr, thr if thr > 0 else 0.25)
+        else:
+            res = dlt.analyse_segmentation(self, model, bgr, thr if thr > 0 else 0.5, min_a)
+    except dl.DLModelError as exc:
+        return ToolExecutionResult(status=ToolStatus.ERROR, message=f"Defect Detection (deep learning): {exc}", outputs=empty)
+    records = [dict(r, model_id="defect_detection_dl") for r in res["regions"]]
+    n = len(records)
+    return ToolExecutionResult(
+        status=ToolStatus.OK if n == 0 else ToolStatus.NG,
+        message=("PASS (0 defects)" if n == 0 else f"NG: {n} defect(s) found") + f"  [{model.backend}, {task.lower()}]",
+        outputs={"Image": img, "Defect_Count": n, "Max_Defect_Area": float(max([r.get("Area", 0) for r in records], default=0)),
+                 "Boxes": [r["Box"] for r in records], "Classes": [r["Class"] for r in records],
+                 "Scores": [r["Score"] for r in records], "Detections": records},
+        overlays=dlt.region_overlays(records))
+
+
+DefectDetectionTool._execute_deep_learning = _dl_defect_result
+
+
 @register_tool
 class LinearEdgeDefectTool(VisionToolBase):
     category = "Defect Detection"
     tool_name = "Linear Edge Defect"
-    description = "Detects burrs, notches, and irregularities along a feature edge."
+    toolbox_hidden = True        # kept so older solutions open; Linear Edge Defect Detection is the full version
+    description = ("Checks how straight an edge is. Looks for the edge along a line you set, fits the best straight line "
+                   "through it, and counts bumps and notches (burrs) that stick out more than the allowed deviation.")
 
     def _init_ports(self):
         self.inputs["Image"] = ToolPort("Image", DataType.IMAGE, "Input image")
-        self.outputs["Burr_Count"] = ToolPort("Burr_Count", DataType.VALUE, "Detected edge defect count")
-        self.outputs["Max_Deviation"] = ToolPort("Max_Deviation", DataType.VALUE, "Maximum edge irregularity deviation (px)")
+        self.outputs["Burr_Count"] = ToolPort("Burr_Count", DataType.VALUE, "Number of bumps / notches beyond the tolerance")
+        self.outputs["Max_Deviation"] = ToolPort("Max_Deviation", DataType.VALUE, "Largest distance of the edge from its best-fit line (px)")
 
     def _init_parameters(self):
         self.parameters = {
-            "start_pt": [80, 400],
-            "end_pt": [600, 400],
-            "max_allowed_deviation": 3.0
+            "start_pt": [80, 400],          # the edge runs roughly from here ...
+            "end_pt": [600, 400],           # ... to here
+            "search_width": 15,             # how far either side of the line to look for the edge (px)
+            "edge_threshold": 20,           # weakest brightness step that counts as an edge
+            "max_allowed_deviation": 3.0    # a bump or notch bigger than this is a defect (px)
         }
+
+    @staticmethod
+    def _runs(flags: np.ndarray) -> list:
+        """Start/end index pairs of consecutive True values."""
+        out, start = [], None
+        for i, f in enumerate(flags):
+            if f and start is None:
+                start = i
+            elif not f and start is not None:
+                out.append((start, i - 1))
+                start = None
+        if start is not None:
+            out.append((start, len(flags) - 1))
+        return out
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
         img = self.get_input_image(context)
+        empty = {"Burr_Count": 0, "Max_Deviation": 0.0}
         if img is None:
-            return ToolExecutionResult(status=ToolStatus.NG, message="No valid input image provided", outputs={"Burr_Count": 0, "Max_Deviation": 0.0})
+            return ToolExecutionResult(status=ToolStatus.NG, message="No valid input image provided", outputs=empty)
+        p1 = self.as_point(self.get_param("start_pt", [80, 400]))
+        p2 = self.as_point(self.get_param("end_pt", [600, 400]))
+        if p1 is None or p2 is None:
+            return ToolExecutionResult(status=ToolStatus.ERROR, message="Start and end points must be x, y pairs", outputs=empty)
+        length = float(np.hypot(p2[0] - p1[0], p2[1] - p1[1]))
+        if length < 10:
+            return ToolExecutionResult(status=ToolStatus.NG, message="The line is too short to check (under 10 px)", outputs=empty)
 
-        p1 = self.get_param("start_pt", [80, 400])
-        p2 = self.get_param("end_pt", [600, 400])
-        if not isinstance(p1, (list, tuple)) or len(p1) < 2:
-            p1 = [0, 0]
-        if not isinstance(p2, (list, tuple)) or len(p2) < 2:
-            p2 = [img.shape[1], 0]
+        tol = max(0.0, self.as_float(self.get_param("max_allowed_deviation", 3.0), 3.0))
+        band = int(min(200, max(2, self.as_float(self.get_param("search_width", 15), 15.0))))
+        edge_thr = self.as_float(self.get_param("edge_threshold", 20), 20.0)
 
-        max_tol = float(self.get_param("max_allowed_deviation", 3.0))
-        # Straight PCB trace check - simulated edge deviations
-        burr_count = 0
-        max_dev = 0.5
-        is_ok = (max_dev <= max_tol)
+        gray = cv2.GaussianBlur(self.to_grayscale(img), (3, 3), 0).astype(np.float32)
+        tx, ty = (p2[0] - p1[0]) / length, (p2[1] - p1[1]) / length          # along the edge
+        nx, ny = -ty, tx                                                    # across it
+        s = np.arange(0.0, min(length, 4000.0), 1.0, dtype=np.float32)
+        offs = np.arange(-band, band + 1, dtype=np.float32)
+        xs = (p1[0] + tx * s[:, None] + nx * offs[None, :]).astype(np.float32)
+        ys = (p1[1] + ty * s[:, None] + ny * offs[None, :]).astype(np.float32)
+        profile = cv2.remap(gray, xs, ys, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+        step = np.abs(np.diff(profile, axis=1))                             # brightness step across the edge
+        best = step.argmax(axis=1)
+        strength = step.max(axis=1)
+        pos = offs[best] + 0.5
+        valid = strength >= edge_thr
+        if int(valid.sum()) < 5:
+            return ToolExecutionResult(status=ToolStatus.NG, message="No edge found along the line (try a larger search width or a lower edge threshold)",
+                                       outputs=empty,
+                                       overlays=[{"type": "line", "pt1": (int(p1[0]), int(p1[1])), "pt2": (int(p2[0]), int(p2[1])), "color": (0, 0, 255), "thickness": 2}])
 
-        overlays = [
-            {"type": "line", "pt1": (int(p1[0]), int(p1[1])), "pt2": (int(p2[0]), int(p2[1])), "color": (0, 240, 255), "thickness": 2},
-            {"type": "text", "text": f"Edge Defect: {burr_count} burrs", "pt": (int(p1[0]), int(p1[1]) - 12), "color": (0, 255, 0) if is_ok else (0, 0, 255)}
-        ]
+        sv, pv = s[valid], pos[valid]
+        coef = np.polyfit(sv, pv, 1)
+        resid = np.abs(pv - np.polyval(coef, sv))
+        keep = resid <= np.percentile(resid, 90)                            # refit without the worst tenth, so a burr does not drag the line
+        if int(keep.sum()) >= 3:
+            coef = np.polyfit(sv[keep], pv[keep], 1)
+        dev = np.zeros(len(s), np.float32)
+        dev[valid] = np.abs(pos[valid] - np.polyval(coef, s[valid]))
+        over = dev > tol
+        runs = self._runs(over)
+        max_dev = float(dev.max())
+        ok = len(runs) == 0
 
+        overlays = [{"type": "line", "pt1": (int(p1[0]), int(p1[1])), "pt2": (int(p2[0]), int(p2[1])), "color": (0, 240, 255), "thickness": 1}]
+        for a, b in runs[:50]:
+            i = a + int(np.argmax(dev[a:b + 1]))
+            sign = np.sign(pos[i] - np.polyval(coef, s[i]))
+            cx = float(p1[0] + tx * s[i] + nx * (np.polyval(coef, s[i]) + sign * dev[i]))
+            cy = float(p1[1] + ty * s[i] + ny * (np.polyval(coef, s[i]) + sign * dev[i]))
+            overlays.append({"type": "cross", "pt": (int(cx), int(cy)), "size": 7, "color": (0, 0, 255)})
+        overlays.append({"type": "text", "text": f"Edge: {len(runs)} defect(s), max {max_dev:.1f}px",
+                         "pt": (int(p1[0]), int(p1[1]) - 14), "color": (0, 255, 0) if ok else (0, 0, 255)})
         return ToolExecutionResult(
-            status=ToolStatus.OK if is_ok else ToolStatus.NG,
-            message=f"Edge inspection: {burr_count} defect(s), max dev: {max_dev:.2f}px",
-            outputs={"Burr_Count": burr_count, "Max_Deviation": max_dev},
-            overlays=overlays
-        )
+            status=ToolStatus.OK if ok else ToolStatus.NG,
+            message=f"Edge straightness: {len(runs)} defect(s) beyond {tol:g}px, largest deviation {max_dev:.2f}px",
+            outputs={"Burr_Count": len(runs), "Max_Deviation": max_dev},
+            overlays=overlays)

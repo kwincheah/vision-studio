@@ -110,6 +110,8 @@ class OpenCVCameraDriver(CameraDriverBase):
         super().__init__(device_info)
         self.camera_index = camera_index
         self._cap: Optional[cv2.VideoCapture] = None
+        self._auto: Optional[bool] = None            # what the module asked for: camera-controlled exposure (True) or fixed (False)
+        self._auto_applied: Optional[bool] = None    # what the camera has been told since it was opened
 
     def open(self) -> Tuple[bool, str]:
         if self._cap is not None and self._cap.isOpened():
@@ -137,6 +139,7 @@ class OpenCVCameraDriver(CameraDriverBase):
             self.height = h
 
         self.is_connected = True
+        self._auto_applied = None
         return True, f"Connected to camera {self.camera_index} ({self.width}x{self.height})"
 
     def close(self):
@@ -147,6 +150,26 @@ class OpenCVCameraDriver(CameraDriverBase):
                 pass
             self._cap = None
         self.is_connected = False
+
+    def set_auto_exposure(self, on: bool) -> bool:
+        """Let the camera set exposure (and brightness) itself, as a webcam does in any other program. Applied on the next capture."""
+        self._auto = bool(on)
+        if on:
+            self.gain = 1.0                       # no leftover digital gain from a fixed setting
+        return True
+
+    def _apply_auto_exposure(self) -> None:
+        if self._auto is None or self._auto == self._auto_applied or self._cap is None:
+            return
+        try:
+            # DirectShow: 0.75 = automatic, 0.25 = manual (this also undoes a fixed exposure left on the camera by an earlier run)
+            self._cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.75 if self._auto else 0.25)
+            if self._auto:
+                for _ in range(8):                # the first frames are dark until the camera has adjusted
+                    self._cap.read()
+        except Exception:
+            pass
+        self._auto_applied = self._auto
 
     def set_exposure(self, exposure_us: float) -> bool:
         self.exposure_time_us = exposure_us
@@ -190,6 +213,7 @@ class OpenCVCameraDriver(CameraDriverBase):
             if not ok:
                 return False, None, msg
 
+        self._apply_auto_exposure()
         ret, frame = self._cap.read()
         if not ret or frame is None:
             return False, None, f"Camera index {self.camera_index} frame acquisition timed out"

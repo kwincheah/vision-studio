@@ -72,17 +72,34 @@ def test_pool_adds_decodes_and_orders_a_folder_naturally(tmp_path):
 
 
 def test_pool_feeds_the_image_source(tmp_path):
+    """Selecting a pool image feeds it to the flow via the transient override.
+
+    It deliberately does not rewrite the node's parameters: a run and an image-strip click
+    are execution state, so the project must stay untouched (see
+    tests/test_image_pool_no_mutation.py).  The source only changes when the operator
+    explicitly loads images, which passes ``persist=True``.
+    """
     pool = ImagePool()
     paths = make_images(tmp_path, 2)
     for p in paths:
         pool.add_path(p)
     sol = SolutionManager.load_from_file(DEMO)
     pipe = sol.get_active_flow()
-    assert pool.apply_to(pipe, 1)
     src = next(n for n in pipe.nodes.values() if n.tool_name == "Image Source")
-    assert src.parameters["file_path"] == os.path.abspath(paths[1]) and pool.index == 1
+    params_before = dict(src.parameters)
+
+    assert pool.apply_to(pipe, 1)
+    assert pool.index == 1
     assert src._override_name == "img2.png"
+    assert src._override_image is not None
+    assert dict(src.parameters) == params_before, (
+        "selecting a strip image must not reconfigure the project")
     assert not pool.apply_to(pipe, 9)
+
+    # an explicit load does adopt the image as the source
+    assert pool.apply_to(pipe, 1, persist=True)
+    assert src.parameters["file_path"] == os.path.abspath(paths[1])
+    assert src.parameters["source_type"] == "File"
 
 
 # --------------------------------------------------------------------------- run engine

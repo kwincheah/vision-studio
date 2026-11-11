@@ -26,11 +26,11 @@ def test_image_source_file_resolution():
     tool = ImageSourceTool("src_test")
     tool.set_param("source_type", "File")
 
-    # 1. Empty path fallback to bundled sample image
+    # 1. An empty path means "nothing loaded": say so instead of silently using a sample picture
     tool.set_param("file_path", "")
     res1 = tool.execute({})
-    assert res1.status == ToolStatus.OK
-    assert "Image" in res1.outputs
+    assert res1.status == ToolStatus.NG
+    assert "No image loaded" in res1.message and "Image" not in res1.outputs
 
     # 2. Path with surrounding quotes (standard Windows 'Copy as path')
     sample_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "apex_vision", "samples", "pcb_sample.png"))

@@ -33,7 +33,7 @@ def test_acquisition_synthetic_patterns():
     tool = create_tool_instance("Image Source", "acq_test")
     
     # 1. PCB Pattern
-    tool.set_param("pattern_type", "PCB Inspection")
+    tool.set_param("pattern_type", "Part with Defects")
     res = tool.execute({})
     assert res.status == ToolStatus.OK
     assert "Image" in res.outputs
@@ -137,10 +137,11 @@ def test_pipeline_execution_and_dag_data_flow():
     pipe = VisionPipeline(name="TestDAG")
     
     src = create_tool_instance("Image Source", "src")
-    src.set_param("pattern_type", "PCB Inspection")
+    src.set_param("pattern_type", "Part with Defects")
     pipe.add_node(src)
 
     tm = create_tool_instance("Template Match", "tm")
+    tm.set_param("template_roi", [260, 240, 180, 120])        # the part to look for must be drawn: it starts empty
     pipe.add_node(tm)
     pipe.connect("src", "Image", "tm", "Image")
 
@@ -150,3 +151,24 @@ def test_pipeline_execution_and_dag_data_flow():
     assert results["src"].status == ToolStatus.OK
     assert results["tm"].status == ToolStatus.OK
     assert pipe.last_flow_time_ms > 0
+
+
+def test_regions_start_empty_which_means_the_whole_picture():
+    """The boxes that used to fit only the test picture now start as [0,0,0,0] = the whole image, whatever its size."""
+    import numpy as np
+    from apex_vision.core.roi_support import WHOLE_IMAGE_DEFAULTS
+    from apex_vision.tools.vm_geom import clamp_roi
+    for tool, keys in WHOLE_IMAGE_DEFAULTS.items():
+        t = create_tool_instance(tool, "x")
+        for key in keys:
+            assert list(t.parameters[key]) == [0, 0, 0, 0], (tool, key)
+    odd = np.zeros((77, 133, 3), np.uint8)
+    assert create_tool_instance("Histogram", "h").get_roi("roi", [5, 5, 9, 9], img_shape=odd.shape[:2]) == (0, 0, 133, 77)
+    assert clamp_roi([0, 0, 0, 0], odd.shape) == (0.0, 0.0, 133.0, 77.0)
+    # a region that needs drawing says so instead of giving a meaningless result
+    res = create_tool_instance("Template Match", "t").execute({"Image": odd})
+    assert res.status == ToolStatus.NG and "draw the template region" in res.message.lower()
+    # an explicitly drawn region still works as before
+    hist = create_tool_instance("Histogram", "h")
+    hist.set_param("roi", [10, 10, 20, 20])
+    assert hist.get_roi("roi", [0, 0, 0, 0], img_shape=odd.shape[:2]) == (10, 10, 20, 20)

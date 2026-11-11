@@ -31,25 +31,33 @@ hidden_imports = [
     'mcp',
     'cv2',
     'numpy',
-] + collect_submodules('apex_vision')
+    'rapidocr_onnxruntime',          # OCR Recognition (its models are added below)
+] + collect_submodules('apex_vision') + collect_submodules('serial')    # serial: the Serial Send module (pyserial)
 
 # Collect data files and model weights
 datas = [
     ('apex_vision/samples/*.png', 'apex_vision/samples'),
-    ('plugins', 'plugins'),
+    ('apex_vision/samples/models', 'apex_vision/samples/models'),     # small demo models for the deep-learning modules
+    ('plugins/sample_sobel_edge_plugin', 'plugins/sample_sobel_edge_plugin'),   # only the published sample plugin; private plugins stay out
     ('apex_vision/assets', 'apex_vision/assets'),            # application icon
     ('qml', 'qml'),                                    # the Qt Quick interface (main.py starts it)
     ('apex_vision/flowgen/reference', 'apex_vision/flowgen/reference'),   # AI Gen reference the assistant reads
     ('apex_vision/flowgen/recipes', 'apex_vision/flowgen/recipes'),
 ]
 
-# Include YOLO weights if present
+# OCR Recognition: the RapidOCR models and settings (without them the engine cannot start)
+datas += collect_data_files('rapidocr_onnxruntime')
+
+# Include YOLO weights if present (the .onnx runs in the packaged app, which has no PyTorch)
+if os.path.exists(os.path.join(project_dir, 'yolo11n.onnx')):
+    datas.append(('yolo11n.onnx', '.'))
 if os.path.exists(os.path.join(project_dir, 'yolo11n.pt')):
     datas.append(('yolo11n.pt', '.'))
 
-# Include projects template folder if present
-if os.path.exists(os.path.join(project_dir, 'projects')):
-    datas.append(('projects', 'projects'))
+# Ship the demo projects only (files ending in _Demo.apex), never whatever else happens to be in the folder
+for _name in sorted(os.listdir(os.path.join(project_dir, 'projects'))) if os.path.isdir(os.path.join(project_dir, 'projects')) else []:
+    if _name.endswith('_Demo.apex'):
+        datas.append((os.path.join('projects', _name), 'projects'))
 
 a = Analysis(
     ['main.py'],

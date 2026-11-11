@@ -343,8 +343,12 @@ def test_plugin_manager_dialog_ui(qapp):
     dialog._suppress_msgbox = True
     assert dialog.table_plugins.rowCount() >= 1
 
-    # Select the first row
-    dialog.table_plugins.selectRow(0)
+    # Select the row containing Sobel Edge Detector
+    for r in range(dialog.table_plugins.rowCount()):
+        item = dialog.table_plugins.item(r, 0)
+        if item and "Sobel" in item.text():
+            dialog.table_plugins.selectRow(r)
+            break
     dialog._on_selection_changed()
     assert len(dialog.txt_details.toPlainText()) > 0
     assert "Sobel Edge Detector" in dialog.txt_details.toPlainText()

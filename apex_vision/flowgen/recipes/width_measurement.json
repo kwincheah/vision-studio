@@ -9,7 +9,7 @@
     "tool": "Image Source",
     "params": {
      "source_type": "Synthetic",
-     "pattern_type": "PCB Inspection"
+     "pattern_type": "Part with Defects"
     }
    },
    {

@@ -88,13 +88,18 @@ def test_start_page_and_exit_go_through_the_unsaved_guard(ui, key, expect):
 
 
 def test_toolbar_loop_buttons_control_the_engine(ui):
+    """The top Loop loops every flow; the one beside the flow tabs loops the open flow (the same setting as the Loop under the image)."""
+    assert ui.be.loop is False and ui.be.allLoop is False
+    named = {c.property("objectName"): c for c in ui.of_type("ChromeToolButton") if c.property("icon") == "loop"}
+    assert set(named) == {"loopAllFlows", "loopThisFlow"}
+    ui.click(ui.center(named["loopThisFlow"]))
+    assert ui.be.loop is True and ui.main.property("loopOn") is True and ui.be.allLoop is False
+    ui.click(ui.center(named["loopThisFlow"]))
     assert ui.be.loop is False
-    btns = [c for c in ui.of_type("ChromeToolButton") if c.property("icon") == "loop"]
-    assert len(btns) == 2
-    ui.click(ui.center(btns[0]))
-    assert ui.be.loop is True and ui.main.property("loopOn") is True
-    ui.click(ui.center(btns[1]))
-    assert ui.be.loop is False
+    ui.click(ui.center(named["loopAllFlows"]))
+    assert ui.be.allLoop is True and ui.be.loop is False
+    ui.click(ui.center(named["loopAllFlows"]))
+    assert ui.be.allLoop is False
 
 
 def test_toolbar_buttons_have_tooltips_and_work(ui):
@@ -210,7 +215,7 @@ def test_grid_menu_item_mirrors_the_real_state(ui):
 
 
 DIALOG_KEYS = ["globalVars", "flowSettings", "validate", "cameraSet", "lensCal", "plugins", "pluginMarket",
-               "pluginCreate", "newSolution", "manual", "shortcuts", "about", "version", "comm", "hwTrigger",
+               "pluginGithub", "pluginCreate", "newSolution", "manual", "shortcuts", "about", "version", "comm", "hwTrigger",
                "controller", "performance", "logViewer", "language"]
 
 

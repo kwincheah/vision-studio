@@ -86,7 +86,7 @@ def run_mcp() -> int:
     return 0
 
 
-CLI_COMMANDS = ("serve", "run", "evaluate", "compare", "list", "dataset", "demo")
+CLI_COMMANDS = ("serve", "run", "train", "model-info", "evaluate", "compare", "list", "dataset", "demo")
 
 
 def main() -> int:

@@ -441,7 +441,7 @@ class InspectionPanel(QWidget):
         row = QHBoxLayout()
         self.edit_dataset = QLineEdit()
         self.edit_dataset.setPlaceholderText(
-            "annotations.json produced by  Tools > Inspection > Generate PCB Dataset")
+            "annotations.json produced by  Tools > Inspection > Generate Sample Defect Dataset")
         self.edit_dataset.setReadOnly(True)
         row.addWidget(self.edit_dataset, 1)
         btn_browse = QPushButton("Browse...")

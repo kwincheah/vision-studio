@@ -17,6 +17,8 @@ def new_instance_id(prefix: str = "node") -> str:
 
 def register_tool(cls: Type[VisionToolBase]):
     _TOOL_REGISTRY[cls.tool_name] = cls
+    if getattr(cls, "toolbox_hidden", False):
+        return cls              # loadable (saved flows, evaluation) but not offered in the toolbox
     cat = getattr(cls, 'category', 'General')
     if cat not in _CATEGORIES:
         _CATEGORIES[cat] = []
@@ -59,8 +61,44 @@ def unregister_tool(tool_name: str) -> bool:
     return True
 
 
+#: toolbox order: the order a flow is built in (acquire, clean up, find, measure, decide, report)
+CATEGORY_ORDER = ["Acquisition", "Image Processing", "Color Processing", "Location", "Measurement", "Image Generation", "Calibration", "Calculation",
+                  "Recognition", "Defect Detection", "Deep Learning", "Division and Combination", "Logic Tools", "Communication"]
+
+#: inside a category, related tools sit together (a tool not listed follows, in the order it was registered)
+TOOL_ORDER: Dict[str, List[str]] = {
+    "Acquisition": ["Image Source", "Multi-image Acquisition", "Image Buffer", "Light Source", "Image Output"],
+    "Image Processing": ["Image Crop", "Image Transform", "Color Convert", "Brightness Contrast", "Image Enhancement", "Image Filter", "Image Binarization",
+                         "Image Morphology", "Edge Detection", "Image Calculate", "Image Combination", "Image Normalization", "Image Correction",
+                         "Shade Correction", "Distortion Correction", "Affine Transformation", "Inverse Affine Transformation", "Ring Expansion",
+                         "Image Fixture", "Image Stitch", "Multiple Images Fusion", "Frame Mean", "Copy Fill"],
+    "Location": ["Template Match", "Mark Location", "Position Correction", "BLOB Analysis", "BLOB Label Analysis", "Target Tracking", "Path Extraction",
+                 "Line Search", "Edge Search", "Caliper", "Peak Search", "Multi-line Search", "Line Group Search", "Parallel Lines Search", "Rect Search",
+                 "Quadrilateral Search", "Circle Search", "Matrix Circle Search", "Ellipse Search", "Hough Detect",
+                 "Edge Intersection", "Find Angle Bisector", "Find Median Line", "Find Vertical Line", "Calculate Parallel Lines"],
+    "Measurement": ["Intensity Measure", "Pixel Count", "Histogram", "Focus Measure", "P2P Measure", "P2L Measure", "P2C Measure", "L2L Measure",
+                    "L2C Measure", "C2C Measure", "Angle Measure", "Line Intersection", "Edge Distance"],
+    "Calibration": ["N-Point Calibration", "CalibBoard Calibration", "N-Image Calibration", "Rotation Calibration", "Translation and Rotation Calibration",
+                    "Camera Mapping", "Mapping Calibration", "Lens Distortion Calibration", "Load Calibration"],
+    "Defect Detection": ["Defect Detection", "Defect Contrast", "Surface Defect Filter", "OCV"],
+    "Deep Learning": ["Object Detection", "DL Classify", "DL Segment", "DL Anomaly", "DL Instance Segment", "DL Image Defect Prediction",
+                      "Classification Registration", "DL Image Retrieval"],
+    "Logic Tools": ["Trigger", "Condition Branch", "Branch", "Branch String", "If Module", "Condition Detection", "String Comparison", "Variable Calculation",
+                    "Data Set", "Point Set", "Graphic Collection", "Format Module", "Save Text", "Time Consuming", "Group", "Script"],
+    "Communication": ["Send Data", "Receive Data", "TCP Send", "UDP Send", "Serial Send", "Modbus TCP Write", "Protocol Parsing", "Protocol Assembly",
+                      "Camera IO", "Data Log"],
+}
+
+
+def _ordered(items: List[str], order: List[str]) -> List[str]:
+    rank = {name: i for i, name in enumerate(order)}
+    return sorted(items, key=lambda n: rank.get(n, len(order)))          # stable: unlisted tools keep their registration order
+
+
 def list_categories() -> Dict[str, List[str]]:
-    return _CATEGORIES
+    """Categories in toolbox order (plugin categories last), each with its tools grouped by purpose."""
+    names = _ordered(list(_CATEGORIES), CATEGORY_ORDER)
+    return {c: _ordered(_CATEGORIES[c], TOOL_ORDER.get(c, [])) for c in names}
 
 
 def list_all_tools() -> List[str]:

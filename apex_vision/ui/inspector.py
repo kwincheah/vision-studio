@@ -46,7 +46,7 @@ def _is_dir_key(key: str) -> bool:
 #: "dropdown select" editor kind (manual §8.2, p. 109).
 PARAM_ENUMS: Dict[str, List[str]] = {
     "source_type": ["Synthetic", "File", "Camera", "Industrial GigE", "Industrial USB3", "IP Stream"],
-    "pattern_type": ["PCB Inspection", "Calibration Grid", "Circles & Holes", "Barcode Sample"],
+    "pattern_type": ["Part with Defects", "Metal Surface (demo)", "Calibration Grid", "Circles & Holes", "Barcode Sample"],
     "color_mode": ["BGR", "Grayscale"],
     "trigger_mode": ["Continuous", "Software Trigger", "Hardware Trigger (Line0)", "Hardware Trigger (Line1)"],
     "method": ["Otsu", "Adaptive", "Manual"],
@@ -239,6 +239,8 @@ class ParameterInspectorWidget(QWidget):
                 self.param_layout.addRow(lbl_text, combo)
 
         for key, val in tool.parameters.items():
+            if key in ("model_data", "model", "embedded_model"):      # learned or embedded data: kept, not edited by hand
+                continue
             if key == "code":
                 lbl = QLabel("Python Logic Script")
                 lbl.setStyleSheet(

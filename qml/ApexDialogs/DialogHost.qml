@@ -23,6 +23,7 @@ Item {
 
     InfoDialog { id: info; anchors.fill: parent; visible: host.current === "info"; onClosed: host.close() }
     GlobalVariablesDialog { anchors.fill: parent; visible: host.current === "globalVars"; onClosed: host.close() }
+    CommunicationDialog { anchors.fill: parent; visible: host.current === "comm"; onClosed: host.close() }
     FlowSettingsDialog { anchors.fill: parent; visible: host.current === "flowSettings"; onClosed: host.close() }
     ValidationDialog { anchors.fill: parent; visible: host.current === "validation"; onClosed: host.close() }
     ModuleConfigDialog { id: moduleConfig; anchors.fill: parent; visible: host.current === "moduleConfig"; onClosed: host.close() }

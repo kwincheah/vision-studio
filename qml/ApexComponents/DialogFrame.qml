@@ -15,6 +15,9 @@ import ApexTheme 1.0
  */
 Item {
     id: root
+    // Named so tests and design audits can address a dialog's card directly.  Every dialog
+    // is `anchors.fill: parent`, so without this the only reachable ancestor is the window.
+    objectName: "dialogFrame"
     property string title: "Dialog"
     property int dialogWidth: 560
     property int dialogHeight: 400
@@ -78,10 +81,14 @@ Item {
     }
 
     // scrim - clicking outside does not dismiss (these dialogs hold edits)
-    Rectangle { anchors.fill: parent; color: "#80000000"; MouseArea { anchors.fill: parent } }
+    // the wheel is taken too, so it can never reach the canvas or image view underneath (they would zoom)
+    Rectangle { anchors.fill: parent; color: "#80000000"; MouseArea { anchors.fill: parent; onWheel: function (w) { w.accepted = true } } }
 
     Rectangle {
         id: panel
+        // The card itself: sized from `dialogWidth`, centred in the host.  Named so an
+        // audit can measure the dialog's real bounds instead of the full-window host.
+        objectName: "dialogCard"
         anchors.centerIn: parent
         width: Math.min(root.dialogWidth, root.width - 40)
         height: Math.min(root.dialogHeight, root.height - 40)
@@ -89,6 +96,8 @@ Item {
         color: Theme.panel
         border.width: 1
         border.color: Theme.fieldBorder
+
+        MouseArea { anchors.fill: parent; acceptedButtons: Qt.NoButton; onWheel: function (w) { w.accepted = true } }     // behind the content: a list or Flickable above it still scrolls
 
         Rectangle {          // title bar
             id: bar

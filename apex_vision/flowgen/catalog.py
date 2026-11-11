@@ -4,10 +4,11 @@ Read from the live registry, so tools added by plugins appear automatically and 
 cannot drift from the engine.
 """
 import os
+import re
 from typing import Any, Dict, List, Optional
 
 import apex_vision.tools  # noqa: F401  (registers the built-in tools)
-from apex_vision.core.registry import create_tool_instance, list_all_tools
+from apex_vision.core.registry import create_tool_instance, get_tool_class, list_all_tools
 
 from apex_vision.core import param_schema
 
@@ -76,20 +77,29 @@ def tool_spec(name: str) -> Dict[str, Any]:
 def full_catalog(builtin_only: bool = False) -> List[Dict[str, Any]]:
     """Every registered tool (``builtin_only``: just the ones shipped with the app - what the checked-in
     reference documents; plugin tools are always available live through ``get_tool_spec``)."""
-    specs = [tool_spec(n) for n in sorted(list_all_tools())]
+    specs = [tool_spec(n) for n in sorted(list_all_tools()) if not getattr(get_tool_class(n), "toolbox_hidden", False)]
     return [s for s in specs if s["builtin"]] if builtin_only else specs
+
+
+_SYNONYMS = {"barcode": ["bcr", "bar code", "qr"], "qr": ["bcr", "2d code"], "threshold": ["binarization"], "robot": ["calibration", "alignment"],
+             "blur": ["filter"], "denoise": ["filter"], "ocr": ["character", "ocr"], "text": ["character"], "angle": ["rotation"], "colour": ["color"]}
 
 
 def search_tools(query: str = "", category: Optional[str] = None, limit: int = 15) -> List[Dict[str, Any]]:
     """Keyword search over name, category, description, port and parameter names (no embeddings)."""
-    words = [w for w in query.lower().replace(",", " ").split() if w]
+    stop = {"a", "an", "the", "of", "to", "and", "or", "for", "in", "on", "with", "between", "two", "from", "by", "is", "it"}
+    words = [w[:-1] if len(w) > 3 and w.endswith("s") else w for w in query.lower().replace(",", " ").split() if w and w not in stop]
     hits = []
     for spec in full_catalog():
         if category and spec["category"].lower() != category.lower():
             continue
-        text = " ".join([spec["tool"], spec["category"], spec["description"], *spec["inputs"], *spec["outputs"],
-                         *spec["parameters"]]).lower()
-        score = sum(text.count(w) + (3 if w in spec["tool"].lower() else 0) for w in words) if words else 1
+        name, desc = spec["tool"].lower(), spec["description"].lower()
+        rest = " ".join([spec["category"], *spec["inputs"], *spec["outputs"], *spec["parameters"]]).lower()
+        score = 1 if not words else 0
+        for w in words:
+            for v in [w] + _SYNONYMS.get(w, []):
+                pat = r"\b" + re.escape(v)                                                        # words that start with it, not letters inside other words
+                score += 4 * len(re.findall(pat, name)) + 3 * len(re.findall(pat, desc)) + min(2, len(re.findall(pat, rest)))
         if score:
             hits.append((score, spec))
     hits.sort(key=lambda h: -h[0])

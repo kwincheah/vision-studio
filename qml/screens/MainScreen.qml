@@ -23,7 +23,31 @@ Rectangle {
     readonly property bool dirty: backend ? backend.dirty : false
     readonly property string role: backend ? backend.role : "Engineer"
     readonly property var nodes: backend ? backend.nodes : SampleData.nodes
-    readonly property var connections: backend ? backend.connections : SampleData.connections
+    // The backend hands over a brand-new list on every update. The canvas must not rebuild its cards and wires each time
+    // (they flickered, and a drag in progress was destroyed), so the lists the Repeaters use only change when their content does;
+    // the cards read their live values (status, time, position) from `nodes` by id.
+    property var connections: []
+    property var nodeIds: []
+    property var groupFrameList: []
+    property var tabList: []                  // the flow tabs; replaced only when something in them changed
+    readonly property string tabKey: tabList.length + "|" + tabList.map(function (t) { return t.active ? t.name : "" }).join("")
+    function cardData(id) {
+        for (var i = 0; i < nodes.length; i++) if (nodes[i].id === id) return nodes[i]
+        return ({ id: id, title: "", tool: "", status: "PASS", ms: 0, x: 0, y: 0, inputs: [], outputs: [] })
+    }
+    function steady() {
+        var ids = []
+        for (var i = 0; i < nodes.length; i++) ids.push(nodes[i].id)
+        if (ids.join("|") !== nodeIds.join("|")) nodeIds = ids
+        var c = backend ? backend.connections : SampleData.connections
+        if (JSON.stringify(c) !== JSON.stringify(connections)) connections = c
+        var t = backend ? backend.flowTabs : [{ "name": "Flow1", "verdict": "", "ms": 0, "active": true }]
+        if (JSON.stringify(t) !== JSON.stringify(tabList)) tabList = t
+        var g = backend ? backend.groupFrames : []
+        if (JSON.stringify(g) !== JSON.stringify(groupFrameList)) groupFrameList = g
+    }
+    onNodesChanged: steady()
+    Component.onCompleted: steady()
     readonly property var results: backend ? backend.results : SampleData.results
     readonly property string verdict: backend ? backend.verdict : "FAIL"
     readonly property bool running: backend ? backend.running : false
@@ -42,6 +66,8 @@ Rectangle {
     readonly property bool loopOn: backend ? backend.loop : designLoop
     property bool designLoop: false
     function setLoop(on) { if (backend) backend.loop = on; else designLoop = on }
+    readonly property bool allLoopOn: backend ? backend.allLoop : false
+    function setAllLoop(on) { if (backend) backend.allLoop = on }
     property bool showGrid: true
     readonly property var layers: backend ? backend.layers : ({ overlays: true, rois: true, metrics: true, datums: true, crosshair: false, histogram: false })
     readonly property string formatted: backend ? backend.formattedOutput : "01_ImageAcquisition,OK,Width=800,Height=600"
@@ -64,7 +90,7 @@ Rectangle {
     Connections {
         target: root.backend
         ignoreUnknownSignals: true
-        function onWorkspaceRequested() { root.zoom = 1; root.panX = 0; root.panY = 0; fitTimer.restart() }
+        function onWorkspaceRequested() { root.zoom = 1; root.panX = 0; root.panY = 0; viewport.resetView(); fitTimer.restart() }
     }
     property var pos: ({})                    // node id -> {x, y}, kept live while dragging
 
@@ -83,7 +109,19 @@ Rectangle {
     property real wireCy: 0
     readonly property real snapRadius: 26
     readonly property var roi: backend ? backend.selectedRoi : [300, 250, 200, 100]
+    // The selected module's Display Setup (its overlay switches and colour).
+    readonly property var displaySetup: backend && backend.selectedDisplay
+                                        ? backend.selectedDisplay
+                                        : ({ roi: true, labels: true, boxes: true, colour: "#e4b030" })
+    // Share of the right column's height given to the image block; the result block below
+    // it takes the rest.  0.6 keeps the viewer dominant, as VisionMaster's does.
+    readonly property real imageBlockShare: 0.6
 
+    // one wheel notch is 120 units and zooms by 15%; a touchpad sends many small steps, so the factor follows the amount scrolled
+    function wheelFactor(w) {
+        var d = w.angleDelta.y !== 0 ? w.angleDelta.y : w.pixelDelta.y * 2
+        return Math.pow(1.15, Math.max(-480, Math.min(480, d)) / 120)
+    }
     function zoomAt(cx, cy, factor) {
         var nz = Math.max(0.25, Math.min(2.5, zoom * factor))
         panX = cx - (cx - panX) * nz / zoom
@@ -462,6 +500,8 @@ Rectangle {
         else if (key === "run") { if (backend) backend.run() }
         else if (key === "del") deleteSelected()
         else if (key === "dellink") deleteSelected()
+        else if (key === "ungroup") { if (backend) { var e1 = backend.setNodeGroup(selectedNode, ""); if (e1) say(e1) } }
+        else if (key.indexOf("grp:") === 0) { if (backend) { var e2 = backend.setNodeGroup(selectedNode, key.substring(4)); if (e2) say(e2) } }
     }
 
     property bool inspectionVisible: false
@@ -498,8 +538,7 @@ Rectangle {
         case "flowSettings": dialogs.show("flowSettings"); break
         case "hwTrigger": dialogs.showInfo("Hardware Trigger Settings",
             "Hardware / encoder triggering is not available in this build.\nFlows run from the software trigger (Once / Continuously)."); break
-        case "comm": dialogs.showInfo("Communication Management",
-            "Communication is configured per module, not globally.\nTCP Send: mode, IP address, port, prefix, suffix and CSV / JSON / plain-text format.\nAdd a TCP Send module to a flow to transmit its result payload."); break
+        case "comm": dialogs.show("comm"); break
         case "aiGen": aiVisible = !aiVisible; break
         case "lensCal": dialogs.show("lensCal"); break
         case "npoint": if (b) b.addTool("N-Point Calibration"); else say("N-Point Calibration module added"); break
@@ -507,6 +546,7 @@ Rectangle {
             "Pick a pattern (chessboard, circle grid, asymmetric circles), its size and a file name; a printable PNG target is written."); break
         case "plugins": dialogs.showPlugins(0); break
         case "pluginMarket": dialogs.showPlugins(1); break
+        case "pluginGithub": dialogs.showPlugins(2); break
         case "pluginCreate": dialogs.showPlugins(3); break
         case "validate": dialogs.show("validation"); break
         case "arrange": if (b) b.arrange(); else say("Modules arranged"); break
@@ -683,17 +723,21 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
             ChromeToolButton { icon: "image"; tooltip: "Load image files (Ctrl+I)"; onClicked: root.invoke("loadImage") }
             ChromeToolButton { icon: "undo"; tooltip: "Undo (Ctrl+Z)"; onClicked: if (root.backend) root.backend.undo(); else root.say("Undo") }
             ChromeToolButton { icon: "redo"; tooltip: "Redo (Ctrl+Y)"; onClicked: if (root.backend) root.backend.redo(); else root.say("Redo") }
-            Rectangle { width: 1; height: 24; color: "#8a9290"; anchors.verticalCenter: parent.verticalCenter }
+            Rectangle { width: 1; height: 24; color: Theme.chromeDivider; anchors.verticalCenter: parent.verticalCenter }
             ChromeToolButton { icon: "lock"; tooltip: root.role === "Operator" ? "Editing locked - click to unlock (Engineer)" : "Lock editing (Operator)"; checked: root.role === "Operator"; onClicked: if (root.backend) root.backend.setRole(root.role === "Operator" ? "Engineer" : "Operator") }
             ChromeToolButton { icon: "camera"; tooltip: "Camera set"; onClicked: root.invoke("cameraSet") }
             ChromeToolButton { icon: "table"; tooltip: "Controller management"; onClicked: root.invoke("controller") }
             ChromeToolButton { icon: "variable"; tooltip: "Global variables"; onClicked: root.invoke("globalVars") }
             ChromeToolButton { icon: "bolt"; tooltip: "Hardware trigger settings"; onClicked: root.invoke("hwTrigger") }
             ChromeToolButton { icon: "script"; tooltip: "Communication configuration"; onClicked: root.invoke("comm") }
-            Rectangle { width: 1; height: 24; color: "#8a9290"; anchors.verticalCenter: parent.verticalCenter }
-            ChromeToolButton { icon: "run"; kind: "run"; tooltip: "Run once"; width: 40; color: "#22c55e"; onClicked: if (root.backend) root.backend.run() }
-            ChromeToolButton { color: "#e4b030"; icon: "loop"; tooltip: "Loop images until Stop"; checked: root.loopOn; onClicked: root.setLoop(!root.loopOn) }
-            ChromeToolButton { icon: "stop"; kind: "stop"; tooltip: "Stop"; width: 40; color: "#ef4444"; onClicked: if (root.backend) root.backend.stop() }
+            Rectangle { width: 1; height: 24; color: Theme.chromeDivider; anchors.verticalCenter: parent.verticalCenter }
+            // `color` is not a ChromeToolButton property - these two carried a dead literal
+            // that had no effect, because the fill comes from `kind`.  Removed so the run and
+            // stop hues are set in exactly one place (the component's tokens).
+            // the top buttons act on ALL flows; the run / loop beside the flow tabs and the ones under the image act on the open flow
+            ChromeToolButton { objectName: "runAllFlows"; icon: "run"; kind: "run"; tooltip: "Run all flows"; width: 40; onClicked: if (root.backend) root.backend.runAll() }
+            ChromeToolButton { objectName: "loopAllFlows"; icon: "loop"; tooltip: "Loop all flows until Stop"; checked: root.allLoopOn; onClicked: root.setAllLoop(!root.allLoopOn) }
+            ChromeToolButton { objectName: "stopAllFlows"; icon: "stop"; kind: "stop"; tooltip: "Stop all flows"; width: 40; onClicked: if (root.backend) root.backend.stopAll() }
             StatusBadge {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.running ? "RUNNING" : root.verdict
@@ -724,31 +768,103 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
         height: Theme.heightTabBar
         color: Theme.chromeDark
 
+        // the flow controls stay where they are; only the tabs beside them scroll
         Row {
+            id: flowControls
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: parent.left
             anchors.leftMargin: 6
-            spacing: 10
-            Rectangle {       // active flow tab
-                width: 245; height: 28
-                color: Theme.accent
-                border.width: 1; border.color: Theme.accentBorder
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left; anchors.leftMargin: 12
-                    text: "● " + (root.backend ? root.backend.flowName : "Flow1") + "  " + root.verdict + "  " + Math.round(root.flowMs) + "ms"
-                    font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption
-                    color: Theme.textPrimary
-                }
-                Icon { name: "close"; tone: "light"; size: 14; anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter }
-            }
-            Item { width: 2; height: 1 }
-            ChromeToolButton { icon: "run"; kind: ""; tooltip: "Run once"; width: 30; height: 28; tone: "light"; onClicked: if (root.backend) root.backend.run() }
-            ChromeToolButton { icon: "loop"; tooltip: "Loop images until Stop"; width: 30; height: 28; checked: root.loopOn; onClicked: root.setLoop(!root.loopOn) }
+            spacing: 6
+            // these two (and the Run / Loop under the image) act on the open flow only - the same state, shown the same way
+            ChromeToolButton { objectName: "runThisFlow"; icon: root.running ? "stop" : "run"; kind: ""; tooltip: root.running ? "Stop this flow" : "Run this flow"; width: 30; height: 28; tone: "light"
+                               onClicked: if (root.backend) (root.running ? root.backend.stop() : root.backend.run()) }
+            ChromeToolButton { objectName: "loopThisFlow"; icon: "loop"; tooltip: "Loop this flow until Stop"; width: 30; height: 28; checked: root.loopOn; onClicked: root.setLoop(!root.loopOn) }
             ChromeToolButton { icon: "plus"; tooltip: "Add a sub-flow"; width: 30; height: 28; onClicked: if (root.backend) root.backend.addFlow(); else root.say("Flow added") }
             ChromeToolButton { icon: "check"; tooltip: "Validate flow"; width: 30; height: 28; onClicked: root.invoke("validate") }
         }
+        Rectangle { id: flowSep; x: flowControls.x + flowControls.width + 8; width: 1; height: 22; color: Theme.chromeOutline; anchors.verticalCenter: parent.verticalCenter }
+        Flickable {       // one tab per flow of the solution; scrolls sideways (wheel, drag) when there are many
+            id: flowTabs
+            objectName: "flowTabs"
+            anchors.verticalCenter: parent.verticalCenter
+            x: flowSep.x + 9
+            height: 28
+            width: Math.max(60, flowRight.x - 10 - x)
+            contentWidth: tabsRow.width; contentHeight: 28
+            clip: true; interactive: contentWidth > width
+            flickableDirection: Flickable.HorizontalFlick
+            boundsBehavior: Flickable.StopAtBounds
+            
+            // the wheel moves the tabs sideways
+            WheelHandler {
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: function (e) {
+                    var d = e.angleDelta.x !== 0 ? e.angleDelta.x : e.angleDelta.y
+                    flowTabs.contentX = Math.max(0, Math.min(flowTabs.contentWidth - flowTabs.width, flowTabs.contentX - d))
+                }
+            }
+            // bring the chosen (or newly added) tab into view - but only when the choice changes, so a manual scroll is left alone
+            function showActive() {
+                var edge = 0
+                for (var i = 0; i < tabsRow.children.length; i++) {
+                    var tab = tabsRow.children[i]
+                    if (!tab || tab.width === undefined) continue
+                    var l = edge, r = edge + tab.width
+                    edge = r + tabsRow.spacing
+                    if (i >= root.tabList.length) break
+                    if (!root.tabList[i].active) continue
+                    if (l < contentX) contentX = l
+                    else if (r > contentX + width) contentX = r - width
+                }
+            }
+            Connections { target: root; function onTabKeyChanged() { Qt.callLater(flowTabs.showActive) } }
+            onWidthChanged: Qt.callLater(showActive)
+            Row {
+                id: tabsRow
+                spacing: 2
+                Repeater {
+                    model: root.tabList
+                    delegate: Rectangle {
+                        objectName: "flowTab_" + modelData.name
+                        // The width follows the label.  It was a fixed 190 px, but the
+                        // label needs 171 px of *text* once the 10 px left inset and the
+                        // close button are taken out, so the cycle time was elided to
+                        // "FAIL 1…".  Content width with a floor keeps short names tidy and
+                        // lets a long one show its verdict and timing; past 320 px Qt's own
+                        // elision takes over, which is the correct fallback.
+                        width: Math.max(190, Math.min(320, tabLabel.implicitWidth + 44))
+                        height: 28
+                        color: modelData.active ? "#8a5a0e" : (tabHover.containsMouse ? Theme.railHover : "transparent")      // dark amber: white text stays readable
+                        border.width: 1; border.color: modelData.active ? Theme.accent : Theme.chromeOutline
+                        MouseArea { id: tabHover; anchors.fill: parent; hoverEnabled: true
+                                    onClicked: if (root.backend) root.backend.selectFlow(modelData.name) }
+                        Text {
+                            id: tabLabel
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.left: parent.left; anchors.leftMargin: 10
+                            anchors.right: closeIcon.left; anchors.rightMargin: 4
+                            elide: Text.ElideRight
+                            text: (modelData.running ? "\u25B6 " : (modelData.active ? "\u25CF " : "")) + modelData.name
+                                  + (modelData.verdict !== "" ? "  " + modelData.verdict + "  " + modelData.ms + "ms" : "")
+                            font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption
+                            font.bold: modelData.active
+                            color: "#ffffff"
+                        }
+                        Icon {
+                            id: closeIcon
+                            objectName: "flowClose_" + modelData.name
+                            name: "close"; tone: "light"; size: 14
+                            visible: root.tabList.length > 1
+                            anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter
+                            MouseArea { anchors.fill: parent; anchors.margins: -4
+                                        onClicked: if (root.backend) root.backend.closeFlow(modelData.name) }
+                        }
+                    }
+                }
+            }
+        }
         Row {
+            id: flowRight
             anchors.right: parent.right
             anchors.rightMargin: 10
             anchors.verticalCenter: parent.verticalCenter
@@ -820,6 +936,7 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
             // ---- flow canvas ----------------------------------------------------------
             Rectangle {
                 id: canvas
+                objectName: "flowCanvas"
                 anchors.top: wsTabs.bottom
                 anchors.bottom: parent.bottom
                 width: parent.width
@@ -840,6 +957,26 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                         c.fillStyle = "" + Theme.canvasDot
                         for (var x = 8; x < width; x += 16)
                             for (var y = 8; y < height; y += 16) c.fillRect(x, y, 1.5, 1.5)
+                    }
+                }
+
+                // pinch to zoom (touch screen, or a touchpad gesture on platforms that deliver one); two fingers also pan.
+                // A precision touchpad on Windows reports its pinch as Ctrl + wheel, which the wheel zoom below handles.
+                PinchHandler {
+                    id: canvasPinch
+                    objectName: "canvasPinch"
+                    target: null                                   // the view is moved by root.zoom / root.panX, not by this handler
+                    acceptedDevices: PointerDevice.TouchScreen | PointerDevice.TouchPad
+                    minimumScale: 0.001
+                    maximumScale: 1000
+                    property real lastScale: 1.0
+                    property real lastX: 0
+                    property real lastY: 0
+                    onActiveChanged: { lastScale = 1.0; lastX = centroid.position.x; lastY = centroid.position.y }
+                    onActiveScaleChanged: if (active && lastScale > 0) { root.zoomAt(centroid.position.x, centroid.position.y, activeScale / lastScale); lastScale = activeScale }
+                    onCentroidChanged: if (active) {
+                        root.panX += centroid.position.x - lastX; root.panY += centroid.position.y - lastY
+                        lastX = centroid.position.x; lastY = centroid.position.y
                     }
                 }
 
@@ -864,7 +1001,7 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                         if (pressedButtons & Qt.RightButton) return
                         root.panX += m.x - lastX; root.panY += m.y - lastY; lastX = m.x; lastY = m.y
                     }
-                    onWheel: function (w) { root.zoomAt(w.x, w.y, w.angleDelta.y > 0 ? 1.15 : 1 / 1.15) }
+                    onWheel: function (w) { root.zoomAt(w.x, w.y, root.wheelFactor(w)) }
                 }
 
                 Item {
@@ -927,55 +1064,83 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                     }
 
                     Repeater {
+                        id: groupFrameRepeater
+                        model: root.groupFrameList
+                        delegate: Rectangle {
+                            objectName: "groupFrame"
+                            x: modelData.x; y: modelData.y; width: modelData.w; height: modelData.h
+                            radius: 10
+                            color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.06)
+                            border.width: 1; border.color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.55)
+                            Text {
+                                x: 10; y: 3
+                                text: modelData.title + "  (" + modelData.count + " module" + (modelData.count === 1 ? "" : "s") + ")"
+                                font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption; font.weight: Font.DemiBold; color: Theme.primary
+                            }
+                        }
+                    }
+
+                    Repeater {
                         id: nodeRepeater
-                        model: root.nodes
+                        model: root.nodeIds
                         delegate: NodeCard {
-                            x: modelData.x
-                            y: modelData.y
-                            title: modelData.title
-                            toolName: modelData.tool || ""
-                            status: modelData.status
-                            ms: modelData.ms
-                            inputs: modelData.inputs
-                            outputs: modelData.outputs
-                            selected: root.selectedNode === modelData.id
-                            onClicked: { root.selectedLink = null; root.selectedNode = modelData.id; canvas.forceActiveFocus(); if (root.backend) root.backend.selectNode(modelData.id) }
-                            onDoubleClicked: dialogs.showModule(modelData.id, modelData.title)
+                            readonly property var d: root.cardData(modelData)      // modelData is the module's id
+                            x: d.x
+                            y: d.y
+                            onDChanged: if (!dragging) { x = d.x; y = d.y }          // a drag breaks the x/y bindings; keep following the model otherwise
+                            title: d.title
+                            toolName: d.tool || ""
+                            status: d.status
+                            ms: d.ms
+                            inputs: d.inputs
+                            outputs: d.outputs
+                            selected: root.selectedNode === modelData
+                            onClicked: { root.selectedLink = null; root.selectedNode = modelData; canvas.forceActiveFocus(); if (root.backend) root.backend.selectNode(modelData) }
+                            onDoubleClicked: dialogs.showModule(modelData, d.title)
                             function publish() {
                                 // a NEW object each time: mutating it in place is not seen as a change,
                                 // so the wires (bound to `pos`) would never follow a dragged module
                                 var p = {}
                                 for (var k in root.pos) p[k] = root.pos[k]
-                                p[modelData.id] = { x: x, y: y }
+                                p[modelData] = { x: x, y: y }
                                 root.pos = p
                             }
                             onXChanged: publish()
                             onYChanged: publish()
                             Component.onCompleted: publish()
                             onDragStarted: if (root.backend) root.backend.beginMove()
-                            onMoved: if (root.backend) root.backend.moveNode(modelData.id, x, y)
-                            inputState: (root.portStates[modelData.id] || { inputs: [] }).inputs
-                            outputState: (root.portStates[modelData.id] || { outputs: [] }).outputs
-                            inputLinked: root.linkedInputs(modelData.id)
-                            onWireStarted: function (index) { root.selectedNode = modelData.id; root.beginWire(modelData.id, index, true, null) }
+                            onMoved: if (root.backend) root.backend.moveNode(modelData, x, y)
+                            inputState: (root.portStates[modelData] || { inputs: [] }).inputs
+                            outputState: (root.portStates[modelData] || { outputs: [] }).outputs
+                            inputLinked: root.linkedInputs(modelData)
+                            onWireStarted: function (index) { root.selectedNode = modelData; root.beginWire(modelData, index, true, null) }
                             onWireMoved: function (p) { root.moveWire(p) }
                             onWireDropped: function (p) { root.endWire(p) }
                             onInputWireStarted: function (index) {
                                 var held = null
                                 for (var i = 0; i < root.connections.length; i++)
-                                    if (root.connections[i].to === modelData.id && root.connections[i].toPort === index) held = root.connections[i]
+                                    if (root.connections[i].to === modelData && root.connections[i].toPort === index) held = root.connections[i]
                                 if (held) root.beginWire(held.from, held.fromPort, true, held)       // pick the wire up by its end
-                                else root.beginWire(modelData.id, index, false, null)                // free input: link backwards
+                                else root.beginWire(modelData, index, false, null)                // free input: link backwards
                             }
                             onInputWireMoved: function (p) { root.moveWire(p) }
                             onInputWireDropped: function (p) { root.endWire(p) }
                             onInputCleared: function (index) {
-                                if (root.backend) root.backend.disconnectInput(modelData.id, index); else root.say("Input disconnected")
+                                if (root.backend) root.backend.disconnectInput(modelData, index); else root.say("Input disconnected")
                             }
                             onContextRequested: function (p) {
-                                root.selectedNode = modelData.id
+                                root.selectedNode = modelData
                                 var c = scene.mapToItem(canvas, p.x, p.y)
                                 cardMenu.x = c.x; cardMenu.y = c.y
+                                var base = [ { text: "Module Configuration...", key: "cfg", shortcut: "Enter" }, { text: "Rename...", key: "rename", shortcut: "F2" },
+                                             { text: "Execute Module", key: "run" } ]
+                                var groups = root.backend ? root.backend.groupsFor(modelData) : []
+                                if (groups.length) base.push({ sep: true })
+                                for (var gi = 0; gi < groups.length; gi++)
+                                    base.push({ text: (groups[gi].current ? "In group: " : "Add to group: ") + groups[gi].title, key: groups[gi].current ? "ungroup" : "grp:" + groups[gi].id })
+                                if (d.group) base.push({ text: "Take out of group", key: "ungroup" })
+                                base.push({ sep: true }); base.push({ text: "Delete Module", key: "del", shortcut: "Del" })
+                                cardMenu.items = base
                                 cardMenu.open()
                             }
                         }
@@ -991,7 +1156,7 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                         width: 20; height: 20; radius: 10
                         color: modelData.state === "hot" ? "#3322c55e" : (modelData.state === "bad" ? "#33dc2626" : "transparent")
                         border.width: modelData.state === "cand" ? 1 : 2
-                        border.color: modelData.state === "hot" ? "#22c55e" : (modelData.state === "bad" ? Theme.errorBorder : Theme.portColor(root.portDtype(root.wireDrag.from, root.wireDrag.index, !root.wireDrag.reverse), "value"))
+                        border.color: modelData.state === "hot" ? Theme.portHot : (modelData.state === "bad" ? Theme.errorBorder : Theme.portColor(root.portDtype(root.wireDrag.from, root.wireDrag.index, !root.wireDrag.reverse), "value"))
                         opacity: modelData.state === "cand" ? 0.6 : 1
                     }
                 }
@@ -1125,19 +1290,56 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                 width: parent.width
                 color: Theme.canvas
                 visible: root.workspaceTab === 2
-                Rectangle {
+
+                // One card per flow, laid out in a wrapping grid.  This previously drew a
+                // single card centred on the canvas with the flow name "PCB_AOI_Solution"
+                // and the timing taken from the *active* flow, so on any other project the
+                // overview named a flow that did not exist and showed another flow's
+                // numbers.  It now reads the same `tabList` the tab bar uses, so the two
+                // cannot disagree.
+                // A Grid sizes itself to its children, so anchoring it centred puts the
+                // block in the middle whatever the flow count.  `Flow` looked right but
+                // reports no implicit size, so `centerIn` collapsed it to a corner; that is
+                // why the old single card sat off-centre.
+                Grid {
                     anchors.centerIn: parent
-                    width: 186; height: 100
-                    radius: 6; color: Theme.card
-                    border.width: 2; border.color: root.verdict === "PASS" ? "#2fa56a" : "#e0585c"
-                    Text { x: 10; y: 8; text: "PCB_AOI_Solution"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; font.weight: Font.DemiBold; color: Theme.textPrimary }
-                    Row {
-                        x: 10; y: 34; spacing: 8
-                        AppButton { text: ""; icon: "run"; kind: "secondary"; width: 36 }
-                        AppButton { text: ""; icon: "loop"; kind: "secondary"; width: 36 }
+                    columns: Math.max(1, Math.min(root.tabList.length,
+                                                  Math.floor((parent.width - 40) / 206)))
+                    spacing: 20
+                    Repeater {
+                        model: root.tabList
+                        delegate: Rectangle {
+                            width: 186; height: 100
+                            radius: 6; color: Theme.card
+                            border.width: 2
+                            border.color: modelData.verdict === "FAIL" ? Theme.errorBorder
+                                        : modelData.verdict === "PASS" ? Theme.okBorder
+                                        : Theme.fieldBorder
+                            Text {
+                                x: 10; y: 8; width: parent.width - 20
+                                text: modelData.name
+                                elide: Text.ElideRight
+                                font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody
+                                font.weight: Font.DemiBold; color: Theme.textPrimary
+                            }
+                            Row {
+                                x: 10; y: 34; spacing: 8
+                                AppButton { text: ""; icon: "run"; kind: "secondary"; width: 36
+                                            onClicked: if (root.backend) root.backend.selectFlow(modelData.name) }
+                                AppButton { text: ""; icon: "loop"; kind: "secondary"; width: 36 }
+                            }
+                            Text { x: 10; y: 74
+                                   text: modelData.ms !== undefined ? modelData.ms + "ms" : "-"
+                                   font.family: Theme.monoFamily;
+                                   font.pixelSize: Theme.fontCaption; color: Theme.textPrimary }
+                            Text { anchors.right: parent.right; anchors.rightMargin: 10; y: 74
+                                   text: modelData.verdict !== "" ? modelData.verdict : "NOT RUN"
+                                   font.pixelSize: Theme.fontCaption; font.weight: Font.Bold
+                                   color: modelData.verdict === "PASS" ? Theme.okText
+                                        : modelData.verdict === "FAIL" ? Theme.errorText
+                                        : Theme.textMuted }
+                        }
                     }
-                    Text { x: 10; y: 74; text: root.flowMs.toFixed(2) + "ms"; font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textPrimary }
-                    Text { anchors.right: parent.right; anchors.rightMargin: 10; y: 74; text: root.verdict; font.pixelSize: Theme.fontCaption; font.weight: Font.Bold; color: root.verdict === "PASS" ? Theme.okText : Theme.errorText }
                 }
             }
         }
@@ -1146,7 +1348,13 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
         Rectangle {
             id: rightColumn
             anchors.right: parent.right
-            width: 640
+            // The canvas and this column hold a 6:4 split of the space beside the rail, at
+            // any window size.  A fixed 640 px made the ratio drift with the window: at 1600
+            // it was 59:41, but at 1280 the image column was wider than the canvas, and on a
+            // wide monitor the canvas ate the column.
+            width: Math.round(Math.max(360,
+                        Math.min((parent.width - rail.width) * 0.4,
+                                 parent.width - rail.width - 320)))
             height: parent.height
             color: Theme.panel
 
@@ -1221,25 +1429,85 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                 Row {
                     anchors.right: parent.right; anchors.rightMargin: 6
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 6
-                    Icon { name: "layers"; size: 16 }
-                    Icon { name: "search"; size: 16 }
-                    Icon { name: "fit"; size: 16 }
-                    Icon { name: "target"; size: 16 }
-                    Icon { name: "grid"; size: 16 }
+                    spacing: 4
+                    Repeater {
+                        model: [ { icon: "layers", name: "viewOverlays", tip: "Show / hide result overlays" },
+                                 { icon: "search", name: "viewZoomIn",   tip: "Zoom in (or scroll the mouse wheel over the image)" },
+                                 { icon: "fit",    name: "viewFit",      tip: "Fit the whole image to the viewer" },
+                                 { icon: "roi",    name: "viewResetRoi", tip: "Reset this module's ROI to the whole image (Ctrl+Shift+R)" },
+                                 { icon: "target", name: "viewCrosshair", tip: "Show / hide the centre crosshair" },
+                                 { icon: "grid",   name: "viewGrid",     tip: "Show / hide a measuring grid (50 px)" } ]
+                        delegate: Rectangle {
+                            id: vbtn
+                            objectName: modelData.name
+                            width: 24; height: 22; radius: 3
+                            // `viewFit` reads as active when the image is already fitted, so
+                            // pressing it gives visible feedback instead of appearing inert.
+                            readonly property bool active: modelData.name === "viewOverlays" ? root.layers.overlays === true
+                                                         : modelData.name === "viewCrosshair" ? root.layers.crosshair === true
+                                                         : modelData.name === "viewGrid" ? root.layers.pixelgrid === true
+                                                         : modelData.name === "viewZoomIn" ? viewport.viewZoom > 1.001
+                                                         : modelData.name === "viewFit" ? viewport.viewZoom <= 1.001 : false
+                            color: vMouse.containsMouse ? Theme.buttonHover : (active ? Theme.accentDim : "transparent")
+                            Icon { anchors.centerIn: parent; name: modelData.icon; size: 16 }
+                            ToolTip.visible: vMouse.containsMouse; ToolTip.text: modelData.tip; ToolTip.delay: 500
+                            MouseArea {
+                                id: vMouse; anchors.fill: parent; hoverEnabled: true
+                                onClicked: {
+                                    if (modelData.name === "viewOverlays") { if (root.backend) root.backend.setLayer("overlays", !(root.layers.overlays === true)) }
+                                    else if (modelData.name === "viewCrosshair") { if (root.backend) root.backend.setLayer("crosshair", !(root.layers.crosshair === true)) }
+                                    else if (modelData.name === "viewGrid") { if (root.backend) root.backend.setLayer("pixelgrid", !(root.layers.pixelgrid === true)) }
+                                    else if (modelData.name === "viewZoomIn") viewport.zoomBy(1.25, viewport.width / 2, viewport.height / 2)
+                                    else if (modelData.name === "viewResetRoi") { if (root.backend) root.backend.resetRoi() }
+                                    else viewport.fitView()
+                                }
+                            }
+                        }
+                    }
                 }
             }
             Rectangle {      // viewport
                 id: viewport
+                objectName: "viewportRect"
                 visible: root.viewTab === "image"
                 anchors.top: imgHeader.bottom
                 width: parent.width
-                height: 300
+                // The image block (header, viewer, read-out, strip) and the result block
+                // below it split the column 6:4, the same way the canvas and this column
+                // split 6:4 horizontally.  A fixed 300 px made the image the smallest thing
+                // on screen and left the ratio changing with the window, whereas
+                // VisionMaster's image window scales with the window rather than sitting at
+                // one height.  The 142 px is the header + read-out + strip + strip header
+                // that share the image block with this rectangle.
+                height: Math.max(160,
+                                 (rightColumn.height - rcTabs.height) * root.imageBlockShare
+                                 - imgHeader.height - readout.height
+                                 - stripHeader.height - strip.height)
                 color: Theme.viewport
+                clip: true
+                property real viewZoom: 1.0              // 1 = the whole image fits; the image header's zoom buttons and the wheel change it
+                property real viewPanX: 0
+                property real viewPanY: 0
+                function resetView() { viewZoom = 1; viewPanX = 0; viewPanY = 0 }
+                // "Fit to screen": the whole image visible and centred.  Same state as zoom 1,
+                // named separately because that is what the button and Ctrl+0 mean to a user.
+                function fitView() { resetView() }
+                readonly property bool fitted: viewZoom <= 1.001
+                function zoomBy(f, cx, cy) {             // keep the point under (cx, cy) fixed
+                    var nz = Math.max(1, Math.min(16, viewZoom * f))
+                    var k = nz / viewZoom
+                    viewPanX = viewPanX * k + (cx - width / 2) * (1 - k)
+                    viewPanY = viewPanY * k + (cy - height / 2) * (1 - k)
+                    viewZoom = nz
+                    if (nz <= 1) { viewPanX = 0; viewPanY = 0 }
+                }
                 Image {
                     id: frame
-                    anchors.fill: parent
-                    anchors.margins: 10
+                    objectName: "viewFrame"
+                    x: 10 + viewport.viewPanX - (viewport.width - 20) * (viewport.viewZoom - 1) / 2
+                    y: 10 + viewport.viewPanY - (viewport.height - 20) * (viewport.viewZoom - 1) / 2
+                    width: (viewport.width - 20) * viewport.viewZoom
+                    height: (viewport.height - 20) * viewport.viewZoom
                     fillMode: Image.PreserveAspectFit
                     cache: false
                     source: root.backend ? root.backend.imageUrl : "../images/sample_pcb.png"
@@ -1252,14 +1520,17 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                 readonly property real imgY0: frame.y + (frame.height - frame.paintedHeight) / 2
 
                 Rectangle {          // the selected module's ROI
+                    // "Show module ROI" in the Display Setup tab hides it; the colour there
+                    // is the one the module's overlays are drawn in.
                     visible: root.roi.length === 4 && frame.implicitWidth > 0
+                             && root.displaySetup.roi !== false
                     x: viewport.imgX0 + root.roi[0] * viewport.imgScale
                     y: viewport.imgY0 + root.roi[1] * viewport.imgScale
                     width: root.roi[2] * viewport.imgScale
                     height: root.roi[3] * viewport.imgScale
-                    color: "#18e4b030"
+                    color: "#18" + String(root.displaySetup.colour || "").replace("#", "")
                     border.width: 2
-                    border.color: Theme.accent
+                    border.color: root.displaySetup.colour || Theme.accent
                 }
                 Rectangle {          // rubber band while drawing
                     id: band
@@ -1268,23 +1539,70 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                     border.width: 1
                     border.color: "#00a0ff"
                 }
+                PinchHandler {
+                    id: viewerPinch
+                    objectName: "viewerPinch"
+                    target: null
+                    acceptedDevices: PointerDevice.TouchScreen | PointerDevice.TouchPad
+                    minimumScale: 0.001
+                    maximumScale: 1000
+                    property real lastScale: 1.0
+                    property real lastX: 0
+                    property real lastY: 0
+                    onActiveChanged: { lastScale = 1.0; lastX = centroid.position.x; lastY = centroid.position.y }
+                    onActiveScaleChanged: if (active && lastScale > 0) { viewport.zoomBy(activeScale / lastScale, centroid.position.x, centroid.position.y); lastScale = activeScale }
+                    onCentroidChanged: if (active && viewport.viewZoom > 1.001) {
+                        var limX = (viewport.width - 20) * (viewport.viewZoom - 1) / 2, limY = (viewport.height - 20) * (viewport.viewZoom - 1) / 2
+                        viewport.viewPanX = Math.max(-limX, Math.min(limX, viewport.viewPanX + centroid.position.x - lastX))
+                        viewport.viewPanY = Math.max(-limY, Math.min(limY, viewport.viewPanY + centroid.position.y - lastY))
+                        lastX = centroid.position.x; lastY = centroid.position.y
+                    }
+                }
                 MouseArea {
                     id: roiDraw
                     anchors.fill: parent
                     property real sx: 0
                     property real sy: 0
-                    cursorShape: Qt.CrossCursor
+                    property bool panning: false
+                    property bool noRoiPress: false     // pressed on a module that has no region to draw
+                    property real px0: 0
+                    property real py0: 0
+                    acceptedButtons: Qt.AllButtons
+                    cursorShape: panning ? Qt.ClosedHandCursor : (root.roi.length === 4 ? Qt.CrossCursor : Qt.ArrowCursor)
                     hoverEnabled: true
                     onExited: viewport.cursorX = -1
-                    onPressed: function (m) { if (root.roi.length !== 4) return; sx = m.x; sy = m.y; band.x = sx; band.y = sy; band.width = 0; band.height = 0; band.visible = true }
+                    onWheel: function (w) { viewport.zoomBy(root.wheelFactor(w), w.x, w.y) }
+                    onPressed: function (m) {
+                        // drag moves a zoomed image: right / middle button always, left button when no ROI is being drawn
+                        if (viewport.viewZoom > 1.001 && (m.button !== Qt.LeftButton || root.roi.length !== 4)) {
+                            panning = true; px0 = m.x - viewport.viewPanX; py0 = m.y - viewport.viewPanY; return
+                        }
+                        if (m.button !== Qt.LeftButton) return
+                        if (root.roi.length !== 4) { sx = m.x; sy = m.y; noRoiPress = true; return }
+                        sx = m.x; sy = m.y; band.x = sx; band.y = sy; band.width = 0; band.height = 0; band.visible = true }
                     onPositionChanged: function (m) {
                         viewport.cursorX = Math.floor((m.x - viewport.imgX0) / viewport.imgScale)
                         viewport.cursorY = Math.floor((m.y - viewport.imgY0) / viewport.imgScale)
+                        if (panning) {
+                            var limX = (viewport.width - 20) * (viewport.viewZoom - 1) / 2, limY = (viewport.height - 20) * (viewport.viewZoom - 1) / 2
+                            viewport.viewPanX = Math.max(-limX, Math.min(limX, m.x - px0))
+                            viewport.viewPanY = Math.max(-limY, Math.min(limY, m.y - py0))
+                            return
+                        }
                         if (!pressed || root.roi.length !== 4) return
                         band.x = Math.min(sx, m.x); band.y = Math.min(sy, m.y)
                         band.width = Math.abs(m.x - sx); band.height = Math.abs(m.y - sy)
                     }
                     onReleased: function (m) {
+                        if (panning) { panning = false; return }
+                        if (noRoiPress) {
+                            noRoiPress = false
+                            if (Math.abs(m.x - sx) + Math.abs(m.y - sy) > 8) {
+                                var n = root.nodeById(root.selectedNode)
+                                root.say((n ? n.title : "This module") + " has no region to draw. Select a module with a region (for example Defect Detection, Template Match, Pixel Count or Intensity Measure).")
+                            }
+                            return
+                        }
                         if (!band.visible) return
                         band.visible = false
                         var s = viewport.imgScale
@@ -1509,16 +1827,19 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
         anchors.bottom: parent.bottom
         width: parent.width
         height: Theme.statusBarHeight
-        color: Theme.chrome
-        Text { x: 16; width: parent.width - 520; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: root.toast !== "" ? root.toast : root.hint; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary }
+        // The darker chrome with light ink, matching the toolbars.  It was the light
+        // menu-strip grey filled with `Theme.textPrimary` - dark ink on a mid-grey,
+        // measured 3.06:1, below the 4.5:1 the rest of the interface holds to.
+        color: Theme.chromeDark
+        Text { x: 16; width: parent.width - 520; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: root.toast !== "" ? root.toast : root.hint; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textOnChrome }
         Row {
             anchors.right: parent.right; anchors.rightMargin: 14
             anchors.verticalCenter: parent.verticalCenter
             spacing: 26
-            Text { text: "Flow " + root.flowMs.toFixed(2) + "ms"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary }
-            Text { text: "Tools " + root.toolCount; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary }
-            Text { text: "Algorithm " + root.algoMs.toFixed(2) + "ms"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary }
-            Text { text: "v" + (backend ? backend.version : ""); font.family: Theme.fontFamily; font.pixelSize: Theme.fontMicro; color: Theme.textPrimary }
+            Text { text: "Flow " + root.flowMs.toFixed(2) + "ms"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textOnChrome }
+            Text { text: "Tools " + root.toolCount; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textOnChrome }
+            Text { text: "Algorithm " + root.algoMs.toFixed(2) + "ms"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textOnChrome }
+            Text { text: "v" + (backend ? backend.version : ""); font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption; color: Theme.textOnChrome }
         }
     }
 
@@ -1528,6 +1849,9 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
     Shortcut { sequence: "Ctrl+S"; onActivated: root.invoke("save") }
     Shortcut { sequence: "Ctrl+Shift+S"; onActivated: root.invoke("saveAs") }
     Shortcut { sequence: "Ctrl+I"; onActivated: root.invoke("loadImage") }
+    // Reset the selected module's ROI back to the whole image.  Ctrl+0 fits the canvas, so
+    // the ROI reset needs its own binding.
+    Shortcut { sequence: "Ctrl+Shift+R"; onActivated: if (root.backend) root.backend.resetRoi() }
     Shortcut { sequence: "Ctrl+Z"; onActivated: if (root.backend) root.backend.undo() }
     Shortcut { sequence: "Ctrl+Y"; onActivated: if (root.backend) root.backend.redo() }
     Shortcut { sequence: "Ctrl+1"; onActivated: root.invoke("viewFlow") }
@@ -1628,7 +1952,7 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
     }
     FolderDialog {
         id: datasetFolderDialog
-        title: "Choose a folder for the PCB defect dataset"
+        title: "Choose a folder for the sample defect dataset"
         onAccepted: if (typeof appInspection !== "undefined") { appInspection.generateDataset(selectedFolder.toString(), 40); inspectionTab = 0; inspectionVisible = true }
     }
     FolderDialog {

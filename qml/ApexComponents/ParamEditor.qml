@@ -28,6 +28,7 @@ Item {
         id: loader
         width: parent.width
         sourceComponent: {
+            if (root.spec.active === false) return blankEditor           // does not apply with the module's current settings
             switch (root.kind) {
             case "bool": return boolEditor
             case "enum": case "device": case "flow": return root.spec.choices && root.spec.choices.length ? enumEditor : textEditor
@@ -39,6 +40,14 @@ Item {
             case "path": case "dir": return pathEditor
             default: return textEditor
             }
+        }
+    }
+
+    Component { id: blankEditor
+        Rectangle { objectName: "paramBlank"; implicitHeight: 26; width: Math.min(root.width, 260); radius: Theme.radiusControl
+            color: Theme.panelAlt; border.width: 1; border.color: Theme.fieldBorder; opacity: 0.7
+            Text { anchors.verticalCenter: parent.verticalCenter; anchors.left: parent.left; anchors.leftMargin: 8
+                text: root.spec.why || "Not used"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption; font.italic: true; color: Theme.textMuted }
         }
     }
 
@@ -131,13 +140,11 @@ Item {
     }
 
     Component { id: codeEditor
-        Column { spacing: Theme.spSnug
-            Rectangle { width: root.width; height: 170; color: Theme.fieldBg; border.width: 1
-                border.color: code.activeFocus ? Theme.primary : Theme.fieldBorder; radius: Theme.radiusPanel
-                Flickable { anchors.fill: parent; anchors.margins: 4; contentHeight: code.contentHeight; contentWidth: code.contentWidth; clip: true
-                    TextEdit { id: code; objectName: "paramCode"; text: String(root.val); width: Math.max(contentWidth, parent.width)
-                        font.family: Theme.monoFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary; selectByMouse: true; activeFocusOnTab: true } } }
-            AppButton { text: "Apply script"; width: 110; onClicked: root.edited(code.text) }
+        ScriptEditor {
+            width: root.width
+            height: 300
+            text: String(root.val)
+            onApplied: function (source) { root.edited(source) }
         }
     }
 

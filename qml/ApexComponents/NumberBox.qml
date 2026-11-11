@@ -27,6 +27,10 @@ Rectangle {
 
     TextInput {
         id: input
+        // A TextInput is not in the Tab chain unless it opts in, so the field was
+        // unreachable by keyboard: in Flow Settings, Tab went CheckLabel -> Cancel -> OK
+        // and skipped both numeric fields entirely.
+        activeFocusOnTab: true
         anchors.left: parent.left
         anchors.leftMargin: Theme.spBase
         anchors.right: steppers.left
@@ -43,7 +47,11 @@ Rectangle {
     MouseArea {      // wheel over the field steps the value
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
-        onWheel: function (w) { root.commit(root.value + (w.angleDelta.y > 0 ? root.step : -root.step)) }
+        // only a field being edited steps with the wheel; otherwise the wheel scrolls the dialog / panel the field sits in
+        onWheel: function (w) {
+            if (input.activeFocus) root.commit(root.value + (w.angleDelta.y > 0 ? root.step : -root.step))
+            else w.accepted = false
+        }
     }
     Row {                       // [-] [+] : two full-height 24 px buttons (a stacked up/down spinner is too small to hit)
         id: steppers

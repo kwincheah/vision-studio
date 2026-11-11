@@ -93,7 +93,12 @@ def test_pixel_readout_follows_the_pointer_and_shows_the_real_colour(ui):
     QTest.mouseMove(ui.w, QPoint(p.x() + 1, p.y()))
     ui.spin(15)
     text = readout_text(ui)
-    assert "X,4" in text and "Y,30" in text, text
+    # The viewer's pointer -> pixel mapping rounds, and its height is derived from the
+    # column's 6:4 split, so the read-out for a point aimed at (400, 300) may land within a
+    # pixel or two.  Assert near it rather than binding the test to one window height.
+    got_x = int(text.split("X,")[1].split()[0])
+    got_y = int(text.split("Y,")[1].split()[0])
+    assert abs(got_x - 400) <= 3 and abs(got_y - 300) <= 3, text
     c = ui.be._provider.image.pixelColor(int(text.split("X,")[1].split()[0]), int(text.split("Y,")[1].split()[0]))
     assert f"R:{c.red()} G:{c.green()} B:{c.blue()}" in text
     QTest.mouseMove(ui.w, QPoint(5, 5))                                      # leaving the image clears it

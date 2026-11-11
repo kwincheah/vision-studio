@@ -16,7 +16,7 @@ Rectangle {
     radius: Theme.radiusPanel
     color: checked ? Theme.accent : (mouse.containsMouse ? Theme.railHover : "transparent")
     border.width: activeFocus ? 2 : 1
-    border.color: activeFocus ? Theme.primary : Theme.accent
+    border.color: activeFocus ? Theme.focusOnChrome : Theme.accent
     activeFocusOnTab: true
     Keys.onPressed: function (e) { var act = e.key === Qt.Key_Space || e.key === Qt.Key_Return; if (act) clicked(); e.accepted = act }
 

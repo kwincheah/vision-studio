@@ -22,3 +22,5 @@ ChromePillButton 1.0 ChromePillButton.qml
 FocusTrap 1.0 FocusTrap.qml
 ParamEditor 1.0 ParamEditor.qml
 ModelPicker 1.0 ModelPicker.qml
+ScriptEditor 1.0 ScriptEditor.qml
+ApexScrollBar 1.0 ApexScrollBar.qml

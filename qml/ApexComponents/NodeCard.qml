@@ -17,6 +17,7 @@ Rectangle {
     property var inputState: []          // per input while a wire is dragged: "" | "ok" (can take it) | "dim" | "hot" (snapped target)
     property var outputState: []         // same for outputs (when a wire is dragged backwards from an input)
     property var inputLinked: []         // per input: is a wire attached (changes the tooltip)
+    readonly property bool dragging: handle.dragging
     readonly property int headerHeight: 26
     readonly property int rowHeight: 14
     readonly property int rowCount: Math.max(inputs.length, outputs.length, 1)
@@ -39,7 +40,12 @@ Rectangle {
     radius: 6
     color: Theme.card
     border.width: selected ? 2 : 2
-    border.color: selected ? Theme.accent : status === "FAIL" ? "#e0585c" : "#2fa56a"
+    // Status border from the palette.  It was the literal "#2fa56a"/"#e0585c", a third and
+    // fourth shade of "success" and "failure" alongside Theme.okBorder/Theme.errorBorder
+    // and the StatusBadge's own fills, so the same PASS verdict drew in two greens on the
+    // same screen.  The tokens are the compliant pair (white text clears 4.5:1 on both).
+    border.color: selected ? Theme.accent
+                          : status === "FAIL" ? Theme.errorBorder : Theme.okBorder
 
     Text {
         x: 10; y: 5
@@ -140,27 +146,55 @@ Rectangle {
         y: root.height - 18 - root.toolLine
         text: root.ms.toFixed(1) + " ms"
         font.family: Theme.monoFamily
-        font.pixelSize: Theme.fontMicro
+        font.pixelSize: Theme.fontCaption
         color: Theme.textMuted
     }
 
+    // Moving the card by hand. Qt's own `drag.target` waits for a threshold measured on the zoomed canvas and then
+    // moves the card only by the distance PAST it, so the card trailed the pointer (twice as far at 200% zoom).
+    // This follows the pointer one-to-one from the first pixel after a small, zoom-independent dead zone.
     MouseArea {
+        id: handle
+        objectName: "cardHandle"
         anchors.fill: parent
-        drag.target: root
-        drag.minimumX: 0
-        drag.minimumY: 0
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        cursorShape: Qt.OpenHandCursor
+        cursorShape: dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+        hoverEnabled: true
+        property bool dragging: false
+        property bool wasDragged: false           // suppresses the click that ends a drag
+        property real pressX: 0                    // pointer at the press, in the canvas's coordinates
+        property real pressY: 0
+        property real startX: 0                    // card position at the press
+        property real startY: 0
+        readonly property real canvasScale: root.parent && root.parent.scale > 0 ? root.parent.scale : 1.0
+        readonly property real deadZone: 4.0       // screen pixels the pointer must travel before the card moves
+        onPressed: function (m) {
+            if (m.button !== Qt.LeftButton) return
+            var p = mapToItem(root.parent, m.x, m.y)
+            pressX = p.x; pressY = p.y; startX = root.x; startY = root.y
+            dragging = false; wasDragged = false
+        }
+        onPositionChanged: function (m) {
+            if (!pressed || !(pressedButtons & Qt.LeftButton)) return
+            var p = mapToItem(root.parent, m.x, m.y)
+            var dx = p.x - pressX, dy = p.y - pressY
+            if (!dragging) {
+                if (Math.sqrt(dx * dx + dy * dy) * canvasScale < deadZone) return
+                dragging = true; wasDragged = true
+                root.dragStarted()
+            }
+            root.x = Math.max(0, startX + dx)
+            root.y = Math.max(0, startY + dy)
+            root.moved()
+        }
+        onReleased: dragging = false
         onClicked: function (m) {
             if (m.button === Qt.RightButton) root.contextRequested(mapToItem(root.parent, m.x, m.y))
-            else root.clicked()
+            else if (!wasDragged) root.clicked()
         }
         onDoubleClicked: root.doubleClicked()
-        hoverEnabled: true
-        ToolTip.visible: containsMouse && !drag.active && root.toolName !== ""
+        ToolTip.visible: containsMouse && !dragging && root.toolName !== ""
         ToolTip.delay: 700
         ToolTip.text: "Toolbox module: " + root.toolName
-        drag.onActiveChanged: if (drag.active) root.dragStarted()
-        onPositionChanged: if (drag.active) root.moved()
     }
 }

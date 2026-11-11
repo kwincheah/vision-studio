@@ -111,15 +111,33 @@ class ImagePool:
             return True
         return False
 
-    def apply_to(self, pipeline, row: Optional[int] = None) -> bool:
-        """Make pool image ``row`` (default: the selected one) the Image Source's input."""
+    def apply_to(self, pipeline, row: Optional[int] = None, persist: bool = False) -> bool:
+        """Make pool image ``row`` (default: the selected one) the Image Source's input.
+
+        Two different things are being chosen here, and only one of them is configuration:
+
+        * ``persist=False`` (default) - *execution* state: which picture the next run
+          consumes.  Carried by ``_override_image`` / ``_override_name``, which
+          ``ImageSourceTool.execute`` reads before falling back to the node's parameters.
+          This is what a run and an image-strip click do, and it must leave the project
+          untouched.
+        * ``persist=True`` - *user intent*: the operator has just loaded images into the
+          app and expects the project to remember them, so the node's ``source_type`` /
+          ``file_path`` are updated.  Only explicit "load image(s) / folder" actions pass
+          this.
+
+        Getting that wrong is what made a harmless Run rewrite the module: it set the
+        project dirty with no user edit and, if the operator then saved as the resulting
+        prompt invites, replaced a Synthetic source with a File one holding an absolute
+        path.
+        """
         row = self.index if row is None else row
         if not self.select(row):
             return False
         item = self.items[row]
         for node in pipeline.nodes.values():
             if node.tool_name == "Image Source":
-                if item.get("path"):
+                if persist and item.get("path"):
                     node.set_param("source_type", "File")
                     node.set_param("file_path", item["path"])
                 node._override_image = item.get("image")
@@ -162,6 +180,7 @@ class RunEngine(QObject):
         self.busy = False
         self.pending = False
         self.strip_active = False        # a Run-button run (single, batch or loop) is in progress
+        self.live = False                # Loop with a camera source: one frame after another until Stop
         self.stopping = False
         self.batch: Optional[Dict[str, Any]] = None
         self.ticks = 0
@@ -252,8 +271,13 @@ class RunEngine(QObject):
         Returns ``"batch"`` or ``"single"``."""
         self.stopping = False
         self.strip_active = True
+        self.live = False
         n = len(self.pool)
-        if scope == "Run all" and n > 0 and (loop or n > 1):
+        if loop and self._has_live_source():
+            self.live = True                    # a camera is its own supply of images: grab the next frame after each cycle until Stop
+            self.request_run()
+            kind = "live"
+        elif scope == "Run all" and n > 0 and (loop or n > 1):
             self._start_batch(loop=loop)
             kind = "batch"
         elif loop and scope == "Run selected" and n > 0:
@@ -265,8 +289,16 @@ class RunEngine(QObject):
         self.state_changed.emit()
         return kind
 
+    def _has_live_source(self) -> bool:
+        """True when the open flow reads its pictures from a camera or stream rather than from files or a pattern."""
+        live = ("Camera", "Industrial GigE", "Industrial USB3", "Hikrobot MVS", "IP Stream")
+        try:
+            return any(n.tool_name == "Image Source" and n.get_param("source_type") in live for n in self._get_pipeline().nodes.values())
+        except Exception:
+            return False
+
     def is_strip_busy(self) -> bool:
-        return bool(self.strip_active or self.batch is not None or self._timer_active())
+        return bool(self.strip_active or self.batch is not None or self.live or self._timer_active())
 
     def show_as_running(self) -> Tuple[bool, bool]:
         """``(running, stopping)`` for the Run / Stop button."""
@@ -275,6 +307,7 @@ class RunEngine(QObject):
 
     def stop(self) -> None:
         self.batch = None
+        self.live = False
         self.strip_active = False
         self.stopping = self.busy
         self.state_changed.emit()
@@ -323,13 +356,20 @@ class RunEngine(QObject):
         self.progress.emit(f"{prefix}: image {position}/{batch['total']} - {self.pool.items[idx]['name']}")
         self.request_run()
 
+    def _live_next(self) -> None:
+        if self.live and not self.busy:
+            self.request_run()
+
     def _after_cycle(self, ok: bool) -> None:
         pipeline = self._get_pipeline()
         if not ok and getattr(pipeline, "stop_on_ng", False) and self.batch is not None:
             # "Stop on NG" halts Run all / Loop exactly as it halts continuous mode
             self.batch = None
+            self.live = False
             self.strip_active = False
             self.run_finished.emit("Stopped: NG detected (Stop on NG is active)")
+        if self.live:
+            QTimer.singleShot(max(0, int(self._interval_ms())), self._live_next)       # the next frame, paced by the run interval
         batch = self.batch
         if batch is not None and batch["awaiting"]:
             batch["awaiting"] = False
@@ -346,7 +386,7 @@ class RunEngine(QObject):
                 self.strip_active = False
                 self.run_finished.emit(f"Run all finished: {batch['done']} image(s), "
                                        f"{batch['ng']} NG, {batch['done'] - batch['ng']} OK")
-        if self.batch is None and not self._timer_active():
+        if self.batch is None and not self.live and not self._timer_active():
             self.strip_active = False
             self.stopping = False
 

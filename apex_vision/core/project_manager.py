@@ -228,7 +228,7 @@ class ProjectManager:
             sol.flows = {pipe.name: pipe}
             sol.active_flow_name = pipe.name
             sol.set_trigger_flow(pipe.name)
-            template_label = "PCB Inspection"
+            template_label = "Surface Defect Inspection"
         elif t_key in ("measurement", "precision measurement"):
             pipe = create_precision_measurement_solution()
             sol.flows = {pipe.name: pipe}
@@ -253,6 +253,8 @@ class ProjectManager:
             pipe = VisionPipeline(name="Flow1")
             from apex_vision.core.registry import create_tool_instance
             src = create_tool_instance("Image Source", "node_source", "01_Acquisition")
+            src.set_param("source_type", "File")      # nothing loaded yet: the user picks their own image
+            src.set_param("file_path", "")
             pipe.add_node(src)
             sol.flows["Flow1"] = pipe
             sol.active_flow_name = "Flow1"
@@ -314,7 +316,7 @@ class ProjectManager:
 
         # Create demo projects
         sample_configs = [
-            ("PCB_Inspection_Demo", "pcb", "PCB Optical Inspection & Defects"),
+            ("PCB_Inspection_Demo", "pcb", "Surface Defect Inspection (sample part)"),
             ("Precision_Measurement_Demo", "measurement", "Dimensional Edge & Hole Measurement"),
             ("YOLO_ObjectDetection_Demo", "yolo", "YOLOv11 Deep Learning Object Detection")
         ]

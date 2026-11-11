@@ -229,8 +229,8 @@ def test_dragging_while_zoomed_and_panned_moves_by_the_right_distance(ui):
     start = ui.point_in(card, 60, 10)
     ui.drag(start, start + QPoint(60, 30))                     # 60 px on screen = 120 scene units at 0.5
     card = ui.cards()["04 TraceWidthCaliper"]
-    # Qt starts a drag only after ~10 px of travel, so the card trails the pointer by that much
-    assert 100 < card.property("x") - x0 <= 120 and 45 < card.property("y") - y0 <= 60
+    # the card follows the pointer one-to-one (it used to trail it by the drag threshold, twice as far when zoomed in)
+    assert abs((card.property("x") - x0) - 120) <= 2 and abs((card.property("y") - y0) - 60) <= 2
     inp = port(card, "in", 0)
     assert any(abs(b.x() - inp.x()) < 1 and abs(b.y() - inp.y()) < 1 for _a, b in ui.wires())
 

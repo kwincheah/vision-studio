@@ -61,9 +61,10 @@ chat's title bar at any time. Details, privacy notes and the MCP server are in [
 
 ## What you can do with it
 
-- **Design flows visually.** 42 built-in modules in 11 categories: acquisition, location (template match, circle / line
-  search, caliper), measurement, image processing, recognition (barcode, OCR, YOLO), defect detection, colour, calibration,
-  communication and logic. Typed ports, no loops, one source per input.
+- **Design flows visually.** 58 built-in modules in 12 categories: acquisition, image processing (crop, resize / rotate, brightness, edge
+  detection, filters), location (template match, circle / line search, caliper, Hough), measurement (distances, angles,
+  intersections, focus), recognition (barcode, OCR), **deep learning** (classify, segment, anomaly and YOLO detection with your own ONNX models), defect detection, colour, calibration, communication (TCP, UDP,
+  serial, Modbus, CSV log) and logic. Every module is listed in [docs/MODULES.md](docs/MODULES.md). Typed ports, no loops, one source per input.
 - **Run on real or fake images.** Single shot, or loop over a folder of images; the Run button turns into Stop while it works.
   Flows run on a background worker, so the window stays responsive.
 - **See results at a glance.** Per-module PASS/FAIL, timings, overlays on the image, and a table of every module's outputs.
@@ -121,7 +122,7 @@ The whole flow canvas can be used without a mouse. Help > Keyboard Shortcuts lis
 main.py                 entry point (Qt Quick UI by default)
 qml/                    the interface; open qml/ApexVision.qmlproject in Qt Design Studio
 apex_vision/core/          flow engine, project files, shared run controller
-apex_vision/tools/         the 42 built-in modules
+apex_vision/tools/         the 58 built-in modules
 apex_vision/flowgen/       AI Gen: module catalogue, spec validator, assistant, MCP server, reference docs
 apex_vision/ui/            the older widget interface
 plugins/                sample plugin
@@ -143,12 +144,14 @@ opening menus) and fail on any Qt warning, so what you see in the screenshots is
 
 More reading:
 [User guide](docs/USER_GUIDE.md) ·
+[Module reference](docs/MODULES.md) ·
+[Deep learning](docs/DEEP_LEARNING.md) ·
 [AI Gen](docs/AI_GEN.md) ·
 [HTTP API](docs/API.md) ·
 [Parameter editors](docs/PARAMETER_EDITORS.md) ·
 [XML format](docs/XML_FORMAT.md) ·
 [Plugin guide](docs/PLUGIN_DEVELOPMENT_GUIDE.md) ·
-[Release notes](docs/RELEASE_NOTES_v1.0.0-beta.3.md)
+[Release notes](docs/RELEASE_NOTES_v1.0.0-beta.4.md)
 
 ### Building the Windows app
 

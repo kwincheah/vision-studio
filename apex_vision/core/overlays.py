@@ -17,6 +17,7 @@ DEFAULT_LAYERS: Dict[str, bool] = {
     "datums": True,        # crosses
     "crosshair": False,    # image-centre reticle
     "histogram": False,    # intensity histogram HUD
+    "pixelgrid": False,    # measuring grid, one line every 50 px (100 px on big images)
 }
 
 
@@ -39,7 +40,7 @@ def _label(img: np.ndarray, text: str, x: int, y: int, colour) -> None:
 def render_overlays(image: Optional[np.ndarray], overlays: Iterable[Dict[str, Any]],
                     layers: Optional[Dict[str, bool]] = None) -> Optional[np.ndarray]:
     """A copy of ``image`` (BGR) with the overlays that the layer switches allow."""
-    if image is None:
+    if not isinstance(image, np.ndarray) or image.ndim not in (2, 3):      # e.g. a list wired into an Image input
         return None
     layers = {**DEFAULT_LAYERS, **(layers or {})}
     out = image.copy()
@@ -52,13 +53,34 @@ def render_overlays(image: Optional[np.ndarray], overlays: Iterable[Dict[str, An
             kind = item.get("type")
             if kind == "rect" and not layers["rois"]:
                 continue
-            if kind in ("circle", "line", "text") and not layers["metrics"]:
+            if kind in ("circle", "line", "text", "sector") and not layers["metrics"]:
                 continue
             if kind == "cross" and not layers["datums"]:
                 continue
             col = _bgr(item.get("color"))
             try:
-                if kind == "rect":
+                alpha = item.get("alpha")
+                if alpha is not None and kind in ("rect", "circle") and 0.0 < float(alpha) < 1.0:     # a see-through filled shape
+                    tint = out.copy()
+                    if kind == "rect":
+                        x, y, bw, bh = [int(v) for v in item.get("box", (0, 0, 0, 0))[:4]]
+                        cv2.rectangle(tint, (x, y), (x + bw, y + bh), col, -1)
+                    else:
+                        cv2.circle(tint, tuple(int(v) for v in item.get("center", (0, 0))), int(item.get("radius", 10)), col, -1)
+                    out = cv2.addWeighted(tint, float(alpha), out, 1.0 - float(alpha), 0)
+                if kind == "sector":
+                    cx, cy = [int(v) for v in item.get("center", (0, 0))]
+                    r_in, r_out = int(item.get("r_in", 0)), int(item.get("r_out", 10))
+                    a0, a1 = float(item.get("start", 0)), float(item.get("end", 360))
+                    for rr in (r_in, r_out):
+                        if rr > 0:
+                            cv2.ellipse(out, (cx, cy), (rr, rr), 0, a0, a1, col, 2, cv2.LINE_AA)
+                    for a in (a0, a1):
+                        ca, sa = np.cos(np.radians(a)), np.sin(np.radians(a))
+                        cv2.line(out, (int(cx + r_in * ca), int(cy + r_in * sa)), (int(cx + r_out * ca), int(cy + r_out * sa)), col, 2, cv2.LINE_AA)
+                    if item.get("label"):
+                        _label(out, str(item["label"]), cx + r_out + 4, cy, col)
+                elif kind == "rect":
                     x, y, bw, bh = [int(v) for v in item.get("box", (0, 0, 0, 0))[:4]]
                     cv2.rectangle(out, (x, y), (x + bw, y + bh), col, 2)
                     if item.get("label"):
@@ -87,6 +109,13 @@ def render_overlays(image: Optional[np.ndarray], overlays: Iterable[Dict[str, An
     if layers["crosshair"]:
         cv2.line(out, (w // 2, 0), (w // 2, h), (140, 116, 100), 1, cv2.LINE_AA)
         cv2.line(out, (0, h // 2), (w, h // 2), (140, 116, 100), 1, cv2.LINE_AA)
+
+    if layers["pixelgrid"]:
+        step = 50 if max(w, h) <= 1000 else 100
+        for gx in range(step, w, step):
+            cv2.line(out, (gx, 0), (gx, h), (150, 150, 150), 1)
+        for gy in range(step, h, step):
+            cv2.line(out, (0, gy), (w, gy), (150, 150, 150), 1)
 
     if layers["histogram"]:
         gray = cv2.cvtColor(out, cv2.COLOR_BGR2GRAY)

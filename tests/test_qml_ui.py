@@ -404,3 +404,80 @@ def test_loading_a_solution_seeds_the_image_strip_without_changing_the_source(gu
     b.openRecent(DEMO)                       # reloading never duplicates the samples
     b.engine.wait_for_run()
     assert len(b.imagePool) == 2
+
+
+def test_a_new_blank_project_starts_empty_and_sample_templates_keep_their_images(gui, tmp_path):
+    from apex_vision.qml_backend import AppBackend, FrameProvider
+    b = AppBackend(FrameProvider())
+    b.createProject("Mine", str(tmp_path), 1)                      # PCB template: the sample boards are listed
+    b.engine.wait_for_run()
+    assert [i["name"] for i in b.imagePool] == ["pcb_sample.png", "pcb_sample_defect.png"]
+
+    b.createProject("Empty", str(tmp_path), 0)                     # blank: nothing in the strip
+    b.engine.wait_for_run()
+    assert b.imagePool == []
+    source = next(n for n in b._solution.get_active_flow().nodes.values() if n.tool_name == "Image Source")
+    assert source.get_param("source_type") == "File" and source.get_param("file_path") == ""
+    result = b._pipeline.last_results[source.instance_id]
+    assert result.status.value == "NG" and "No image loaded" in result.message, "no silent sample picture"
+
+    b.createProject("Mine2", str(tmp_path), 1)                     # going back to a sample template restores them
+    b.engine.wait_for_run()
+    assert len(b.imagePool) == 2
+
+
+def test_sample_pictures_are_listed_only_for_flows_that_use_them(gui, tmp_path):
+    """The two bundled boards feed the demo flows' Image Source. A flow with another source (a camera, a plugin's own
+    satellite module, your own files) must start with an empty strip, or 'Run all' would repeat it once per picture."""
+    from apex_vision.qml_backend import AppBackend, FrameProvider
+    from apex_vision.core.pipeline import SolutionManager
+    from apex_vision.core.registry import create_tool_instance
+    b = AppBackend(FrameProvider())
+
+    def settle(backend, quiet=0.4, limit=8.0):
+        """Let runs and their finished-run signals play out until nothing has happened for ``quiet`` seconds."""
+        end, last, stamp = time.time() + limit, -1, time.time()
+        while time.time() < end:
+            QGuiApplication.processEvents()
+            time.sleep(0.01)
+            now = len(backend.history) + (1000 if backend.engine.busy else 0)
+            if now != last:
+                last, stamp = now, time.time()
+            elif time.time() - stamp > quiet:
+                return
+
+    b.load_solution(SolutionManager.load_from_file(DEMO), DEMO)                       # a demo flow: synthetic board
+    assert [i["name"] for i in b.imagePool] == ["pcb_sample.png", "pcb_sample_defect.png"]
+
+    def solution_with(*tools, **source):
+        sol = SolutionManager(name="S")
+        flow = sol.add_flow("F")
+        sol.active_flow_name = flow.name
+        for i, name in enumerate(tools):
+            node = create_tool_instance(name, f"n{i}", f"n{i}")
+            if name == "Image Source":
+                for k, v in source.items():
+                    node.set_param(k, v)
+            flow.add_node(node)
+        return sol
+
+    cases = {
+        "another test pattern": solution_with("Image Source", source_type="Synthetic", pattern_type="Calibration Grid"),
+        "another synthetic pattern": solution_with("Image Source", source_type="Synthetic", pattern_type="Circles & Holes"),
+        "the user's own file": solution_with("Image Source", source_type="File", file_path=str(tmp_path / "mine.png")),
+        "no Image Source at all (a plugin source)": solution_with("Geometry Generation"),
+    }
+    for label, sol in cases.items():
+        b.load_solution(sol, None)
+        assert b.imagePool == [], f"{label}: the strip must be empty"
+        settle(b)
+        b.clearHistory()
+        b.run()
+        settle(b)
+        assert len(b.history) == 1, f"{label}: one run, not one per sample picture ({len(b.history)})"
+        b.load_solution(SolutionManager.load_from_file(DEMO), DEMO)                   # and the demo brings them back
+        assert len(b.imagePool) == 2
+
+    sample = os.path.join(os.path.dirname(os.path.abspath(__import__("apex_vision.qml_backend", fromlist=["x"]).__file__)), "samples", "pcb_sample.png")
+    assert b.uses_sample_images(solution_with("Image Source", source_type="File", file_path=sample))
+    assert b.uses_sample_images(solution_with("Image Source", source_type="Synthetic", pattern_type="PCB Inspection"))   # old name

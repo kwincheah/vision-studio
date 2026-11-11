@@ -59,6 +59,7 @@ def test_each_kind_of_parameter_gets_its_own_editor(ui):
 def test_booleans_are_switches_and_numbers_show_their_limits(ui):
     ui.be.addTool("Image Binarization")
     ui.settle()
+    node(ui, "Image Binarization").set_param("method", "Manual")      # the limits show for the settings that apply
     open_config(ui, "Image Binarization")
     ed = editors(ui)
     assert child(ui, ed["invert"], "paramSwitch"), "a true/false parameter must be a switch, not a text box"

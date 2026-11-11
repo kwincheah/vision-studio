@@ -74,7 +74,7 @@ Rectangle {
         Item { width: 1; height: 6 }
         Text { text: "SAMPLE TEMPLATES"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; font.weight: Font.Bold; color: Theme.textSecondary }
         Repeater {
-            model: ["PCB Inspection & Defects", "Precision Measurement", "YOLOv11 Object Detection", "Robot Coordinate Calibration"]
+            model: ["Surface Defect Inspection", "Precision Measurement", "YOLOv11 Object Detection", "Robot Coordinate Calibration"]
             delegate: Rectangle {
                 width: leftCol.width; height: 36
                 radius: Theme.radiusPanel

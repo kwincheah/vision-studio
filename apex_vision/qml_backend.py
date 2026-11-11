@@ -9,6 +9,7 @@ Everything here is Qt-widget free, so it works with ``QGuiApplication`` only.
 """
 import json
 import os
+import threading
 import time
 from typing import Any, Dict, List, Optional
 
@@ -63,12 +64,24 @@ class FrameProvider(QQuickImageProvider):
             self.image = QImage(rgb.data, w, h, 3 * w, QImage.Format.Format_RGB888).copy()
 
 
+def _is_picture(value) -> bool:
+    """Only an image array can be shown (a list or number wired into an Image input is not one)."""
+    return isinstance(value, np.ndarray) and value.ndim in (2, 3)
+
+
 class AppBackend(QObject):
+    #: The Display Setup colour every module starts with (the signature amber).  Kept here
+    #: so the render path does not need to import the tool base.
+    DEFAULT_OVERLAY_COLOUR = "#e4b030"
+
     changed = pyqtSignal()
     startPageRequested = pyqtSignal()
     workspaceRequested = pyqtSignal()
+    _all_cycle = pyqtSignal(str, object)    # a flow finished one cycle inside Run all flows (flow name, payload)
+    _all_done = pyqtSignal()
     closeApproved = pyqtSignal()            # the window may close (nothing unsaved, or the user decided)
     confirmRequested = pyqtSignal(str)      # unsaved edits would be lost - ask the user first
+    commMessage = pyqtSignal(str, str)      # a communication device with a flow to run received a message (device, text)
 
     def __init__(self, provider: FrameProvider, project_manager: Optional[ProjectManager] = None):
         super().__init__()
@@ -82,10 +95,18 @@ class AppBackend(QObject):
         self._token = 0
         self._verdict = "PASS"
         self._flow_ms = 0.0
+        self._flow_stats: dict = {}             # flow name -> (verdict, ms) of its last run, for the flow tabs
         self._algo_ms = 0.0
         self._results: List[Dict[str, str]] = []
         self._scope = "Run all"
-        self._loop = False
+        self._loops: Dict[str, bool] = {}        # Loop of each flow (the buttons next to the image and in the flow row)
+        # Run all flows (the top buttons): its own state, separate from the single-flow Run of the open flow
+        self._all_active = False
+        self._all_stop = False
+        self._all_loop = False
+        self._all_flows: List[str] = []           # the flows the all-flows run is currently working on
+        self._all_summary: Dict[str, str] = {}
+        self._rerun_later = False
         self._undo: List[str] = []
         self._redo: List[str] = []
         self._cameras: List[Dict[str, str]] = []
@@ -101,6 +122,9 @@ class AppBackend(QObject):
                                 pool=self._pool, interval_ms=lambda: int(self._pipeline.run_interval_ms),
                                 parent=self)
         self.engine.cycle_finished.connect(self._on_cycle)
+        self.commMessage.connect(self._on_comm_message)
+        self._all_cycle.connect(self._on_all_cycle)
+        self._all_done.connect(self._on_all_done)
         self.engine.state_changed.connect(lambda: self.changed.emit())
         self.engine.image_selected.connect(lambda _row: self.changed.emit())
         self.engine.progress.connect(lambda text: self._notify(text))
@@ -126,6 +150,9 @@ class AppBackend(QObject):
 
     def _restore(self, snapshot: str) -> None:
         self._solution = SolutionManager.from_dict(json.loads(snapshot))
+        from apex_vision.core import comm_manager
+        if comm_manager.get_manager().dump() != self._solution.comm_devices:        # undo/redo of adding or removing a device
+            comm_manager.get_manager().load(self._solution.comm_devices)
         self._freeze_layout()
         if self._selected not in self._pipeline.nodes:
             self._selected = next(iter(self._pipeline.execution_order), "")
@@ -149,6 +176,8 @@ class AppBackend(QObject):
 
     @pyqtProperty(bool, notify=changed)
     def running(self):
+        if self._all_live():                         # inside a Run all flows: is the open flow one of those running
+            return self._solution.active_flow_name in self._all_flows
         return self.engine.show_as_running()[0]
 
     @pyqtProperty(str, notify=changed)
@@ -189,26 +218,118 @@ class AppBackend(QObject):
         """The selected module's output image with its overlays (else the flow's last image)."""
         pipe = self._pipeline
         res = self._last_results.get(self._selected)
-        if res is not None and res.outputs.get("Image") is not None:
+        if res is not None and _is_picture(res.outputs.get("Image")):
             return res.outputs["Image"], res.overlays
         node = pipe.nodes.get(self._selected)
         if node is not None:                      # modules without an image output show their input
             for c in pipe.connections:
                 if c.to_node == self._selected and c.to_port == "Image":
                     upstream = self._last_results.get(c.from_node)
-                    if upstream is not None and upstream.outputs.get(c.from_port) is not None:
+                    if upstream is not None and _is_picture(upstream.outputs.get(c.from_port)):
                         return upstream.outputs[c.from_port], (res.overlays if res else [])
         overlays = [o for r in self._last_results.values() for o in r.overlays]
         return self._last_image, overlays
 
     def _render_view(self) -> None:
         image, overlays = self._view_image_and_overlays()
+        overlays = self._apply_module_display(overlays)
         self._provider.set_array(render_overlays(image, overlays, self._layers))
         self._token += 1
+
+    def _apply_module_display(self, overlays):
+        """Filter and recolour the selected module's overlays for its Display Setup.
+
+        The ROI rectangle of the selected module is drawn by the view, not here, so these
+        switches cover what the module itself paints: its text labels and its result boxes.
+        Only the *selected* module is affected - the viewer shows that module's output.
+        """
+        node = self._pipeline.nodes.get(self._selected)
+        if node is None or not overlays:
+            return overlays
+        display = node.display or {}
+        show_labels = display.get("labels", True)
+        show_boxes = display.get("boxes", True)
+        colour = display.get("colour") or ""
+        recolour = colour.lower() != self.DEFAULT_OVERLAY_COLOUR
+        out = []
+        for item in overlays:
+            if not isinstance(item, dict):
+                out.append(item)
+                continue
+            kind = item.get("type")
+            if kind == "text" and not show_labels:
+                continue
+            if kind == "rect" and not show_boxes:
+                continue
+            if recolour and kind in ("text", "rect", "line", "circle", "sector", "cross"):
+                item = {**item, "color": colour}
+            out.append(item)
+        return out
+
+    @pyqtProperty("QVariantMap", notify=changed)
+    def selectedDisplay(self):
+        """The selected module's Display Setup (checkboxes and colour)."""
+        node = self._pipeline.nodes.get(self._selected)
+        if node is None:
+            return {}
+        return {**(node.display or {})}
+
+    @pyqtSlot(str, str, "QVariant", result=bool)
+    def setModuleDisplay(self, node_id, key, value):  # noqa: N802
+        """Change one Display Setup field of a module (a checkbox or the colour)."""
+        node = self._pipeline.nodes.get(node_id)
+        if node is None or not self._editable():
+            return False
+        if key not in ("roi", "labels", "boxes", "colour"):
+            return False
+        current = (node.display or {}).get(key)
+        if key == "colour":
+            if hasattr(value, "toVariant"):
+                value = value.toVariant()
+            colour = str(value or "").lower()
+            if len(colour) != 7 or not colour.startswith("#"):
+                return False
+            try:
+                int(colour[1:], 16)
+            except ValueError:
+                return False
+            value = colour
+        else:
+            value = bool(value)
+        if current == value:
+            return True
+        self._push_undo()
+        node.display = {**(node.display or {}), key: value}
+        self._render_view()
+        self._notify("Display updated")
+        self.changed.emit()
+        return True
 
     @pyqtProperty(str, constant=True)
     def version(self):
         return APP_VERSION
+
+    # ------------------------------------------------------------------ script editor
+    @pyqtSlot(str, result=str)
+    def highlightScript(self, source):  # noqa: N802
+        """The script as HTML spans for the editor's syntax colouring.
+
+        Python's own tokenizer does the classifying (see core/script_highlight), so quotes
+        and multi-line strings are correct rather than guessed at with regular expressions.
+        """
+        from apex_vision.core import script_highlight
+        return script_highlight.highlight(source)
+
+    @pyqtSlot(str, result="QVariantMap")
+    def checkScript(self, source):  # noqa: N802
+        """Compile without running: {ok, line, message}, so the gutter can mark the line."""
+        from apex_vision.core import script_highlight
+        return script_highlight.check(source)
+
+    @pyqtProperty(str, constant=True)
+    def scriptHint(self):  # noqa: N802
+        from apex_vision.core import script_highlight
+        return script_highlight.describe_contract()
 
     @pyqtProperty(str, constant=True)
     def projectsFolder(self):  # noqa: N802
@@ -294,6 +415,8 @@ class AppBackend(QObject):
         params = []
         for key, current in node.parameters.items():
             spec = param_schema.spec_for(node.tool_name, key, current)
+            if spec["kind"] == "hidden":
+                continue
             item = {"name": spec.get("label", key), "kind": spec["kind"], "value": str(current)[:40], "limits": ""}
             unit = f" {spec['unit']}" if spec.get("unit") else ""
             if spec.get("choices"):
@@ -327,13 +450,26 @@ class AppBackend(QObject):
         return self._pool.index
 
     def _get_loop(self) -> bool:
-        return self._loop
+        return bool(self._loops.get(self._solution.active_flow_name, False))
 
     def _set_loop(self, value: bool) -> None:
-        self._loop = bool(value)
+        self._loops[self._solution.active_flow_name] = bool(value)
         self.changed.emit()
 
-    loop = pyqtProperty(bool, _get_loop, _set_loop, notify=changed)
+    loop = pyqtProperty(bool, _get_loop, _set_loop, notify=changed)          # Loop of the open flow only
+
+    def _get_all_loop(self) -> bool:
+        return self._all_loop
+
+    def _set_all_loop(self, value: bool) -> None:
+        self._all_loop = bool(value)
+        self.changed.emit()
+
+    allLoop = pyqtProperty(bool, _get_all_loop, _set_all_loop, notify=changed)   # Loop of the top buttons: every flow
+
+    @pyqtProperty(bool, notify=changed)
+    def allRunning(self):  # noqa: N802
+        return self._all_live()
 
     @pyqtProperty("QVariantList", notify=changed)
     def globalVariables(self):  # noqa: N802
@@ -354,10 +490,9 @@ class AppBackend(QObject):
     def toolCategories(self):  # noqa: N802
         """Tool box content from the live registry, so plugin tools show up too."""
         from apex_vision.core.registry import list_categories
-        icons = {"Acquisition": "camera", "Location": "target", "Measurement": "measure",
-                 "Image Generation": "roi", "Image Processing": "grid", "Recognition": "text",
-                 "Defect Detection": "shield", "Color Processing": "palette", "Calibration": "grid",
-                 "Communication": "comm", "Logic Tools": "logic"}
+        icons = {"Acquisition": "camera", "Image Processing": "image", "Color Processing": "palette", "Location": "target", "Measurement": "measure",
+                 "Image Generation": "roi", "Calibration": "grid", "Calculation": "variable", "Recognition": "text", "Defect Detection": "shield",
+                 "Deep Learning": "layers", "Division and Combination": "table", "Logic Tools": "logic", "Communication": "comm"}
         return [{"name": name, "icon": icons.get(name, "list"), "tools": list(tools)}
                 for name, tools in list_categories().items()]
 
@@ -429,6 +564,30 @@ class AppBackend(QObject):
         self._notify(f"ROI set to {x}, {y}, {w}, {h}")
         self._rerun()
 
+    @pyqtSlot(result=bool)
+    def resetRoi(self):  # noqa: N802
+        """Put the selected module's ROI back to "the whole image".
+
+        ``[0, 0, 0, 0]`` is the tools' own default and means "no restriction" - the region
+        tools treat an empty ROI as the full frame, so this is a real reset rather than a
+        1x1 box parked in the corner.  One undo step, and the flow re-runs so the verdict
+        follows the change.
+        """
+        node, key = self._roi_key()
+        if key is None:
+            self._notify("This module has no region to reset")
+            return False
+        if not self._editable():
+            return False
+        if list(node.parameters.get(key) or []) == [0, 0, 0, 0]:
+            self._notify("ROI is already the whole image")
+            return True
+        self._push_undo()
+        node.set_param(key, [0, 0, 0, 0])
+        self._notify("ROI reset to the whole image")
+        self._rerun()
+        return True
+
     @pyqtProperty("QVariantList", notify=changed)
     def nodes(self):
         pipe = self._pipeline
@@ -446,12 +605,66 @@ class AppBackend(QObject):
                 "status": status,
                 "ms": float(res.elapsed_ms) if res is not None else 0.0,
                 "x": x, "y": y,
+                "group": pipe.group_of(nid),
                 "inputs": [{"name": n, "type": _PORT_KIND.get(p.data_type, "region"), "dtype": p.data_type.name}
                            for n, p in node.inputs.items()],
                 "outputs": [{"name": n, "type": _PORT_KIND.get(p.data_type, "region"), "dtype": p.data_type.name}
                             for n, p in node.outputs.items()],
             })
         return out
+
+    @pyqtProperty("QVariantList", notify=changed)
+    def groupFrames(self):  # noqa: N802
+        """A frame round each Group's modules (for the canvas): {id, title, x, y, w, h}."""
+        pipe = self._pipeline
+        positions = self._positions(pipe)
+        out = []
+        for gid, g in pipe.nodes.items():
+            if g.tool_name != "Group":
+                continue
+            ids = [gid] + pipe.group_members(gid)
+            xs0, ys0, xs1, ys1 = [], [], [], []
+            for nid in ids:
+                n = pipe.nodes[nid]
+                x, y = positions.get(nid, (50.0, 50.0))
+                xs0.append(x)
+                ys0.append(y)
+                xs1.append(x + 190)
+                ys1.append(y + 54 + 14 * max(len(n.inputs), len(n.outputs), 1))
+            pad = 16
+            out.append({"id": gid, "title": g.name.replace("_", " ", 1), "x": min(xs0) - pad, "y": min(ys0) - pad - 14, "w": max(xs1) - min(xs0) + 2 * pad,
+                        "h": max(ys1) - min(ys0) + 2 * pad + 14, "count": len(ids) - 1})
+        return out
+
+    @pyqtSlot(str, result="QVariantList")
+    def groupsFor(self, node_id):  # noqa: N802
+        """The Group modules this module could be put in: [{id, title}] (none for a Group itself)."""
+        node = self._pipeline.nodes.get(node_id)
+        if node is None or node.tool_name == "Group":
+            return []
+        return [{"id": gid, "title": g.name.replace("_", " ", 1), "current": self._pipeline.group_of(node_id) == gid}
+                for gid, g in self._pipeline.nodes.items() if g.tool_name == "Group"]
+
+    @pyqtSlot(str, str, result=str)
+    def setNodeGroup(self, node_id, group_id):  # noqa: N802
+        """Put a module in a Group (or out of it with an empty id). Returns '' on success, else what is wrong. One undo step."""
+        pipe = self._pipeline
+        if node_id not in pipe.nodes:
+            return "That module no longer exists."
+        if not self._editable():
+            return "Editing is locked for the Operator role."
+        if pipe.group_of(node_id) == (group_id or ""):
+            return ""
+        if group_id and (group_id not in pipe.nodes or pipe.nodes[group_id].tool_name != "Group"):
+            return "Choose a Group module."
+        if pipe.nodes[node_id].tool_name == "Group":
+            return "A Group cannot be put inside another Group."
+        self._push_undo()
+        pipe.set_group(node_id, group_id or "")
+        shown = lambda n: n.replace("_", " ", 1)  # noqa: E731
+        self._notify(f"{shown(pipe.nodes[node_id].name)} " + (f"added to {shown(pipe.nodes[group_id].name)}" if group_id else "taken out of its group"))
+        self.changed.emit()
+        return ""
 
     @pyqtProperty("QVariantList", notify=changed)
     def connections(self):
@@ -494,16 +707,48 @@ class AppBackend(QObject):
         return out
 
     # ------------------------------------------------------------------ solution
-    def load_solution(self, solution: SolutionManager, path: Optional[str] = None) -> None:
+    @staticmethod
+    def uses_sample_images(solution: SolutionManager) -> bool:
+        """True when a flow's Image Source is set up to show the bundled sample board (the built-in demo flows).
+
+        Everything else (your own projects, cameras, folders, a plugin's own source module) starts with an empty image strip:
+        the sample pictures would feed nothing and would make 'Run all' repeat the flow once per picture."""
+        samples = os.path.normcase(os.path.join(os.path.dirname(os.path.abspath(__file__)), "samples"))
+        for flow in solution.flows.values():
+            for node in flow.nodes.values():
+                if node.tool_name != "Image Source":
+                    continue
+                kind = node.get_param("source_type", "Synthetic")
+                if kind == "Synthetic" and node.get_param("pattern_type", "") in ("Part with Defects", "PCB Inspection"):
+                    return True
+                if kind == "File":
+                    fp = str(node.get_param("file_path", "") or "").strip().strip('"')
+                    if fp and os.path.normcase(os.path.abspath(fp)).startswith(samples):
+                        return True
+        return False
+
+    def load_solution(self, solution: SolutionManager, path: Optional[str] = None, sample_images: Optional[bool] = None) -> None:
+        """Open ``solution``. The image strip lists the bundled sample pictures only for the built-in demo flows;
+        ``sample_images`` forces it on or off."""
+        if sample_images is None:
+            sample_images = self.uses_sample_images(solution)
+        self._all_flows, self._all_loop, self._loops = [], False, {}        # another solution: nothing keeps running, Loop is off
+        if self._all_active:
+            self._all_stop = True
         self._solution = solution
         self._project.path = path
+        self._start_comm(solution)
         self._selected = next(iter(self._pipeline.execution_order), "")
         self._results = []
         self._history = []
         self._undo.clear()
         self._redo.clear()
         self._freeze_layout()
-        self._seed_sample_images()
+        if sample_images:
+            self._seed_sample_images()
+        else:
+            self._pool.clear()
+            self.engine.batch = None
         self._project.mark_saved(solution)
         self._notify(f"Loaded solution '{solution.name}' ({len(solution.flows)} flow(s))")
         self.workspaceRequested.emit()
@@ -556,11 +801,10 @@ class AppBackend(QObject):
         if path:
             self.openRecent(path)
             return
-        from apex_vision.samples.pcb_solution import create_pcb_inspection_solution
-        sol = SolutionManager(name="IndustrialSolution")
-        sol.flows["Flow1"] = create_pcb_inspection_solution()
+        sol = SolutionManager(name="IndustrialSolution")          # empty: a sample board only comes with a template the user picks
+        sol.flows["Flow1"] = self._blank_flow("Flow1")
         sol.active_flow_name = "Flow1"
-        self.load_solution(sol, None)
+        self.load_solution(sol, None, sample_images=False)
         if self._pm.get_show_on_startup():
             self.startPageRequested.emit()
 
@@ -693,7 +937,7 @@ class AppBackend(QObject):
             except OSError as exc:        # unwritable or missing drive: tell the user instead of crashing
                 self._notify(f"Could not create the project in '{folder}': {exc}")
                 return
-            self.load_solution(sol, path)
+            self.load_solution(sol, path, sample_images=False if TEMPLATE_KEYS[max(0, min(template, 4))] == "blank" else None)
         self._guard(do)
 
     @pyqtSlot(str)
@@ -867,6 +1111,64 @@ class AppBackend(QObject):
         self._freeze_layout()
         self._notify("Modules arranged")
 
+    @pyqtProperty("QVariantList", notify=changed)
+    def flowTabs(self):  # noqa: N802
+        """Every flow of the solution, for the tab bar: name, last verdict ('' = not run yet), cycle ms, active."""
+        active = self._solution.active_flow_name
+        tabs = []
+        for name in self._solution.flows:
+            verdict, ms = self._flow_stats.get(name, ("", 0.0))
+            running = (name in self._all_flows) if self._all_live() else (name == active and self.engine.show_as_running()[0])
+            tabs.append({"name": name, "verdict": verdict, "ms": round(ms), "active": name == active, "running": bool(running)})
+        return tabs
+
+    @pyqtSlot(str)
+    def selectFlow(self, name):  # noqa: N802
+        """Open another flow of the solution (its tab was clicked)."""
+        if name not in self._solution.flows or name == self._solution.active_flow_name:
+            return
+        self.engine.stop()
+        self._solution.active_flow_name = name
+        self._verdict, self._flow_ms = self._flow_stats.get(name, ("PASS", 0.0))
+        self._freeze_layout()
+        self._selected = next(iter(self._pipeline.execution_order), "")
+        self._notify(f"Opened flow {name}")
+        self.workspaceRequested.emit()
+        self._rerun()
+
+    @pyqtSlot(str)
+    def closeFlow(self, name):  # noqa: N802
+        """Delete a flow (its tab's x). The last flow cannot be deleted; Ctrl+Z brings a deleted one back."""
+        if not self._editable() or name not in self._solution.flows:
+            return
+        if len(self._solution.flows) < 2:
+            self._notify("A solution needs at least one flow")
+            return
+        self._push_undo()
+        was_active = name == self._solution.active_flow_name
+        self._solution.remove_flow(name)
+        self._flow_stats.pop(name, None)
+        if was_active:
+            self._verdict, self._flow_ms = self._flow_stats.get(self._solution.active_flow_name, ("PASS", 0.0))
+            self._freeze_layout()
+            self._selected = next(iter(self._pipeline.execution_order), "")
+            self._rerun()
+        self._notify(f"Deleted flow {name}")
+
+    @staticmethod
+    def _blank_source():
+        """An Image Source with nothing chosen yet: it brings no sample picture."""
+        src = create_tool_instance("Image Source", new_instance_id("src"), "01_Acquisition")
+        src.set_param("source_type", "File")
+        src.set_param("file_path", "")
+        return src
+
+    def _blank_flow(self, name: str):
+        from apex_vision.core.pipeline import VisionPipeline
+        flow = VisionPipeline(name=name)
+        flow.add_node(self._blank_source())
+        return flow
+
     @pyqtSlot()
     def addFlow(self):  # noqa: N802
         self._push_undo()
@@ -874,7 +1176,7 @@ class AppBackend(QObject):
         while f"Flow{n}" in self._solution.flows:
             n += 1
         flow = self._solution.add_flow(f"Flow{n}")
-        flow.add_node(create_tool_instance("Image Source", new_instance_id("src"), "01_Acquisition"))
+        flow.add_node(self._blank_source())
         self._solution.active_flow_name = flow.name
         self._freeze_layout()
         self._notify(f"Created sub-flow {flow.name}")
@@ -929,6 +1231,83 @@ class AppBackend(QObject):
         self._undo.append(self._snapshot())
         self._restore(self._redo.pop())
         self._notify("Redo")
+
+    # ------------------------------------------------------------------ communication management
+    def _start_comm(self, solution: SolutionManager) -> None:
+        """Make the network devices of the opened solution the live ones, and start those marked to start with it."""
+        from apex_vision.core import comm_manager
+        mgr = comm_manager.get_manager()
+        mgr.on_message = lambda device, text: self.commMessage.emit(device, text)       # called on the device's thread; queued to the window's
+        mgr.load(solution.comm_devices)
+        problems = mgr.start_auto()
+        if problems:
+            self._notify("Communication: " + "; ".join(problems))
+
+    def _on_comm_message(self, device: str, text: str) -> None:
+        from apex_vision.core import comm_manager
+        dev = comm_manager.get_manager().devices.get(device)
+        if dev is None or not dev.trigger_flow:
+            return
+        self._solution.global_variables["g_LastMessage"] = text
+        flow = self._solution.flows.get(dev.trigger_flow)
+        if flow is not None and flow.enabled:
+            if dev.trigger_flow == self._solution.active_flow_name:
+                self.run()
+            else:
+                self._solution.trigger_flow(dev.trigger_flow)
+            self.changed.emit()
+
+    @pyqtProperty("QVariantList", notify=changed)
+    def commDevices(self):  # noqa: N802
+        from apex_vision.core import comm_manager
+        return comm_manager.get_manager().status()
+
+    @pyqtProperty("QVariantList", notify=changed)
+    def flowNames(self):  # noqa: N802
+        return list(self._solution.flows)
+
+    @pyqtSlot()
+    def refreshComm(self):  # noqa: N802
+        self.changed.emit()
+
+    @pyqtSlot(str, str, str, int, str, str, bool, str, result=str)
+    def addCommDevice(self, name, kind, host, port, terminator, trigger_flow, auto_start, remote):  # noqa: N802
+        """Add a network device to the solution. '' on success, else what is wrong."""
+        from apex_vision.core import comm_manager
+        if not self._editable():
+            return "Editing is locked for the Operator role."
+        mgr = comm_manager.get_manager()
+        bad = mgr.add(comm_manager.CommDevice(name.strip(), kind, host.strip() or "0.0.0.0", port, terminator, trigger_flow, auto_start, remote.strip()))
+        if bad:
+            return bad
+        self._push_undo()
+        self._solution.comm_devices = mgr.dump()
+        self.changed.emit()
+        return ""
+
+    @pyqtSlot(str, result=str)
+    def startCommDevice(self, name):  # noqa: N802
+        from apex_vision.core import comm_manager
+        bad = comm_manager.get_manager().start(name)
+        self.changed.emit()
+        return bad or ""
+
+    @pyqtSlot(str)
+    def stopCommDevice(self, name):  # noqa: N802
+        from apex_vision.core import comm_manager
+        comm_manager.get_manager().stop(name)
+        self.changed.emit()
+
+    @pyqtSlot(str)
+    def removeCommDevice(self, name):  # noqa: N802
+        from apex_vision.core import comm_manager
+        if not self._editable():
+            return
+        mgr = comm_manager.get_manager()
+        self._push_undo()
+        mgr.remove(name)
+        self._solution.comm_devices = mgr.dump()
+        self.changed.emit()
 
     @pyqtSlot(str, str, str)
     def setGlobal(self, name, kind, text):  # noqa: N802
@@ -1020,25 +1399,30 @@ class AppBackend(QObject):
         if node is None:
             return []
         out = []
+        off = param_schema.inactive(node.tool_name, node.parameters)
         for k, v in node.parameters.items():
             spec = param_schema.spec_for(node.tool_name, k, v)
+            if spec["kind"] == "hidden":
+                continue
             if spec["kind"] == "flow":
                 spec["choices"] = list(self._solution.flows)
             elif spec["kind"] == "device":
-                spec["choices"] = self._camera_ids(v)
-            spec.update({"name": k, "type": type(v).__name__, "native": v,
+                spec["choices"] = self._camera_ids(v, node.parameters.get("source_type") if node.tool_name == "Image Source" else None)
+            spec.update({"active": k not in off, "why": off.get(k, ""), "name": k, "type": type(v).__name__, "native": v,
                          "value": json.dumps(v) if isinstance(v, (list, dict)) else str(v)})
             out.append(spec)
         return out
 
-    def _camera_ids(self, current: Any) -> List[str]:
+    def _camera_ids(self, current: Any, source_type: Optional[str] = None) -> List[str]:
+        """Camera ids to choose from; with a Source Type, only the devices that kind of source can use."""
         ids = []
         try:
             from apex_vision.core.camera_manager import CameraManager
-            ids = [d.device_id for d in CameraManager.get_instance().list_devices()]
+            from apex_vision.tools.acquisition import device_fits
+            ids = [d.device_id for d in CameraManager.get_instance().list_devices() if source_type is None or device_fits(source_type, d.camera_type)]
         except Exception:
             pass
-        if current and current not in ids:
+        if current and current not in ids and source_type is None:
             ids.insert(0, str(current))
         return ids
 
@@ -1070,6 +1454,8 @@ class AppBackend(QObject):
             self._notify(f"{spec['label']}: the module did not accept that value")
             return False
         self._notify(f"{node.name}: {spec['label']} set to {value if not isinstance(value, list) else json.dumps(value)}")
+        if isinstance(value, str) and value.lower().endswith(".pt"):
+            self._notify(f"{node.name}: a .pt model is converted to ONNX on first use. Only use models you trust - a .pt file can contain code.")
         self._rerun()
         return True
 
@@ -1124,6 +1510,15 @@ class AppBackend(QObject):
     def _ensure_pool_applied(self) -> None:
         self._pool.apply_to(self._pipeline)
 
+    def _adopt_pool_image(self, row=None) -> None:
+        """The operator just loaded images: make the chosen one the project's source.
+
+        Unlike ``_ensure_pool_applied`` this is a configuration change, so the Image
+        Source's ``source_type`` / ``file_path`` are written and the project becomes dirty.
+        Loading images is a deliberate edit; running a flow is not.
+        """
+        self._pool.apply_to(self._pipeline, row, persist=True)
+
     @pyqtSlot("QVariantList")
     def loadImageFiles(self, urls):  # noqa: N802
         added, first = 0, None
@@ -1134,7 +1529,7 @@ class AppBackend(QObject):
                 first = idx if first is None else first
         if first is not None:
             self._pool.select(first)
-            self._ensure_pool_applied()
+            self._adopt_pool_image(first)
         self._notify(f"Loaded {added} image(s)")
         if added:
             self._rerun()
@@ -1148,7 +1543,7 @@ class AppBackend(QObject):
             self._notify(f"Cannot read folder: {exc}")
             return
         if added:
-            self._ensure_pool_applied()
+            self._adopt_pool_image()
         self._notify(f"Loaded {added} image(s) from {folder}"
                      + (f" ({skipped} more skipped)" if skipped else "")
                      + (f", {failed} unreadable" if failed else ""))
@@ -1173,30 +1568,130 @@ class AppBackend(QObject):
     # ------------------------------------------------------------------ execution
     def _rerun(self) -> None:
         """Re-run the flow after an edit (queued if a cycle is already running)."""
+        if self._all_active:                         # the all-flows run owns the flows: it shows the edit on its next pass
+            self._rerun_later = True
+            return
         self.engine.request_run()
 
     @pyqtSlot()
     def run(self):
-        """The Run button: 'Run all' over every image (repeating with Loop), else the selected one."""
+        """The Run button of the open flow: 'Run all' over every image (repeating with Loop), else the selected one."""
+        if self._all_live():                         # an all-flows run is going: this flow joins it
+            name = self._solution.active_flow_name
+            if name not in self._all_flows:
+                self._all_flows.append(name)
+                self._notify(f"{name} started")
+            return
         if self.engine.is_strip_busy():
             return
-        self.engine.start_strip_run(self._scope, self._loop)
+        self.engine.start_strip_run(self._scope, self.loop)
 
     @pyqtSlot()
     def stop(self):
+        """The Stop button of the open flow: only this flow (the others of an all-flows run carry on)."""
+        if self._all_live():
+            name = self._solution.active_flow_name
+            if name in self._all_flows:
+                self._all_flows.remove(name)
+            if not self._all_flows:
+                self._all_stop = True
+            self.engine.stop()
+            self._notify(f"{name} stopped" + ("" if self._all_flows else " - no flow is running"))
+            return
         self.engine.stop()
         self._notify("Stopped")
+
+    # ------------------------------------------------------------------ all flows (the top Run / Loop / Stop)
+    def _all_live(self) -> bool:
+        return self._all_active and not self._all_stop
+
+    @pyqtSlot()
+    def runAll(self):  # noqa: N802
+        """Run every flow of the solution - repeating until Stop when the top Loop is on. Each flow reads its own Image Source."""
+        names = [n for n, f in self._solution.flows.items() if f.enabled]
+        if not names:
+            return
+        if self._all_live():                         # already running: bring in any flow that was stopped on its own
+            self._all_flows.extend(n for n in names if n not in self._all_flows)
+            self._notify(f"All {len(names)} flows running")
+            return
+        if self._all_active:                         # a stopped run is still finishing its last cycle
+            return
+        self.engine.stop()
+        sol = self._solution
+        self._all_flows, self._all_stop, self._all_active = names, False, True
+        self._all_summary = {}
+        self._rerun_later = False
+
+        def work():
+            while True:
+                for name in list(self._all_flows):
+                    if self._all_stop or self._solution is not sol:
+                        break
+                    flow = sol.flows.get(name)
+                    if flow is None or name not in self._all_flows:
+                        continue
+                    while self.engine.busy and not self._all_stop:       # a single-flow cycle is finishing
+                        time.sleep(0.02)
+                    payload = RunEngine.compute_cycle(flow, sol)
+                    try:
+                        self._all_cycle.emit(name, payload)
+                    except RuntimeError:             # the window closed
+                        return
+                if self._all_stop or self._solution is not sol or not self._all_loop or not self._all_flows:
+                    break
+                time.sleep(max(0.05, float(getattr(self._pipeline, "run_interval_ms", 0) or 0) / 1000.0))
+            try:
+                self._all_done.emit()
+            except RuntimeError:
+                pass
+
+        threading.Thread(target=work, daemon=True).start()
+        self._notify(f"Running all {len(names)} flows" + (" - Loop is on, press Stop to end" if self._all_loop else ""))
+
+    @pyqtSlot()
+    def stopAll(self):  # noqa: N802
+        """Stop every flow (the top Stop button) - the open flow too."""
+        self._all_stop = True
+        self._all_flows = []
+        self.engine.stop()
+        self._notify("Stopped all flows")
+
+    def _on_all_cycle(self, name: str, payload: dict) -> None:
+        flow = self._solution.flows.get(name)
+        if flow is None or flow is not payload["pipeline"]:         # the flow was deleted or replaced meanwhile
+            return
+        verdict = "PASS" if RunEngine.payload_ok(payload) and not payload["failure"] else "FAIL"
+        self._all_summary[name] = verdict
+        if name == self._solution.active_flow_name:
+            self._on_cycle(payload)                  # the open flow shows its results as usual
+        else:
+            self._flow_stats[name] = (verdict, float(flow.last_flow_time_ms))
+            self.changed.emit()
+
+    def _on_all_done(self) -> None:
+        stopped = self._all_stop
+        self._all_active = self._all_stop = False
+        self._all_flows = []
+        if not stopped and self._all_summary:
+            bad = sum(1 for v in self._all_summary.values() if v != "PASS")
+            self._hint = f"All flows finished: {len(self._all_summary) - bad} PASS, {bad} FAIL"
+        if self._rerun_later:
+            self._rerun_later = False
+            self.engine.request_run()
+        self.changed.emit()
 
     def _on_cycle(self, payload: dict) -> None:
         results = payload["results"]
         pipe = self._pipeline
         self._verdict = "PASS" if RunEngine.payload_ok(payload) and not payload["failure"] else "FAIL"
         self._flow_ms = float(pipe.last_flow_time_ms)
+        self._flow_stats[self._solution.active_flow_name] = (self._verdict, self._flow_ms)
         self._algo_ms = sum(float(r.elapsed_ms) for r in results.values())
         image = None
         for nid in pipe.execution_order:
             res = results.get(nid)
-            if res is not None and res.outputs.get("Image") is not None:
+            if res is not None and _is_picture(res.outputs.get("Image")):
                 image = res.outputs["Image"]
         self._last_image = image
         self._last_results = dict(results)

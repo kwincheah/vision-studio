@@ -54,7 +54,7 @@ def test_backend_startup_and_close_behaviour(tmp_path):
 
     pm.set_show_on_startup(False)
     b.startup()
-    assert not shown and len(b.nodes) == 7 and b.solutionName == "IndustrialSolution"
+    assert not shown and len(b.nodes) == 1 and b.solutionName == "IndustrialSolution"
     pm.set_show_on_startup(True)
     b.startup()
     assert shown                                              # the start page comes first when enabled

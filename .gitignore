@@ -96,3 +96,9 @@ Thumbs.db
 
 # Third-party vendor manual excerpts (kept locally for reference, not redistributed)
 docs/references/
+
+# Private plugin and project for a separate geoint project: kept locally, never published
+/plugins/geoint_satellite_plugin/
+/projects/YTL_Solar_Inspection.apex
+/install_plugin.py
+/tests/test_geoint_*.py

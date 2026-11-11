@@ -46,7 +46,7 @@ Rectangle {
         contentWidth: width
         contentHeight: form.height + 2 * Theme.spSection
         clip: true
-        ScrollBar.vertical: ScrollBar { }
+        ScrollBar.vertical: ApexScrollBar { }
 
         Column {
             id: form

@@ -547,7 +547,7 @@ class StartPageDialog(QDialog):
 
         # Template quick cards
         tpl_cards = [
-            ("PCB Inspection && Defects", "pcb", "IC alignment, mounting holes, trace calipers & scratch check"),
+            ("Surface Defect Inspection", "pcb", "Alignment, hole search, width caliper and scratch check on a sample part"),
             ("Precision Measurement", "measurement", "Sub-pixel circle fitting, calipers, and tolerances"),
             ("YOLOv11 Object Detection", "yolo", "Real-time deep learning neural object detection"),
             ("Robot Coordinate Calibration", "calibration", "N-point affine calibration and color extraction")

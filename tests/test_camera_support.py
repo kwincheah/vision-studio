@@ -165,7 +165,7 @@ def test_camera_source_with_the_untouched_default_device_opens_the_webcam(monkey
     monkeypatch.setattr(CameraManager, "get_or_create_driver", spy)
     src = create_tool_instance("Image Source", "s", "S")
     src.set_param("source_type", "Camera")
-    assert src.get_param("camera_device") == "mvs_gige_0"      # the default a new module starts with
+    assert src.get_param("camera_device") == "webcam_0"        # choosing Camera leaves no Hikrobot device selected
     src.execute({})
     assert asked[0] == "webcam_0"
     asked.clear()

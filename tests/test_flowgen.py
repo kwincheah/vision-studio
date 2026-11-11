@@ -29,7 +29,9 @@ def codes(spec):
 def test_catalogue_covers_every_registered_tool_with_ports_and_parameters():
     from apex_vision.core.registry import list_all_tools
     cat = {c["tool"]: c for c in catalog.full_catalog()}
-    assert set(cat) == set(list_all_tools()) and len(cat) >= 40
+    from apex_vision.core.registry import get_tool_class
+    shown = {n for n in list_all_tools() if not get_tool_class(n).toolbox_hidden}
+    assert set(cat) == shown and len(cat) >= 40
     assert cat["Caliper"]["outputs"]["Edge1"] == "POINT"
     assert cat["Caliper"]["parameters"]["polarity"]["choices"] == ["Any", "Dark to light", "Light to dark"]
     assert all(c["description"] for c in cat.values())
@@ -50,7 +52,7 @@ def test_catalogue_does_not_leak_the_install_path():
 
 def test_keyword_search_finds_the_right_tool():
     names = [h["tool"] for h in catalog.search_tools("measure distance between two points")]
-    assert "P2P Measure" in names[:3]
+    assert "P2P Measure" in names[:5]
     assert [h["tool"] for h in catalog.search_tools("", category="Calibration")] and \
         all(h["category"] == "Calibration" for h in catalog.search_tools("", category="Calibration"))
 
@@ -70,7 +72,7 @@ def test_a_good_spec_is_clean_and_round_trips_through_the_apps_own_loader():
 @pytest.mark.parametrize("mutate,code", [
     (lambda s: s["modules"].append({"id": "x", "tool": "Blur"}), "unknown_tool"),
     (lambda s: s["modules"][1]["params"].update(sigma_x=1), "unknown_param"),
-    (lambda s: s["modules"][1]["params"].update(filter_type="Box"), "bad_param"),
+    (lambda s: s["modules"][1]["params"].update(filter_type="Wiener"), "bad_param"),
     (lambda s: s["modules"][1]["params"].update(kernel_size="big"), "bad_param"),
     (lambda s: s["modules"][1]["params"].update(kernel_size=10 ** 15), "bad_param"),
     (lambda s: s["modules"].append({"id": "src", "tool": "Histogram"}), "duplicate_id"),

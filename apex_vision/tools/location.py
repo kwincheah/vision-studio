@@ -113,7 +113,7 @@ class TemplateMatchTool(VisionToolBase):
     def _init_parameters(self):
         self.parameters = {
             "min_score": 0.65,
-            "template_roi": [260, 240, 180, 120],  # Default bounding box for template
+            "template_roi": [0, 0, 0, 0],  # the part to look for - draw it on the image (empty = not drawn yet)
             "start_angle": -15.0,
             "end_angle": 15.0,
             "angle_step": 2.0,
@@ -128,7 +128,9 @@ class TemplateMatchTool(VisionToolBase):
         gray = self.to_grayscale(img)
         h, w = gray.shape[:2]
 
-        tx, ty, tw, th = self.get_param("template_roi", [260, 240, 180, 120])
+        tx, ty, tw, th = self.get_param("template_roi", [0, 0, 0, 0])
+        if tw <= 0 or th <= 0:
+            return ToolExecutionResult(status=ToolStatus.NG, message="Draw the template region on the image first (it is empty)")
         tx = max(0, min(tx, w - 10))
         ty = max(0, min(ty, h - 10))
         tw = max(10, min(tw, w - tx))
@@ -677,91 +679,156 @@ class EdgeSearchTool(VisionToolBase):
 class BlobAnalysisTool(VisionToolBase):
     category = "Location"
     tool_name = "BLOB Analysis"
-    description = "Extracts connected binary regions, filters by area/circularity, and finds centroids."
+    description = ("Finds connected regions (blobs) of a binary or thresholded picture and measures each: area, perimeter, centre, box and its angle, major / minor axis, "
+                   "circularity, rectangularity and more. Choose how the picture is thresholded, which blobs to keep (by any measure), and how to sort them.")
+
+    THRESHOLD_MODES = ["Single Threshold", "Double Threshold", "Auto Threshold", "Soft Threshold (Fixed)", "Soft Threshold (Relative)", "None (already binary)"]
+    SORT_FEATURES = ["Area", "Perimeter", "Circularity", "Rectangularity", "Center X", "Center Y", "Box Angle", "Box Width", "Box Height", "Box Left", "Box Top",
+                     "Second-order Center Distance", "Principal Axis Angle", "Axis Ratio"]
 
     def _init_ports(self):
         self.inputs["Image"] = ToolPort("Image", DataType.IMAGE, "Input image")
         self.outputs["Image"] = ToolPort("Image", DataType.IMAGE, "Pass-through image")
+        self.outputs["Binary"] = ToolPort("Binary", DataType.IMAGE, "The binary picture the blobs were found in")
         self.outputs["Count"] = ToolPort("Count", DataType.VALUE, "Number of blobs found")
+        self.outputs["Total_Area"] = ToolPort("Total_Area", DataType.VALUE, "Sum of the blobs' areas")
         self.outputs["Blobs"] = ToolPort("Blobs", DataType.ANY, "List of detected blob dictionaries")
+        self.outputs["Areas"] = ToolPort("Areas", DataType.ANY, "Area of each blob")
+        self.outputs["Centers"] = ToolPort("Centers", DataType.ANY, "[[x, y], ...] centre of each blob")
 
     def _init_parameters(self):
         self.parameters = {
-            "threshold": 128,
-            "invert": False,
+            "roi": [0, 0, 0, 0],            # all zero = the whole picture
+            "threshold_mode": "Single Threshold",
+            "threshold": 128,               # the low threshold
+            "high_threshold": 255,
+            "invert": False,                # True: the blobs are darker than the background
             "min_area": 50,
             "max_area": 50000,
-            "min_circularity": 0.0
+            "min_circularity": 0.0,
+            "max_circularity": 1.0,
+            "min_rectangularity": 0.0,
+            "max_rectangularity": 1.0,
+            "min_axis_ratio": 0.0,
+            "max_axis_ratio": 1.0,
+            "min_perimeter": 0,
+            "max_perimeter": 1000000,
+            "min_rect_width": 0,
+            "max_rect_width": 1000000,
+            "min_rect_height": 0,
+            "max_rect_height": 1000000,
+            "min_major_axis": 0,
+            "max_major_axis": 1000000,
+            "min_minor_axis": 0,
+            "max_minor_axis": 1000000,
+            "max_barycenter_offset": 1000000,
+            "min_hole_area": 0,             # holes smaller than this inside a blob are filled
+            "max_blobs": 500,
+            "connectivity": "8-connected",
+            "sort_feature": "Area",
+            "sort_type": "No Sorting",
+            "contour_output": False,
         }
+
+    def _binarize(self, gray: np.ndarray):
+        mode = str(self.get_param("threshold_mode", "Single Threshold"))
+        low, high = int(self.get_param("threshold", 128)), int(self.get_param("high_threshold", 255))
+        darker = bool(self.get_param("invert", False))
+        if mode == "None (already binary)":
+            return (gray > 0).astype(np.uint8) * 255
+        if mode == "Auto Threshold":
+            _, b = cv2.threshold(gray, 0, 255, (cv2.THRESH_BINARY_INV if darker else cv2.THRESH_BINARY) | cv2.THRESH_OTSU)
+            return b
+        if mode == "Double Threshold":
+            inside = (gray >= low) & (gray <= high) if high > low else ((gray <= high) | (gray >= low))
+            return (~inside if darker else inside).astype(np.uint8) * 255
+        if mode == "Soft Threshold (Fixed)":               # a ramp between the two thresholds; the blob is where it is more than half
+            mid = (low + max(high, low)) / 2.0
+            return ((gray <= mid) if darker else (gray >= mid)).astype(np.uint8) * 255
+        if mode == "Soft Threshold (Relative)":            # against the picture's own local level, for blobs with fuzzy edges
+            local = cv2.GaussianBlur(gray, (0, 0), max(3.0, min(gray.shape[:2]) / 20.0)).astype(np.float32)
+            margin = max(1.0, (high - low) / 4.0) if high > low else 8.0
+            return ((gray.astype(np.float32) <= local - margin) if darker else (gray.astype(np.float32) >= local + margin)).astype(np.uint8) * 255
+        # Single threshold: lighter than background [low, 255], darker [0, low - 1]
+        return ((gray < low) if darker else (gray >= low)).astype(np.uint8) * 255
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
         img = self.get_input_image(context)
         if img is None:
             return ToolExecutionResult(status=ToolStatus.NG, message="No valid input image provided")
 
+        from apex_vision.tools import vm_location2
         gray = self.to_grayscale(img)
-        thresh_val = int(self.get_param("threshold", 128))
-        invert = bool(self.get_param("invert", False))
+        x0, y0, rw, rh = [int(v) for v in self.get_param("roi", [0, 0, 0, 0])[:4]]
+        if rw > 0 and rh > 0:
+            x0, y0, rw, rh = self.get_roi("roi", [0, 0, rw, rh], img_shape=gray.shape)
+        else:
+            x0, y0, rw, rh = 0, 0, gray.shape[1], gray.shape[0]
+        sub = gray[y0:y0 + rh, x0:x0 + rw]
+        binary = self._binarize(sub)
+        hole = int(self.as_float(self.get_param("min_hole_area", 0), 0.0))
+        if hole > 0:                                       # fill the holes of at most this size
+            inv = cv2.bitwise_not(binary)
+            n, lab, st, _ = cv2.connectedComponentsWithStats(inv, connectivity=4)
+            border = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]])).tolist())
+            for i in range(1, n):
+                if i not in border and st[i, cv2.CC_STAT_AREA] <= hole:
+                    binary[lab == i] = 255
+        conn = 4 if str(self.get_param("connectivity", "8-connected")).startswith("4") else 8
+        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, connectivity=conn)
 
-        ttype = cv2.THRESH_BINARY_INV if invert else cv2.THRESH_BINARY
-        _, binary = cv2.threshold(gray, thresh_val, 255, ttype)
-
-        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, connectivity=8)
-
-        min_area = float(self.get_param("min_area", 50))
-        max_area = float(self.get_param("max_area", 50000))
-        min_circ = float(self.get_param("min_circularity", 0.0))
-
+        g_ = lambda n, d=0.0: self.as_float(self.get_param(n, d), d)  # noqa: E731
+        ranges = {"area": (g_("min_area", 50), g_("max_area", 50000)), "circularity": (g_("min_circularity"), g_("max_circularity", 1.0)),
+                  "rectangularity": (g_("min_rectangularity"), g_("max_rectangularity", 1.0)), "axis_ratio": (g_("min_axis_ratio"), g_("max_axis_ratio", 1.0)),
+                  "perimeter": (g_("min_perimeter"), g_("max_perimeter", 1e6)), "box_w": (g_("min_rect_width"), g_("max_rect_width", 1e6)),
+                  "box_h": (g_("min_rect_height"), g_("max_rect_height", 1e6)), "major_axis": (g_("min_major_axis"), g_("max_major_axis", 1e6)),
+                  "minor_axis": (g_("min_minor_axis"), g_("max_minor_axis", 1e6))}
         blobs = []
-        overlays = []
-
         for i in range(1, num_labels):
-            area = stats[i, cv2.CC_STAT_AREA]
-            if area < min_area or area > max_area:
+            f = vm_location2.blob_features(binary, labels, i, stats, centroids)
+            vals = {"area": f["area"], "circularity": f["circularity"], "rectangularity": f["rectangularity"], "axis_ratio": f["axis_ratio"], "perimeter": f["perimeter"],
+                    "box_w": f["box"][2], "box_h": f["box"][3], "major_axis": f["major_axis"], "minor_axis": f["minor_axis"]}
+            if any(not (lo <= vals[k] <= hi) for k, (lo, hi) in ranges.items()):
                 continue
-
-            bx = stats[i, cv2.CC_STAT_LEFT]
-            by = stats[i, cv2.CC_STAT_TOP]
-            bw = stats[i, cv2.CC_STAT_WIDTH]
-            bh = stats[i, cv2.CC_STAT_HEIGHT]
-            cx, cy = centroids[i]
-
-            perimeter = 2 * (bw + bh)
-            circ = (4 * np.pi * area) / (perimeter * perimeter + 1e-5)
-            if circ < min_circ:
+            if f["barycenter_offset"] > g_("max_barycenter_offset", 1e6):
                 continue
+            f.update({"id": i, "cx": f["cx"] + x0, "cy": f["cy"] + y0, "area": float(f["area"]), "box": [f["box"][0] + x0, f["box"][1] + y0, f["box"][2], f["box"][3]],
+                      "box_left": f["box"][0] + x0, "box_top": f["box"][1] + y0, "_label": i})
+            blobs.append(f)
+        key = vm_location2.SORT_KEY.get(str(self.get_param("sort_feature", "Area")), "area")
+        order = str(self.get_param("sort_type", "No Sorting"))
+        if order != "No Sorting":
+            blobs.sort(key=lambda b: b[key], reverse=order == "Descending")
+        blobs = blobs[:max(1, int(g_("max_blobs", 500)))]
 
-            blob_info = {
-                "id": i,
-                "cx": float(cx),
-                "cy": float(cy),
-                "area": float(area),
-                "box": [int(bx), int(by), int(bw), int(bh)],
-                "circularity": float(circ)
-            }
-            blobs.append(blob_info)
-
-            overlays.append({
-                "type": "rect",
-                "box": [int(bx), int(by), int(bw), int(bh)],
-                "color": (255, 120, 0),
-                "label": f"#{len(blobs)} Area:{area}"
-            })
-            overlays.append({
-                "type": "cross",
-                "pt": (int(cx), int(cy)),
-                "size": 6,
-                "color": (0, 255, 0)
-            })
-
+        overlays = []
+        for n, b in enumerate(blobs, 1):
+            lab_id = b.pop("_label")
+            overlays.append({"type": "rect", "box": b["box"], "color": (255, 120, 0), "label": f"#{n} Area:{int(b['area'])}"})
+            overlays.append({"type": "cross", "pt": (int(b["cx"]), int(b["cy"])), "size": 6, "color": (0, 255, 0)})
+            if bool(self.get_param("contour_output", False)):
+                comp = (labels == lab_id).astype(np.uint8)
+                cnts, _ = cv2.findContours(comp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                for c in cnts:
+                    pts = c.reshape(-1, 2)[::max(1, len(c) // 80)]
+                    for j in range(len(pts)):
+                        p, q = pts[j], pts[(j + 1) % len(pts)]
+                        overlays.append({"type": "line", "pt1": (int(p[0] + x0), int(p[1] + y0)), "pt2": (int(q[0] + x0), int(q[1] + y0)), "color": (0, 255, 255), "thickness": 1})
+        full = np.zeros(gray.shape, np.uint8)
+        full[y0:y0 + rh, x0:x0 + rw] = binary
+        total = float(sum(b["area"] for b in blobs))
         status = ToolStatus.OK if len(blobs) > 0 else ToolStatus.NG
         return ToolExecutionResult(
             status=status,
             message=f"Detected {len(blobs)} blob(s)",
             outputs={
                 "Image": img,
+                "Binary": cv2.cvtColor(full, cv2.COLOR_GRAY2BGR),
                 "Count": len(blobs),
-                "Blobs": blobs
+                "Total_Area": total,
+                "Blobs": blobs,
+                "Areas": [b["area"] for b in blobs],
+                "Centers": [[b["cx"], b["cy"]] for b in blobs],
             },
             overlays=overlays
         )

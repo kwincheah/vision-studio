@@ -24,7 +24,7 @@ Rectangle {
 
     FileDialog { id: datasetDialog; title: "Open annotations.json"; nameFilters: ["Annotations (*.json)"]
         onAccepted: if (root.svc) root.svc.loadDataset(selectedFile.toString()) }
-    FolderDialog { id: generateDialog; title: "Folder for the PCB defect dataset"
+    FolderDialog { id: generateDialog; title: "Folder for the sample defect dataset"
         onAccepted: if (root.svc) root.svc.generateDataset(selectedFolder.toString(), boards.value) }
     FolderDialog { id: storeDialog; title: "Experiment store folder"
         onAccepted: if (root.svc) root.svc.setStore(selectedFolder.toString()) }

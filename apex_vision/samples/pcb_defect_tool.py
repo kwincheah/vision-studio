@@ -45,6 +45,7 @@ class PCBBoardLayoutTool(VisionToolBase):
     dependency visible in the graph rather than hidden inside the detector.
     """
     category = "Acquisition"
+    toolbox_hidden = True        # a demo / evaluation node for the synthetic PCB dataset, not a general module
     tool_name = "PCB Board Layout"
     description = ("Board design geometry (pad and trace rectangles) for a synthetic PCB, "
                    "supplied to the defect detector as inspection context.")
@@ -98,6 +99,7 @@ class PCBBoardLayoutTool(VisionToolBase):
 @register_tool
 class PCBDefectDetectionTool(VisionToolBase):
     category = "Recognition"
+    toolbox_hidden = True        # a demo / evaluation node for the synthetic PCB dataset, not a general module
     tool_name = "PCB Defect Detection"
     description = ("Deterministic classical PCB defect detector: finds scratches, voids, "
                    "missing paste and missing copper, and emits structured detections "

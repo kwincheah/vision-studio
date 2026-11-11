@@ -382,7 +382,7 @@ class ApexMainWindow(QMainWindow):
         self._add_action(file_menu, "Load Image File...", self.on_load_image_file, "Ctrl+I")
         file_menu.addSeparator()
         sample_menu = file_menu.addMenu("Load Example Solution")
-        self._add_action(sample_menu, "PCB Inspection & Defect Analysis",
+        self._add_action(sample_menu, "Surface Defect Inspection",
                          lambda: self._load_solution_instance(create_pcb_inspection_solution()))
         self._add_action(sample_menu, "Precision Dimensional Measurement",
                          lambda: self._load_solution_instance(create_precision_measurement_solution()))
@@ -409,8 +409,6 @@ class ApexMainWindow(QMainWindow):
         self._add_action(tools_menu, "Camera Lens Distortion Calibration Wizard...", self.on_open_lens_calibration_wizard)
         self._add_action(tools_menu, "N-Point Spatial Calibration Wizard", self.on_calibration_wizard)
         self._add_action(tools_menu, "Calibration Target Generator...", self.on_generate_calibration_target)
-        self._add_action(tools_menu, "Module Generator...",
-                         lambda: self.on_open_plugin_manager(initial_tab=3))
         self._add_action(tools_menu, "Plugin Manager...", self.on_open_plugin_manager)
         self._add_action(tools_menu, "Plugin Marketplace...", lambda: self.on_open_plugin_manager(initial_tab=1))
         self._add_action(tools_menu, "Create Vision Plugin...", lambda: self.on_open_plugin_manager(initial_tab=3))
@@ -443,7 +441,7 @@ class ApexMainWindow(QMainWindow):
         self._add_action(inspection_menu, "Compare Experiments...",
                          lambda: self.show_inspection_panel(4))
         inspection_menu.addSeparator()
-        self._add_action(inspection_menu, "Generate PCB Defect Dataset...",
+        self._add_action(inspection_menu, "Generate Sample Defect Dataset...",
                          self.on_generate_pcb_dataset)
         self._add_action(inspection_menu, "Explainability (Grad-CAM)...",
                          self.on_explainability_info)
@@ -578,7 +576,7 @@ class ApexMainWindow(QMainWindow):
         self.tab_workspace.setCurrentIndex(index)
 
     _SOLUTION_TEMPLATES = {
-        "PCB Inspection": create_pcb_inspection_solution,
+        "Surface Defect Inspection": create_pcb_inspection_solution,
         "Precision Measurement": create_precision_measurement_solution,
         "Robot Calibration": create_calibration_robot_solution,
     }
@@ -1311,7 +1309,7 @@ class ApexMainWindow(QMainWindow):
         from apex_vision.samples.pcb_defect_dataset import build_dataset
 
         directory = QFileDialog.getExistingDirectory(
-            self, "Choose a folder for the PCB defect dataset")
+            self, "Choose a folder for the sample defect dataset")
         if not directory:
             return
         count, ok = QInputDialog.getInt(
@@ -2964,7 +2962,8 @@ class ApexMainWindow(QMainWindow):
             return False
 
         src_tool = self._ensure_image_source()
-        self.pool.apply_to(self.pipeline, idx)
+        # the user asked for this image explicitly, so it becomes the project's source
+        self.pool.apply_to(self.pipeline, idx, persist=True)
         disp_name = self.pool.items[idx]["name"]
 
         if execute:

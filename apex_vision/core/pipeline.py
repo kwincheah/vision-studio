@@ -88,6 +88,9 @@ class VisionPipeline:
     def remove_node(self, instance_id: str):
         if instance_id in self.nodes:
             del self.nodes[instance_id]
+            for other in self.nodes.values():
+                if getattr(other, "group", "") == instance_id:        # the Group is gone: its modules are on their own again
+                    other.group = ""
             self.connections = [
                 c for c in self.connections
                 if c.from_node != instance_id and c.to_node != instance_id
@@ -109,9 +112,13 @@ class VisionPipeline:
                 continue
             visited.add(curr)
             for c in self.connections:
-                if c.from_node == curr and c.to_node not in visited:
+                if c.from_node == curr and c.to_node not in visited and not self._internal_to_group(c):
                     stack.append(c.to_node)
         return False
+
+    def _internal_to_group(self, c) -> bool:
+        """True for a wire between a Group and one of its own modules: it is part of the loop, not a dependency, so it never makes a cycle."""
+        return self.group_of(c.to_node) == c.from_node or self.group_of(c.from_node) == c.to_node
 
     def can_connect(self, from_node: str, from_port: str, to_node: str, to_port: str) -> tuple[bool, str]:
         """
@@ -168,30 +175,65 @@ class VisionPipeline:
         ]
         self._update_execution_order()
 
-    def _update_execution_order(self):
-        """Topological sort for node execution order, fallback to insertion order."""
-        adj: Dict[str, List[str]] = {node_id: [] for node_id in self.nodes}
-        in_degree: Dict[str, int] = {node_id: 0 for node_id in self.nodes}
+    def group_of(self, node_id: str) -> str:
+        """The id of the Group module a module belongs to, or '' (a Group is never a member of another)."""
+        node = self.nodes.get(node_id)
+        gid = getattr(node, "group", "") if node is not None else ""
+        if gid and gid != node_id and gid in self.nodes and self.nodes[gid].tool_name == "Group" and node.tool_name != "Group":
+            return gid
+        return ""
 
-        for c in self.connections:
-            if c.from_node in adj and c.to_node in in_degree:
-                adj[c.from_node].append(c.to_node)
-                in_degree[c.to_node] += 1
+    def set_group(self, node_id: str, group_id: str = "") -> bool:
+        """Put a module inside a Group module (or take it out with an empty id). False when that is not allowed."""
+        node = self.nodes.get(node_id)
+        if node is None:
+            return False
+        if group_id:
+            g = self.nodes.get(group_id)
+            if g is None or g.tool_name != "Group" or node.tool_name == "Group" or group_id == node_id:
+                return False
+        node.group = group_id or ""
+        self._update_execution_order()
+        return True
 
-        queue = [n for n, deg in in_degree.items() if deg == 0]
-        order = []
+    def group_members(self, group_id: str) -> List[str]:
+        """The modules inside a Group, in running order."""
+        return [n for n in self.execution_order if self.group_of(n) == group_id]
+
+    @staticmethod
+    def _kahn(ids: List[str], edges: List[tuple]) -> List[str]:
+        adj: Dict[str, List[str]] = {n: [] for n in ids}
+        indeg: Dict[str, int] = {n: 0 for n in ids}
+        for a, b in edges:
+            if a in adj and b in indeg and a != b:
+                adj[a].append(b)
+                indeg[b] += 1
+        queue = [n for n in ids if indeg[n] == 0]
+        order: List[str] = []
         while queue:
-            curr = queue.pop(0)
-            order.append(curr)
-            for nxt in adj.get(curr, []):
-                in_degree[nxt] -= 1
-                if in_degree[nxt] == 0:
+            cur = queue.pop(0)
+            order.append(cur)
+            for nxt in adj.get(cur, []):
+                indeg[nxt] -= 1
+                if indeg[nxt] == 0:
                     queue.append(nxt)
+        order += [n for n in ids if n not in order]
+        return order
 
-        for n in self.nodes:
-            if n not in order:
-                order.append(n)
+    def _update_execution_order(self):
+        """Topological sort for node execution order, fallback to insertion order.
 
+        A Group and the modules inside it are sorted as one unit (so everything the group's modules need has run before it, and everything
+        that needs their results runs after it); inside the unit the modules are sorted among themselves and follow the Group module."""
+        rep = {n: (self.group_of(n) or n) for n in self.nodes}
+        units = [n for n in self.nodes if rep[n] == n]
+        unit_order = self._kahn(units, [(rep.get(c.from_node, c.from_node), rep.get(c.to_node, c.to_node)) for c in self.connections])
+        order: List[str] = []
+        for u in unit_order:
+            order.append(u)
+            inside = [n for n in self.nodes if rep[n] == u and n != u]
+            if inside:
+                order += self._kahn(inside, [(c.from_node, c.to_node) for c in self.connections if rep.get(c.from_node) == u and rep.get(c.to_node) == u])
         self.execution_order = order
 
     def validate_flow(self) -> List[Dict[str, Any]]:
@@ -203,7 +245,7 @@ class VisionPipeline:
         # 1. Cycle detection in overall graph (iterative 3-color DFS to avoid RecursionError)
         adj: Dict[str, List[str]] = {n: [] for n in self.nodes}
         for c in self.connections:
-            if c.from_node in adj:
+            if c.from_node in adj and not self._internal_to_group(c):
                 adj[c.from_node].append(c.to_node)
 
         # 0 = unvisited, 1 = visiting (in stack), 2 = visited
@@ -398,16 +440,31 @@ class VisionPipeline:
         for node in self.nodes.values():
             node_el = ET.SubElement(nodes_el, "Node", attrib={
                 "instance_id": str(node.instance_id),
-                "tool_name": str(node.tool_name),
+                # a placeholder for a plugin module that is not installed keeps the real module's name and category,
+                # so opening and re-saving such a project does not destroy it
+                "tool_name": str(getattr(node, "missing_tool_name", None) or node.tool_name),
                 "name": str(node.name),
-                "category": str(getattr(node, "category", "")),
-                "enabled": "true" if node.enabled else "false"
+                "category": str(getattr(node, "_saved_category", None) or getattr(node, "category", "")),
+                "enabled": "true" if node.enabled else "false",
+                **({"group": str(node.group)} if getattr(node, "group", "") else {}),
             })
             params_el = ET.SubElement(node_el, "Parameters")
             for p_key, p_val in node.parameters.items():
                 p_type, p_encoded = self._encode_xml_value(p_val)
                 param_el = ET.SubElement(params_el, "Parameter", attrib={"name": p_key, "type": p_type})
                 param_el.text = p_encoded
+
+            # The module's Display Setup, written only when it differs from the default, so
+            # a project the user never touched keeps exactly the file it had.
+            display = getattr(node, "display", None) or {}
+            default = getattr(node, "DEFAULT_DISPLAY", None) or {}
+            if default and display != default:
+                ET.SubElement(node_el, "Display", attrib={
+                    "roi": "true" if display.get("roi", True) else "false",
+                    "labels": "true" if display.get("labels", True) else "false",
+                    "boxes": "true" if display.get("boxes", True) else "false",
+                    "colour": str(display.get("colour") or ""),
+                })
 
         conns_el = ET.SubElement(root, "Connections")
         for conn in self.connections:
@@ -482,6 +539,7 @@ class VisionPipeline:
 
                 tool = create_tool_instance(tool_name, inst_id, node_name, allow_placeholder=True)
                 tool.enabled = enabled
+                tool.group = n_el.attrib.get("group", "") or ""
 
                 params_el = n_el.find("Parameters")
                 if params_el is not None:
@@ -493,6 +551,16 @@ class VisionPipeline:
                         ptype = param_el.attrib.get("type")
                         param_dict[k] = cls._decode_xml_value(ptype, param_el.text)
                     tool.load_dict({"parameters": param_dict})
+                display_el = n_el.find("Display")
+                if display_el is not None:
+                    tool.display = tool._coerce_display({
+                        "roi": display_el.attrib.get("roi", "true").lower() in ("true", "1", "yes"),
+                        "labels": display_el.attrib.get("labels", "true").lower() in ("true", "1", "yes"),
+                        "boxes": display_el.attrib.get("boxes", "true").lower() in ("true", "1", "yes"),
+                        "colour": display_el.attrib.get("colour", ""),
+                    })
+                if hasattr(tool, "_saved_category"):                 # a plugin module that is not installed
+                    tool._saved_category = n_el.attrib.get("category") or None
 
                 pipe.add_node(tool)
 
@@ -604,14 +672,22 @@ class VisionPipeline:
 
         global_ctx = {
             "globals": global_vars if global_vars is not None else {},
-            "flow_name": self.name
+            "flow_name": self.name,
+            # what Time Consuming needs: when the flow began, what has run so far (live), in what order, and the modules' names
+            "flow_started": start_time,
+            "results": results,
+            "order": list(self.execution_order),
+            "node_names": {nid: n.name for nid, n in self.nodes.items()},
         }
 
         timed_out = False
-        for node_id in self.execution_order:
+        done: set = set()
+
+        def run_one(node_id: str) -> Optional[ToolExecutionResult]:
+            nonlocal timed_out
             node = self.nodes.get(node_id)
             if not node:
-                continue
+                return None
 
             # Timeout enforcement (Manual p. 93 Flow Timeout)
             elapsed_so_far = (time.perf_counter() - start_time) * 1000.0
@@ -625,7 +701,7 @@ class VisionPipeline:
                 results[node_id] = res
                 if on_step_callback:
                     on_step_callback(node_id, res)
-                continue
+                return res
 
             # Bypass check (Manual toggle or conditional branch deactivation)
             if not node.enabled or node_id in bypassed_branches:
@@ -634,7 +710,7 @@ class VisionPipeline:
                 results[node_id] = res
                 if on_step_callback:
                     on_step_callback(node_id, res)
-                continue
+                return res
 
             node_context: Dict[str, Any] = {"global": global_ctx}
             for c in self.connections:
@@ -666,11 +742,91 @@ class VisionPipeline:
 
             if on_step_callback:
                 on_step_callback(node_id, res)
+            return res
+
+        def run_group(gid: str) -> None:
+            """Run a Group: its modules once, or round a loop, then report the group as a whole."""
+            gnode = self.nodes[gid]
+            members = self.group_members(gid)
+            done.update(members)
+            if not gnode.enabled or gid in bypassed_branches:
+                reason = "Bypassed by Branch Logic" if gid in bypassed_branches else "Bypassed (Disabled)"
+                for m in [gid] + members:
+                    results[m] = ToolExecutionResult(status=ToolStatus.BYPASS, message=reason)
+                    if on_step_callback:
+                        on_step_callback(m, results[m])
+                return
+            loop = bool(gnode.get_param("loop_enable"))
+            lo, hi = int(gnode.get_param("loop_start")), int(gnode.get_param("loop_end"))
+            indices = list(range(lo, min(hi, lo + 100000))) if loop else [0]
+            interval = max(0.0, float(gnode.get_param("interval_ms"))) / 1000.0 if loop else 0.0
+            loops, broke, last = 0, False, lo
+            t_group = time.perf_counter()
+            for n, i in enumerate(indices):
+                last = i
+                data_cache[gid] = {"Cycle": i, "Loops": loops, "Broke": False}
+                bypassed_branches.difference_update(members)             # every pass starts with all of its modules switched on
+                for m in members:
+                    run_one(m)
+                loops += 1
+                data_cache[gid] = {"Cycle": i, "Loops": loops, "Broke": False}
+                if loop and bool(gnode.get_param("break_enable")) and self._group_should_break(gnode, gid, data_cache):
+                    broke = True
+                    break
+                if timed_out:
+                    break
+                if interval > 0 and n < len(indices) - 1:
+                    remaining = (self.flow_timeout_ms - (time.perf_counter() - start_time) * 1000.0) / 1000.0
+                    time.sleep(max(0.0, min(interval, remaining)))
+            inner = [results[m] for m in members if m in results and results[m].status != ToolStatus.BYPASS]
+            statuses = {r.status for r in inner}
+            worst = ToolStatus.ERROR if ToolStatus.ERROR in statuses else ToolStatus.TIMEOUT if ToolStatus.TIMEOUT in statuses else ToolStatus.NG if ToolStatus.NG in statuses else ToolStatus.OK
+            res = ToolExecutionResult(
+                status=worst,
+                message=f"{loops} pass(es) over {len(members)} module(s)" + (" - stopped by the break condition" if broke else ""),
+                outputs={"Cycle": last, "Loops": loops, "Broke": broke},
+                elapsed_ms=(time.perf_counter() - t_group) * 1000.0)
+            results[gid] = res
+            data_cache[gid] = res.outputs
+            if on_step_callback:
+                on_step_callback(gid, res)
+
+        for node_id in self.execution_order:
+            if node_id in done:
+                continue
+            node = self.nodes.get(node_id)
+            if node is not None and node.tool_name == "Group":
+                run_group(node_id)
+            else:
+                run_one(node_id)
 
         total_elapsed = (time.perf_counter() - start_time) * 1000.0
         self.last_flow_time_ms = total_elapsed
         self.last_results = results
         return results
+
+    def _group_should_break(self, gnode, gid: str, data_cache: Dict[str, Dict[str, Any]]) -> bool:
+        """The Group's break test: compare its Base value with its Target value (each wired from a module, or typed)."""
+        def value(port_name: str, typed_name: str):
+            for c in self.connections:
+                if c.to_node == gid and c.to_port == port_name:
+                    out = data_cache.get(c.from_node, {})
+                    if c.from_port in out:
+                        return out[c.from_port]
+            return gnode.get_param(typed_name)
+        a, b = value("Base", "base_value"), value("Target", "target_value")
+        kind = str(gnode.get_param("compare_type"))
+        try:
+            if kind == "String":
+                a, b = str(a), str(b)
+            elif kind == "Int":
+                a, b = int(float(a)), int(float(b))
+            else:
+                a, b = float(a), float(b)
+        except (TypeError, ValueError):
+            return False
+        op = str(gnode.get_param("break_when"))
+        return {"==": a == b, "!=": a != b, ">": a > b, ">=": a >= b, "<": a < b, "<=": a <= b}.get(op, False) if kind != "String" or op in ("==", "!=") else False
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -715,6 +871,7 @@ class SolutionManager:
         self.trigger_flow_name: str = "Flow1"
         # Optional Python source defining process(context); run after every flow cycle.
         self.global_script: str = ""
+        self.comm_devices: List[Dict[str, Any]] = []     # Communication Management: the network devices of this solution
         self.global_variables: Dict[str, Any] = {
             "g_CountOK": 0,
             "g_CountNG": 0,
@@ -878,6 +1035,7 @@ class SolutionManager:
             "trigger_flow": self.trigger_flow_name,
             "global_variables": self.global_variables,
             "global_script": self.global_script,
+            **({"comm_devices": self.comm_devices} if self.comm_devices else {}),
             "flows": [flow.to_dict() for flow in self.flows.values()]
         }
 
@@ -892,6 +1050,8 @@ class SolutionManager:
 
         if isinstance(data.get("global_script"), str):
             sol.global_script = data["global_script"]
+        if isinstance(data.get("comm_devices"), list):
+            sol.comm_devices = [dict(d) for d in data["comm_devices"] if isinstance(d, dict)]
 
         flows_data = data.get("flows", [])
         if flows_data:
@@ -915,6 +1075,10 @@ class SolutionManager:
         for key, val in self.global_variables.items():
             vtype, enc = VisionPipeline._encode_xml_value(val)
             ET.SubElement(vars_el, "Variable", attrib={"name": str(key), "type": vtype}).text = enc
+        if self.comm_devices:
+            devs_el = ET.SubElement(root, "CommDevices")
+            for d in self.comm_devices:
+                ET.SubElement(devs_el, "Device", attrib={k: ("true" if v is True else "false" if v is False else str(v)) for k, v in d.items()})
         if self.global_script:
             stype, senc = VisionPipeline._encode_xml_value(self.global_script)
             ET.SubElement(root, "GlobalScript", attrib={"type": stype}).text = senc
@@ -951,6 +1115,16 @@ class SolutionManager:
                 if vname:
                     sol.global_variables[vname] = VisionPipeline._decode_xml_value(
                         v_el.attrib.get("type"), v_el.text)
+        devs_el = root.find("CommDevices")
+        if devs_el is not None:
+            for d_el in devs_el.findall("Device"):
+                d = dict(d_el.attrib)
+                d["auto_start"] = str(d.get("auto_start", "false")).lower() == "true"
+                try:
+                    d["port"] = int(d.get("port", 8000))
+                except ValueError:
+                    continue
+                sol.comm_devices.append(d)
         script_el = root.find("GlobalScript")
         if script_el is not None:
             sol.global_script = str(VisionPipeline._decode_xml_value(

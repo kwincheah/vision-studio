@@ -15,18 +15,23 @@ from apex_vision.core.registry import register_tool
 class GeometryFitTool(VisionToolBase):
     category = "Image Generation"
     tool_name = "Circle/Line Fit"
-    description = "Fits circle or line on the basis of 3 or more coordinate feature points."
+    description = ("Fits a circle (3+ points), an ellipse (5+ points) or a line (2+ points) through a set of coordinates. "
+                   "Ellipse results: Center_X / Center_Y, Axis_A (long) and Axis_B (short) lengths, and Angle_Deg of the long axis.")
 
     def _init_ports(self):
         self.inputs["Point_Set"] = ToolPort("Point_Set", DataType.ANY, "List of (x, y) coordinates")
         self.outputs["Center_X"] = ToolPort("Center_X", DataType.VALUE, "Fitted Center X")
         self.outputs["Center_Y"] = ToolPort("Center_Y", DataType.VALUE, "Fitted Center Y")
         self.outputs["Radius"] = ToolPort("Radius", DataType.VALUE, "Fitted Radius")
-        self.outputs["Angle_Deg"] = ToolPort("Angle_Deg", DataType.VALUE, "Fitted Line Angle")
+        self.outputs["Angle_Deg"] = ToolPort("Angle_Deg", DataType.VALUE, "Fitted Line Angle (or the ellipse's long-axis angle)")
+        self.outputs["Axis_A"] = ToolPort("Axis_A", DataType.VALUE, "Ellipse long axis length")
+        self.outputs["Axis_B"] = ToolPort("Axis_B", DataType.VALUE, "Ellipse short axis length")
+        self.outputs["Circle"] = ToolPort("Circle", DataType.CIRCLE, "Fitted circle {cx, cy, r}")
+        self.outputs["Line"] = ToolPort("Line", DataType.LINE, "Fitted line {x1, y1, x2, y2}")
 
     def _init_parameters(self):
         self.parameters = {
-            "fit_type": "Circle Fit",  # Circle Fit, Line Fit
+            "fit_type": "Circle Fit",  # Circle Fit, Ellipse Fit, Line Fit
             "default_points": [[100, 200], [200, 100], [300, 200], [200, 300]]
         }
 
@@ -47,6 +52,30 @@ class GeometryFitTool(VisionToolBase):
                         f"fitting: {pts_in!r:.80}")
 
         pts = pts.astype(np.float32)
+
+        if fit_t == "Ellipse Fit":
+            if len(pts) < 5:
+                return ToolExecutionResult(status=ToolStatus.NG, message=f"An ellipse needs at least 5 points, got {len(pts)}")
+            (ex, ey), (da, db), ang = cv2.fitEllipse(pts)
+            a_len, b_len = max(da, db), min(da, db)
+            if db > da:
+                ang += 90.0
+            ang = float(((ang + 90.0) % 180.0) - 90.0)
+            overlays = [
+                {"type": "cross", "pt": (int(ex), int(ey)), "size": 8, "color": (255, 180, 0)},
+                {"type": "text", "text": f"Ellipse {a_len:.1f} x {b_len:.1f}", "pt": (int(ex) + 8, int(ey) - 8), "color": (0, 240, 255)},
+            ]
+            t = np.linspace(0, 2 * np.pi, 48)
+            ca, sa = np.cos(np.radians(ang)), np.sin(np.radians(ang))
+            ring = [(int(ex + (a_len / 2) * np.cos(u) * ca - (b_len / 2) * np.sin(u) * sa),
+                     int(ey + (a_len / 2) * np.cos(u) * sa + (b_len / 2) * np.sin(u) * ca)) for u in t]
+            overlays += [{"type": "line", "pt1": ring[i], "pt2": ring[(i + 1) % len(ring)], "color": (0, 240, 255), "thickness": 2} for i in range(len(ring))]
+            return ToolExecutionResult(
+                status=ToolStatus.OK,
+                message=f"Fitted Ellipse: Center=({ex:.1f}, {ey:.1f}), axes {a_len:.2f} x {b_len:.2f}, angle {ang:.1f} deg ({len(pts)} pts)",
+                outputs={"Center_X": float(ex), "Center_Y": float(ey), "Radius": float((a_len + b_len) / 4.0), "Angle_Deg": ang,
+                         "Axis_A": float(a_len), "Axis_B": float(b_len)},
+                overlays=overlays)
 
         if fit_t == "Circle Fit":
             mx = np.mean(pts[:, 0])
@@ -78,7 +107,7 @@ class GeometryFitTool(VisionToolBase):
                 return ToolExecutionResult(
                     status=ToolStatus.OK,
                     message=f"Fitted Circle: Center=({cx:.1f}, {cy:.1f}), R={r:.2f} ({len(pts)} pts)",
-                    outputs={"Center_X": cx, "Center_Y": cy, "Radius": r, "Angle_Deg": 0.0},
+                    outputs={"Center_X": cx, "Center_Y": cy, "Radius": r, "Angle_Deg": 0.0, "Circle": {"cx": cx, "cy": cy, "r": r}},
                     overlays=overlays
                 )
             except np.linalg.LinAlgError:
@@ -100,7 +129,9 @@ class GeometryFitTool(VisionToolBase):
             return ToolExecutionResult(
                 status=ToolStatus.OK,
                 message=f"Fitted Line: Angle={angle:.2f}° ({len(pts)} pts)",
-                outputs={"Center_X": float(x0), "Center_Y": float(y0), "Radius": 0.0, "Angle_Deg": angle},
+                outputs={"Center_X": float(x0), "Center_Y": float(y0), "Radius": 0.0, "Angle_Deg": angle,
+                         "Line": {"x1": float(p1[0]), "y1": float(p1[1]), "x2": float(p2[0]), "y2": float(p2[1]),
+                                  "length": float(np.hypot(p2[0] - p1[0], p2[1] - p1[1]))}},
                 overlays=overlays
             )
 

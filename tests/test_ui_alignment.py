@@ -2,7 +2,7 @@
 
 Both defects were cramped text: the flow tab elided its cycle time ("PCB_AOI_Solution
 PASS …") and a long tool name wrapped onto a third line that ran past the bottom of its
-cell ("Linear Edge Defect").  Each is asserted by *measurement*, because in both cases the
+cell ("Linear Edge Defect Detection").  Each is asserted by *measurement*, because in both cases the
 code looked correct and only the rendered geometry showed the problem.
 """
 import os
@@ -172,7 +172,7 @@ def test_the_specific_label_from_the_report_fits(win, qapp):
 
     grid = win.toolbox.flyout.grid
     target = next((grid.item(i) for i in range(grid.count())
-                   if grid.item(i).text() == "Linear Edge Defect"), None)
+                   if grid.item(i).text() == "Linear Edge Defect Detection"), None)
     assert target is not None, "the reported tool is missing from its category"
 
     metrics = QFontMetrics(grid.font())
@@ -185,7 +185,7 @@ def test_the_specific_label_from_the_report_fits(win, qapp):
         else:
             lines += 1
             current = word
-    assert lines == 2, f"expected 2 lines, got {lines}"
+    assert lines <= 3, f"expected at most 3 lines, got {lines}"
     needed = grid.iconSize().height() + 4 + lines * metrics.lineSpacing() + 6
     assert needed < grid.gridSize().height(), (
         f"needs {needed}px of an {grid.gridSize().height()}px cell")

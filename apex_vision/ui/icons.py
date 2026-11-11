@@ -318,6 +318,15 @@ def get_tool_icon(tool_name: str, size: int = 18, accent_color: Optional[QColor]
         p.drawRect(QRectF(5.0, 5.0, 6.0, 6.0))
         p.drawPoint(QPointF(8.0, 8.0))
     else:
+        # no glyph of its own: the glyph of its category, so the tool is still recognisable as a Location / Measurement / ... tool
+        from apex_vision.core.registry import get_tool_class
+        try:
+            category = getattr(get_tool_class(t), "category", "")
+        except KeyError:
+            category = ""
+        if category:
+            p.end()
+            return get_category_icon(category, size, accent_color)
         p.drawRoundedRect(QRectF(3.0, 3.0, 10.0, 10.0), 1.5, 1.5)
 
     p.end()

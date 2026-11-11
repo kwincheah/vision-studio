@@ -14,7 +14,7 @@ def create_pcb_inspection_solution() -> VisionPipeline:
     pipe = VisionPipeline(name="PCB_AOI_Solution")
 
     src = create_tool_instance("Image Source", "node_source", "01_ImageAcquisition")
-    src.set_param("pattern_type", "PCB Inspection")
+    src.set_param("pattern_type", "Part with Defects")
     pipe.add_node(src)
 
     tm = create_tool_instance("Template Match", "node_template", "02_IC_Alignment")
@@ -64,7 +64,7 @@ def create_calibration_robot_solution() -> VisionPipeline:
     pipe = VisionPipeline(name="Robot_Calibration_Solution")
 
     src = create_tool_instance("Image Source", "node_source", "01_ColorAcquisition")
-    src.set_param("pattern_type", "PCB Inspection")
+    src.set_param("pattern_type", "Part with Defects")
     pipe.add_node(src)
 
     col = create_tool_instance("Color Extraction", "node_color", "02_ExtractTargetColor")
@@ -117,11 +117,11 @@ def create_object_detection_solution() -> VisionPipeline:
     pipe = VisionPipeline(name="YOLO_Detection_Solution")
 
     src = create_tool_instance("Image Source", "node_source", "01_Acquisition")
-    src.set_param("pattern_type", "PCB Inspection")
+    src.set_param("pattern_type", "Part with Defects")
     pipe.add_node(src)
 
     det = create_tool_instance("Object Detection", "node_yolo", "02_YOLOv11_Detector")
-    det.set_param("model_path", "yolo11n.pt")
+    det.set_param("model_path", "yolo11n.onnx")
     det.set_param("confidence", 0.25)
     det.set_param("iou", 0.45)
     det.set_param("classes", "all")

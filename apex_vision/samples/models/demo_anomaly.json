@@ -1,0 +1,13 @@
+{
+  "task": "anomaly",
+  "output_type": "Reconstruction (autoencoder)",
+  "input_size": [
+    128,
+    128
+  ],
+  "normalize": "0 to 1",
+  "resize": "Stretch",
+  "rgb": true,
+  "threshold": 0.08059,
+  "good_images": 80
+}

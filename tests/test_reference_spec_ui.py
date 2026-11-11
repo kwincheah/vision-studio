@@ -229,7 +229,7 @@ def test_module_config_dialog_enum_and_path_editors(qapp):
 
 def test_module_config_dialog_edits_write_through(qapp):
     tool = create_tool_instance("Image Source", "n4", "01_Acq")
-    tool.set_param("pattern_type", "PCB Inspection")
+    tool.set_param("pattern_type", "Part with Defects")
     dlg = ModuleConfigDialog(tool)
     combo = next(c for c in dlg.findChildren(QComboBox)
                  if c.findText("Calibration Grid") >= 0)

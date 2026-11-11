@@ -82,10 +82,11 @@ Column {
         radius: Theme.radiusPanel
         clip: true
         ListView {
+            id: optionList
             anchors.fill: parent; anchors.margins: 1
             model: root.shown
             interactive: root.shown.length > root.maxRows
-            ScrollBar.vertical: ScrollBar { }
+            ScrollBar.vertical: ApexScrollBar { }
             delegate: Rectangle {
                 objectName: "aiModelOption"
                 width: ListView.view.width; height: 30

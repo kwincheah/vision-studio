@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "apex-vision-studio"
-version = "1.0.0b3"
+version = "1.0.0b4"
 description = "Modular Industrial Machine Vision Platform & Visual Flow Orchestration"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -40,11 +40,17 @@ dependencies = [
     "opencv-python>=4.8.0",
     "numpy>=1.24.0",
     "anthropic>=0.86.0",     # AI Gen (Claude); other providers use plain HTTP
+    "rapidocr-onnxruntime>=1.3.0",   # OCR Recognition
+    "pyserial>=3.5",         # Serial Send
 ]
 
 [project.optional-dependencies]
 ml = [
     "ultralytics>=8.0.0",
+]
+train = [                     # python main.py train ...  (running trained models needs none of this)
+    "torch>=2.1",
+    "onnx>=1.15",
 ]
 ai = [
     "keyring>=24.0.0",      # remember API keys in the OS credential store

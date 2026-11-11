@@ -55,7 +55,7 @@ QtObject {
 
     // ---- tool box ----------------------------------------------------------------------
     readonly property var toolCategories: [
-        { name: "Acquisition", icon: "camera", tools: ["Image Source", "Image Output", "Image Buffer", "PCB Board Layout"] },
+        { name: "Acquisition", icon: "camera", tools: ["Image Source", "Image Output", "Image Buffer"] },
         { name: "Location", icon: "target", tools: ["Template Match", "Position Correction", "Circle Search", "Line Search", "Caliper", "Edge Search", "BLOB Analysis"] },
         { name: "Measurement", icon: "measure", tools: ["L2L Measure", "P2P Measure", "Intensity Measure", "Pixel Count", "Edge Distance", "Histogram"] },
         { name: "Image Generation", icon: "roi", tools: ["Circle/Line Fit", "Geometry Generation"] },
@@ -79,7 +79,7 @@ QtObject {
             { text: "Load Image File...", key: "loadImage", shortcut: "Ctrl+I" },
             { text: "Load Image Folder...", key: "loadFolder" }, { sep: true },
             { text: "Load Example Solution", sub: [
-                { text: "PCB Inspection & Defect Analysis", key: "example0" },
+                { text: "Surface Defect Inspection", key: "example0" },
                 { text: "Precision Dimensional Measurement", key: "example1" },
                 { text: "Deep Learning Object Detection (YOLOv11)", key: "example2" },
                 { text: "Color Extraction & Robot Calibration", key: "example3" } ] },
@@ -96,9 +96,9 @@ QtObject {
             { text: "Camera Lens Distortion Calibration Wizard...", key: "lensCal" },
             { text: "N-Point Spatial Calibration Wizard", key: "npoint" },
             { text: "Calibration Target Generator...", key: "targetGen" },
-            { text: "Module Generator...", key: "pluginCreate" },
             { text: "Plugin Manager...", key: "plugins" },
             { text: "Plugin Marketplace...", key: "pluginMarket" },
+            { text: "Install Plugin from GitHub...", key: "pluginGithub" },
             { text: "Create Vision Plugin...", key: "pluginCreate" }, { sep: true },
             { text: "Validate Active Flow", key: "validate" },
             { text: "Arrange Modules Hierarchically", key: "arrange" } ] },
@@ -113,7 +113,7 @@ QtObject {
             { text: "Failure Analysis...", key: "inspect2" },
             { text: "Experiments...", key: "inspect3" },
             { text: "Compare Experiments...", key: "inspect4" }, { sep: true },
-            { text: "Generate PCB Defect Dataset...", key: "genDataset" },
+            { text: "Generate Sample Defect Dataset...", key: "genDataset" },
             { text: "Explainability (Grad-CAM)...", key: "gradcam" }, { sep: true },
             { text: "Open Experiment Folder", key: "openExperiments" } ] },
         { title: "View", items: [

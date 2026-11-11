@@ -18,7 +18,9 @@ DialogFrame {
         spacing: 10
         Text {
             property int bad: { var n = 0; for (var i = 0; i < root.issues.length; i++) if (root.issues[i].severity !== "info") n++; return n }
-            text: bad === 0 ? "No problems found." : bad + " issue(s) need attention."
+            text: bad === 0 ? "No problems found." :
+                  bad === 1 ? "1 issue needs attention."
+                            : bad + " issues need attention."
             font.family: Theme.fontFamily; font.pixelSize: Theme.fontLabel; font.weight: Font.DemiBold
             color: bad === 0 ? Theme.okText : Theme.errorText
         }

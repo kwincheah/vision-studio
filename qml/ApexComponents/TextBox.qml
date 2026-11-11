@@ -23,6 +23,9 @@ Rectangle {
 
     TextInput {
         id: input
+        // TextInput does not join the Tab chain by default; without this a keyboard-only
+        // operator cannot reach any text field in any dialog.
+        activeFocusOnTab: !root.readOnly
         anchors.fill: parent
         anchors.leftMargin: Theme.spBase
         anchors.rightMargin: Theme.spBase

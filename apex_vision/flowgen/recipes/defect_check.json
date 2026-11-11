@@ -1,5 +1,5 @@
 {
- "title": "Surface / PCB defect check with pass-fail verdict",
+ "title": "Surface defect check with pass-fail verdict",
  "when": "The user wants to find scratches, dirt or other anomalies in a region and decide OK/NG by the number of defects.",
  "spec": {
   "name": "Defect_Check",
@@ -9,7 +9,7 @@
     "tool": "Image Source",
     "params": {
      "source_type": "Synthetic",
-     "pattern_type": "PCB Inspection"
+     "pattern_type": "Part with Defects"
     }
    },
    {

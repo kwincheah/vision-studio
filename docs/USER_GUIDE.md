@@ -11,11 +11,12 @@ the end.
 3. [The main window](#3-the-main-window)
 4. [Reading results](#4-reading-results)
 5. [Using a camera](#5-using-a-camera)
-6. [Saving and opening projects](#6-saving-and-opening-projects)
-7. [Run from the command line](#7-run-from-the-command-line)
-8. [Call it from another program (HTTP API)](#8-call-it-from-another-program-http-api)
-9. [Keyboard shortcuts](#9-keyboard-shortcuts)
-10. [Troubleshooting](#10-troubleshooting)
+6. [Deep learning](#6-deep-learning)
+7. [Saving and opening projects](#7-saving-and-opening-projects)
+8. [Run from the command line](#8-run-from-the-command-line)
+9. [Call it from another program (HTTP API)](#9-call-it-from-another-program-http-api)
+10. [Keyboard shortcuts](#10-keyboard-shortcuts)
+11. [Troubleshooting](#11-troubleshooting)
 
 ---
 
@@ -61,7 +62,7 @@ To build your own flow:
 4. Press **Run**.
 
 A typical measurement flow is: **Image Source > Image Filter > Edge/Circle search > Measure > Condition Branch**. The last
-module decides PASS or FAIL.
+module decides PASS or FAIL. All 58 modules are listed in [MODULES.md](MODULES.md).
 
 Press <kbd>Ctrl</kbd>+<kbd>G</kbd> to open **AI Gen** instead: describe the inspection in plain words and it proposes a
 flow. Nothing is added until you accept it, and <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes it. See [AI_GEN.md](AI_GEN.md).
@@ -72,12 +73,26 @@ flow. Nothing is added until you accept it, and <kbd>Ctrl</kbd>+<kbd>Z</kbd> und
 |---|---|
 | **Toolbox** (left) | All modules by category. Drag one onto the canvas. |
 | **Canvas** (middle) | The flow. Modules and wires. Right-click a module for Configuration, Rename (F2), Execute Module, Delete. |
-| **Image viewer** (right) | The image with each module's overlays drawn on it. |
+| **Image viewer** (right) | The image with each module's overlays drawn on it. The small icons above it show / hide overlays, zoom in, fit, show a centre crosshair and a measuring grid. Scroll to zoom, drag a zoomed image to move it. To set a module's region (ROI), select the module and drag a rectangle on the image. |
 | **Image strip** | The images loaded for this project. Click one to run the flow on it. **Run all** runs every image. |
 | **Parameters** | Settings of the selected module. |
 | **Result panel** (bottom) | Current Result, History and Help (see below). |
 
 The title bar shows the project name and the app version.
+
+### Zooming and moving around
+
+The flow canvas and the image viewer work the same way:
+
+| To | Do this |
+|---|---|
+| **Zoom** | roll the mouse wheel, or two-finger scroll on a touchpad. A small scroll zooms a little and a big one zooms more. The point under the pointer stays where it is |
+| **Zoom (pinch)** | pinch with two fingers on a touchpad or touchscreen. On Windows a precision touchpad's pinch arrives as Ctrl + wheel, which works too |
+| **Move the view** | drag the empty canvas (or a zoomed image) with the mouse, or drag with two fingers on a touchscreen |
+| **Buttons** | **+** / **-** zoom about the middle; **Fit** (the square button, or Ctrl+0) shows the whole flow. In the image viewer the magnifier zooms in and the corners icon fits the image |
+| **Limits** | the canvas zooms from 25% to 250%, the image from 100% to 1600% |
+
+A module follows your pointer exactly while you drag it, at any zoom.
 
 ## 4. Reading results
 
@@ -114,7 +129,14 @@ Notes:
 - A ready-made flow that uses the webcam, checks its brightness and counts bright objects is described in
   [CAMERA_DEMO.md](CAMERA_DEMO.md).
 
-## 6. Saving and opening projects
+## 6. Deep learning
+
+Classify parts, outline defects or find anomalies with your own trained model: add **DL Classify**, **DL Segment**, **DL Anomaly** or
+**Object Detection** from the **Deep Learning** toolbox category and pick an `.onnx` file. Open `DeepLearning_Demo.apex` to see all three
+working on bundled demo models, and read [DEEP_LEARNING.md](DEEP_LEARNING.md) for training your own (`python main.py train ...`).
+The **Defect Detection** module can use the same models: set its Method to *Deep learning*.
+
+## 7. Saving and opening projects
 
 - <kbd>Ctrl</kbd>+<kbd>S</kbd> saves; <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> saves under a new name.
 - Projects are saved as `.apex` files, which are readable **XML** ([XML_FORMAT.md](XML_FORMAT.md)). Older `.vmp`, `.sol`,
@@ -122,7 +144,7 @@ Notes:
 - **New Project** starts in `Documents/ApexVision/Projects`. Use **Browse...** to pick another folder.
 - Plugin packages use the `.apexpkg` extension.
 
-## 7. Run from the command line
+## 8. Run from the command line
 
 The same engine runs without a window:
 
@@ -132,10 +154,10 @@ python main.py run --workflow my_flow.apex --input images_folder --out-json resu
 ```
 
 `--input` may be a single image or a folder. The exit code is non-zero if any image failed, unless you pass
-`--ignore-errors`. Other commands are `serve` (see below), `evaluate`, `compare`, `list`, `dataset` and `demo` for
+`--ignore-errors`. Other commands are `serve` (see below), `train` and `model-info` for deep-learning models ([DEEP_LEARNING.md](DEEP_LEARNING.md)), `evaluate`, `compare`, `list`, `dataset` and `demo` for
 measuring a detector on a labelled dataset. Add `--help` to any of them (for example `python -m apex_vision.cli run --help`).
 
-## 8. Call it from another program (HTTP API)
+## 9. Call it from another program (HTTP API)
 
 Another program, a web app for example, can send an image to your computer and get PASS/FAIL and every measurement back as
 JSON:
@@ -153,7 +175,7 @@ The server listens on this computer only unless you set a host **and** an API ke
 in the folder; they cannot upload flows. Everything, with Python and JavaScript examples, is in [API.md](API.md).
 The server is available from source (`python main.py serve`); the packaged Windows app has no console yet.
 
-## 9. Keyboard shortcuts
+## 10. Keyboard shortcuts
 
 | Keys | Action |
 |---|---|
@@ -169,10 +191,12 @@ The server is available from source (`python main.py serve`); the packaged Windo
 | <kbd>Del</kbd> | Delete the selected module |
 | <kbd>F1</kbd> | Open the manual |
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 | Problem | What to do |
 |---|---|
+| The picture from the camera is too dark | Add a **Brightness Contrast** module (mode *Auto Brighten*) after the Image Source, or improve the lighting. |
+| Dragging on the image does nothing | Only modules with a region setting can have one drawn (for example Defect Detection, Template Match, Pixel Count, Intensity Measure, Histogram, Crop). Select one first; a message appears otherwise. |
 | Windows warns about an unknown publisher | The app is not code-signed yet. **More info > Run anyway**. |
 | The camera image is black or the camera will not open | Close other programs using it; allow desktop apps under Windows camera privacy settings; wait a second for exposure to settle. |
 | "Missing Plugin Tool" when opening an old project | The project uses a module from a plugin that is not installed. Install the plugin, or remove that module. |
@@ -186,5 +210,5 @@ can, the project file.
 
 ## More guides
 
-[AI Gen](AI_GEN.md) · [HTTP API](API.md) · [Camera demo](CAMERA_DEMO.md) · [Parameter editors](PARAMETER_EDITORS.md) ·
+[Module reference](MODULES.md) · [Deep learning](DEEP_LEARNING.md) · [AI Gen](AI_GEN.md) · [HTTP API](API.md) · [Camera demo](CAMERA_DEMO.md) · [Parameter editors](PARAMETER_EDITORS.md) ·
 [XML format](XML_FORMAT.md) · [Plugin development](PLUGIN_DEVELOPMENT_GUIDE.md)

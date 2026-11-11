@@ -1,0 +1,15 @@
+{
+  "task": "segment",
+  "labels": [
+    "background",
+    "defect"
+  ],
+  "input_size": [
+    96,
+    96
+  ],
+  "normalize": "0 to 1",
+  "resize": "Stretch",
+  "rgb": true,
+  "validation_iou": 0.8946
+}

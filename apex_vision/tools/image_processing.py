@@ -25,7 +25,15 @@ class ImageBinarizationTool(VisionToolBase):
             "threshold": 128,
             "invert": False,
             "adaptive_block_size": 11,
-            "adaptive_c": 2
+            "adaptive_c": 2,
+            # the guide's other binarization types
+            "low_threshold": 100,          # Hard Threshold: white between low and high
+            "high_threshold": 255,
+            "kernel_width": 15,            # Mean / Gaussian: the image is compared with its own blurred copy
+            "kernel_height": 15,
+            "gaussian_sigma": 0.0,
+            "comparison": "Greater or Equal",
+            "threshold_offset": 0.0,
         }
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
@@ -38,6 +46,15 @@ class ImageBinarizationTool(VisionToolBase):
         invert = bool(self.get_param("invert", False))
         thresh_val = int(self.get_param("threshold", 128))
 
+        if method in ("Hard Threshold", "Mean", "Gaussian", "Auto"):
+            from apex_vision.tools import vm_image
+            dst = vm_image.binarize(gray, method, int(self.get_param("low_threshold", 100)), int(self.get_param("high_threshold", 255)),
+                                    int(self.get_param("kernel_width", 15)), int(self.get_param("kernel_height", 15)), float(self.get_param("gaussian_sigma", 0.0)),
+                                    str(self.get_param("comparison", "Greater or Equal")), float(self.get_param("threshold_offset", 0.0)))
+            if invert:
+                dst = 255 - dst
+            return ToolExecutionResult(status=ToolStatus.OK, message=f"Binarized via {method}", outputs={"Image": cv2.cvtColor(dst, cv2.COLOR_GRAY2BGR)},
+                                       overlays=[{"type": "text", "text": f"Binarized ({method})", "pt": (15, 25), "color": (255, 255, 0)}])
         if method == "Otsu":
             flags = cv2.THRESH_BINARY_INV if invert else cv2.THRESH_BINARY
             flags |= cv2.THRESH_OTSU
@@ -71,7 +88,7 @@ class ImageBinarizationTool(VisionToolBase):
 class ImageFilterTool(VisionToolBase):
     category = "Image Processing"
     tool_name = "Image Filter"
-    description = "Spatial filtering: Gaussian blur, Median filter, Bilateral, or Sharpening."
+    description = "Spatial filtering: Gaussian, Box and Median blur, Bilateral, Sharpen, or Unsharp Mask."
 
     def _init_ports(self):
         self.inputs["Image"] = ToolPort("Image", DataType.IMAGE, "Input image")
@@ -81,7 +98,9 @@ class ImageFilterTool(VisionToolBase):
         self.parameters = {
             "filter_type": "Gaussian",  # Gaussian, Median, Sharpen, Bilateral
             "kernel_size": 5,
-            "sigma": 1.5
+            "sigma": 1.5,
+            "edge_low": 40,                # Edge Extraction: keep gradient strengths between these
+            "edge_high": 120,
         }
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
@@ -95,8 +114,18 @@ class ImageFilterTool(VisionToolBase):
             ksize += 1
         sigma = float(self.get_param("sigma", 1.5))
 
-        if ftype == "Gaussian":
+        if ftype in ("Mean", "Inverse", "Edge Extraction"):
+            from apex_vision.tools import vm_image
+            dst = vm_image.filter_image(img, ftype, ksize, sigma, int(self.get_param("edge_low", 40)), int(self.get_param("edge_high", 120)))
+            if dst.ndim == 2:
+                dst = cv2.cvtColor(dst, cv2.COLOR_GRAY2BGR)
+        elif ftype == "Gaussian":
             dst = cv2.GaussianBlur(img, (ksize, ksize), sigma)
+        elif ftype == "Box":
+            dst = cv2.blur(img, (ksize, ksize))
+        elif ftype == "Unsharp Mask":
+            sigma = max(0.1, self.as_float(self.get_param("sigma", 1.5), 1.5))
+            dst = cv2.addWeighted(img, 1.5, cv2.GaussianBlur(img, (0, 0), sigma), -0.5, 0)
         elif ftype == "Median":
             dst = cv2.medianBlur(img, ksize)
         elif ftype == "Sharpen":
@@ -116,7 +145,7 @@ class ImageFilterTool(VisionToolBase):
 class ImageMorphologyTool(VisionToolBase):
     category = "Image Processing"
     tool_name = "Image Morphology"
-    description = "Morphological operations: Dilate, Erode, Open, Close, Gradient."
+    description = "Morphological operations: Dilate, Erode, Open, Close, Gradient, Top Hat, Black Hat."
 
     def _init_ports(self):
         self.inputs["Image"] = ToolPort("Image", DataType.IMAGE, "Input image")
@@ -126,7 +155,10 @@ class ImageMorphologyTool(VisionToolBase):
         self.parameters = {
             "operation": "Open",  # Dilate, Erode, Open, Close, Gradient
             "kernel_size": 3,
-            "iterations": 1
+            "iterations": 1,
+            "element": "Rect",             # the structuring element: Rect, Ellipse or Cross
+            "element_width": 0,            # 0 = the kernel size
+            "element_height": 0,
         }
 
     #: Upper bound on the structuring element.  A larger kernel is almost certainly a
@@ -151,14 +183,23 @@ class ImageMorphologyTool(VisionToolBase):
 
         iters = max(1, int(round(self.as_float(self.get_param("iterations", 1), 1.0))))
 
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (ksize, ksize))
+        shape = {"Rect": cv2.MORPH_RECT, "Ellipse": cv2.MORPH_ELLIPSE, "Cross": cv2.MORPH_CROSS}.get(str(self.get_param("element", "Rect")), cv2.MORPH_RECT)
+        ew = int(round(self.as_float(self.get_param("element_width", 0), 0.0))) or ksize
+        eh = int(round(self.as_float(self.get_param("element_height", 0), 0.0))) or ksize
+        kernel = cv2.getStructuringElement(shape, (max(1, min(ew, self.MAX_KERNEL)), max(1, min(eh, self.MAX_KERNEL))))
 
         op_map = {
+            "Dilation": cv2.MORPH_DILATE,
+            "Erosion": cv2.MORPH_ERODE,
+            "Opening": cv2.MORPH_OPEN,
+            "Closing": cv2.MORPH_CLOSE,
             "Dilate": cv2.MORPH_DILATE,
             "Erode": cv2.MORPH_ERODE,
             "Open": cv2.MORPH_OPEN,
             "Close": cv2.MORPH_CLOSE,
-            "Gradient": cv2.MORPH_GRADIENT
+            "Gradient": cv2.MORPH_GRADIENT,
+            "Top Hat": cv2.MORPH_TOPHAT,
+            "Black Hat": cv2.MORPH_BLACKHAT
         }
         morph_op = op_map.get(op, cv2.MORPH_OPEN)
         try:

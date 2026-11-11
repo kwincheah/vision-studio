@@ -32,19 +32,7 @@ from apex_vision.ui import layout_metrics as LM
 APEX_ACCENT = QColor(THEME["apex_accent"])
 
 
-CATEGORY_ORDER = [
-    "Acquisition",
-    "Location",
-    "Measurement",
-    "Image Generation",
-    "Image Processing",
-    "Color Processing",
-    "Recognition",
-    "Defect Detection",
-    "Calibration",
-    "Communication",
-    "Logic Tools",
-]
+from apex_vision.core.registry import CATEGORY_ORDER  # noqa: E402  (one toolbox order for both interfaces)
 
 # Rail shortcuts per category (manual p.70/p.72 icon inventory).
 CATEGORY_GLYPH = {

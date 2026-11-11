@@ -2,6 +2,7 @@ module ApexDialogs
 InfoDialog 1.0 InfoDialog.qml
 GlobalVariablesDialog 1.0 GlobalVariablesDialog.qml
 FlowSettingsDialog 1.0 FlowSettingsDialog.qml
+CommunicationDialog 1.0 CommunicationDialog.qml
 ValidationDialog 1.0 ValidationDialog.qml
 ModuleConfigDialog 1.0 ModuleConfigDialog.qml
 CameraSetDialog 1.0 CameraSetDialog.qml

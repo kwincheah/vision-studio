@@ -217,7 +217,7 @@ Rectangle {
             property bool stick: true
             onMovingChanged: if (!moving) stick = atYEnd
             onContentHeightChanged: if (stick) Qt.callLater(positionViewAtEnd)
-            ScrollBar.vertical: ScrollBar { }
+            ScrollBar.vertical: ApexScrollBar { }
 
             header: Item { width: list.width; height: root.msgs.length === 0 ? welcome.height : 0
                 Column {
@@ -237,7 +237,7 @@ Rectangle {
                         font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary
                     }
                     Repeater {
-                        model: [ "Check the PCB for scratches and fail when any are found",
+                        model: [ "Check the part for scratches and fail when any are found",
                                  "Measure the width between two edges and pass if it is 20 to 60 px",
                                  "Count the bright blobs after smoothing and noise removal",
                                  "Make sure the label reads SN- and report green coverage over 5%" ]

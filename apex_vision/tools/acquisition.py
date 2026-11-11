@@ -13,6 +13,20 @@ from apex_vision.core.registry import register_tool
 #: the device a new Image Source starts with (a simulated Hikrobot camera); not what "Camera" should open
 DEFAULT_CAMERA_DEVICE = "mvs_gige_0"
 
+#: the source types that read a device from the camera list, and which kind of device each one means
+_DEVICE_KIND = {"Camera": "USB/Webcam", "Industrial GigE": "Industrial GigE", "Industrial USB3": "Industrial USB3", "Hikrobot MVS": "Hikrobot MVS"}
+_DEFAULT_DEVICE = {"Industrial GigE": "virtual_gige_0", "Industrial USB3": "virtual_usb3_0", "Hikrobot MVS": DEFAULT_CAMERA_DEVICE}
+
+
+def device_fits(source_type: str, camera_type: str) -> bool:
+    """Whether a device of ``camera_type`` can be used by ``source_type`` (a webcam is not a GigE camera)."""
+    kind = _DEVICE_KIND.get(source_type)
+    return bool(kind) and str(camera_type).startswith(kind)
+
+
+def default_device(source_type: str, camera_index: int = 0) -> str:
+    return f"webcam_{int(camera_index)}" if source_type == "Camera" else _DEFAULT_DEVICE.get(source_type, "")
+
 
 @register_tool
 class ImageSourceTool(VisionToolBase):
@@ -30,10 +44,11 @@ class ImageSourceTool(VisionToolBase):
         self.parameters = {
             "source_type": "Synthetic",  # File, Synthetic, Camera, Industrial GigE, Industrial USB3, IP Stream, Hikrobot MVS
             "file_path": default_sample,
-            "pattern_type": "PCB Inspection",  # PCB Inspection, Calibration Grid, Circles & Holes, Barcode Sample
+            "pattern_type": "Part with Defects",  # Part with Defects, Metal Surface (demo), Calibration Grid, Circles & Holes, Barcode Sample
             "color_mode": "BGR",  # BGR or Grayscale
             "camera_device": DEFAULT_CAMERA_DEVICE,  # Device ID or Camera name
             "camera_index": 0,  # Legacy USB camera index
+            "auto_exposure": True,  # Camera (webcam) only: the camera sets exposure and brightness itself
             "exposure_time_us": 20000.0,  # Exposure time in microseconds
             "gain": 1.0,  # Camera gain factor
             "trigger_mode": "Continuous",  # Continuous, Software Trigger, Hardware Trigger
@@ -43,11 +58,17 @@ class ImageSourceTool(VisionToolBase):
         }
 
     def _generate_synthetic_image(self, pattern: str) -> np.ndarray:
+        if pattern == "Metal Surface (demo)":
+            # a deterministic walk through good and defective parts (for trying the deep-learning modules)
+            from apex_vision.samples.demo_parts import make_part
+            n = getattr(self, "_demo_part_index", 0)
+            self._demo_part_index = n + 1
+            return make_part(n)[0]
         w, h = 800, 600
         img = np.zeros((h, w, 3), dtype=np.uint8)
 
-        if pattern == "PCB Inspection":
-            # Dark green PCB background
+        if pattern in ("Part with Defects", "PCB Inspection"):     # "PCB Inspection" is the name older projects use
+            # Dark green board-like background
             img[:] = (35, 75, 40)
             # Traces
             cv2.line(img, (50, 150), (450, 150), (40, 190, 180), 3)
@@ -111,6 +132,21 @@ class ImageSourceTool(VisionToolBase):
 
         return img
 
+    def set_param(self, key: str, value: Any):
+        old = self.parameters.get("source_type")
+        was_index = self.parameters.get("camera_index")
+        super().set_param(key, value)
+        if key == "camera_index" and value != was_index and self.parameters.get("source_type") == "Camera"                 and str(self.parameters.get("camera_device", "")) == f"webcam_{was_index}":
+            self.parameters["camera_device"] = f"webcam_{self.parameters['camera_index']}"       # the device follows the index
+        if key == "source_type" and value != old and default_device(self.parameters["source_type"]):
+            # a different kind of camera: the device that was chosen for the old kind no longer applies
+            self.parameters["camera_device"] = default_device(self.parameters["source_type"], self.parameters.get("camera_index", 0))
+
+    def load_dict(self, data: Dict[str, Any]):
+        super().load_dict(data)
+        if self.parameters.get("pattern_type") == "PCB Inspection":      # the name projects saved by earlier builds use
+            self.parameters["pattern_type"] = "Part with Defects"
+
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
         src_type = self.get_param("source_type", "Synthetic")
         color_mode = self.get_param("color_mode", "BGR")
@@ -122,15 +158,10 @@ class ImageSourceTool(VisionToolBase):
         elif src_type == "File":
             fpath = str(self.get_param("file_path", "")).strip().strip('"').strip("'")
             if not fpath:
-                sample_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "samples", "pcb_sample.png"))
-                if os.path.exists(sample_path):
-                    fpath = sample_path
-                    self.set_param("file_path", fpath)
-                else:
-                    return ToolExecutionResult(
-                        status=ToolStatus.NG,
-                        message="No file path specified. Click 'Browse...' in Property Inspector to select an image."
-                    )
+                return ToolExecutionResult(
+                    status=ToolStatus.NG,
+                    message="No image loaded. Load an image (Ctrl+I) or click 'Browse...' in the module settings."
+                )
 
             if not os.path.exists(fpath):
                 # Try relative to current working directory
@@ -167,22 +198,12 @@ class ImageSourceTool(VisionToolBase):
 
             # Determine device ID
             target_device_id = str(self.get_param("camera_device", "")).strip()
-            if not target_device_id:
-                if src_type == "Hikrobot MVS":
-                    target_device_id = "mvs_gige_0"
-                elif src_type == "Industrial GigE":
-                    target_device_id = "virtual_gige_0"
-                elif src_type == "Industrial USB3":
-                    target_device_id = "virtual_usb3_0"
-                elif src_type == "IP Stream":
-                    target_device_id = "ip_stream_custom"
-                else:
-                    cidx = int(self.get_param("camera_index", 0))
-                    target_device_id = f"webcam_{cidx}"
-            elif src_type == "Camera" and target_device_id == DEFAULT_CAMERA_DEVICE:
-                # "Camera" means a webcam. The untouched default device is the simulated Hikrobot camera,
-                # so choosing Camera alone must not silently keep producing a test picture.
-                target_device_id = f"webcam_{int(self.get_param('camera_index', 0))}"
+            if src_type == "IP Stream":
+                target_device_id = "ip_stream_custom"          # the address is the stream URL; a device chosen earlier does not apply
+            elif not target_device_id or (src_type == "Camera" and target_device_id == DEFAULT_CAMERA_DEVICE):
+                # nothing chosen: this kind's own default. "Camera" means a webcam - an untouched default (older projects keep
+                # the simulated Hikrobot camera there) must never keep producing a test picture.
+                target_device_id = default_device(src_type, self.get_param("camera_index", 0))
 
             stream_url = str(self.get_param("stream_url", "")).strip()
             driver = cm.get_or_create_driver(target_device_id, stream_url=stream_url)
@@ -209,10 +230,12 @@ class ImageSourceTool(VisionToolBase):
                 driver.load_mvs_config_file(mvs_cfg)
 
             # Apply exposure and gain settings to driver
-            exp_val = float(self.get_param("exposure_time_us", 20000.0))
-            gain_val = float(self.get_param("gain", 1.0))
-            driver.set_exposure(exp_val)
-            driver.set_gain(gain_val)
+            auto = src_type == "Camera" and hasattr(driver, "set_auto_exposure")
+            if auto:
+                driver.set_auto_exposure(bool(self.get_param("auto_exposure", True)))
+            if not (auto and self.get_param("auto_exposure", True)):       # automatic: the camera keeps control of both
+                driver.set_exposure(float(self.get_param("exposure_time_us", 20000.0)))
+                driver.set_gain(float(self.get_param("gain", 1.0)))
             driver.set_trigger_mode(str(self.get_param("trigger_mode", "Continuous")))
             if hasattr(driver, "set_trigger_source"):
                 driver.set_trigger_source(str(self.get_param("mvs_trigger_source", "Software")))
@@ -226,7 +249,7 @@ class ImageSourceTool(VisionToolBase):
             camera_label = f"[{driver.device_info.camera_type}] {driver.device_info.name}"
 
         else:  # Synthetic
-            pattern = self.get_param("pattern_type", "PCB Inspection")
+            pattern = self.get_param("pattern_type", "Part with Defects")
             img = self._generate_synthetic_image(pattern)
 
         if color_mode == "Grayscale" and len(img.shape) == 3:

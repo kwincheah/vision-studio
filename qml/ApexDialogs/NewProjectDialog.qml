@@ -24,7 +24,7 @@ DialogFrame {
                 AppButton { text: "Browse..."; width: 88; onClicked: folderDialog.open() } } }
         FormRow { label: "Solution Template:"; width: parent.width
             SelectBox { id: tpl; width: parent.width
-                model: ["Blank Solution (Standard Acquisition)", "PCB Inspection", "Precision Measurement", "YOLOv11 Object Detection", "Robot Calibration"] } }
+                model: ["Blank Solution (Standard Acquisition)", "Surface Defect Inspection", "Precision Measurement", "YOLOv11 Object Detection", "Robot Calibration"] } }
     }
     FolderDialog {
         id: folderDialog

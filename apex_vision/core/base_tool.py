@@ -60,6 +60,7 @@ class ToolExecutionResult:
 
 
 class VisionToolBase:
+    toolbox_hidden = False      # True: loads and runs, but is not offered in the toolbox or to the AI assistant
     """Base class for all Apex Vision tools (both built-in and plugin extensions)."""
     category: str = "General"
     tool_name: str = "BaseTool"
@@ -67,13 +68,25 @@ class VisionToolBase:
     plugin_id: str = "builtin"
     param_definitions: Dict[str, Any] = {}
 
+    #: Default "Display Setup" of a module: show its ROI, its text labels and its result
+    #: boxes, drawn in the signature amber.
+    DEFAULT_DISPLAY: Dict[str, Any] = {
+        "roi": True, "labels": True, "boxes": True, "colour": "#e4b030",
+    }
+
     def __init__(self, instance_id: str, name: Optional[str] = None):
         self.instance_id: str = instance_id
         self.name: str = name or self.tool_name
         self.enabled: bool = True
+        self.group: str = ""        # instance id of the Group module this module belongs to ("" = none)
         self.inputs: Dict[str, ToolPort] = {}
         self.outputs: Dict[str, ToolPort] = {}
         self.parameters: Dict[str, Any] = {}
+        #: How this module's own drawings appear on the image (the Display Setup tab):
+        #: whether its ROI, its text labels and its result boxes are shown, and the colour
+        #: they use.  This is configuration, not execution state - it is saved with the
+        #: project and only ever written by an explicit user edit.
+        self.display: Dict[str, Any] = dict(self.DEFAULT_DISPLAY)
         self._init_ports()
         self._init_parameters()
 
@@ -187,6 +200,9 @@ class VisionToolBase:
                 width = len(current[0])
                 if not all(isinstance(v, (list, tuple)) and len(v) == width for v in value):
                     return current
+            elif current and all(isinstance(c, dict) for c in current):
+                if not all(isinstance(v, dict) for v in value):                       # a list of records (for example a group's items): any number of them
+                    return current
             elif current and len(value) != len(current):
                 return current
             return type(current)(value) if isinstance(current, tuple) else list(value)
@@ -238,11 +254,19 @@ class VisionToolBase:
             "name": self.name,
             "enabled": self.enabled,
             "parameters": self.parameters,
+            **({"group": self.group} if self.group else {}),
+            # Only when the user changed something, so existing projects stay byte-for-byte
+            # what they were and the "unsaved changes" check does not see a phantom edit.
+            **({"display": dict(self.display)}
+               if self.display != self.DEFAULT_DISPLAY else {}),
         }
 
     def load_dict(self, data: Dict[str, Any]):
         self.name = data.get("name", self.name)
         self.enabled = data.get("enabled", self.enabled)
+        if "group" in data:
+            self.group = str(data.get("group") or "")
+        self.display = self._coerce_display(data.get("display"))
         # Route every stored value through the same type coercion as `set_param`, so a
         # project file written by an older build (or edited by hand) cannot put a
         # wrong-typed value into a parameter and crash the tool at inspection time.
@@ -253,6 +277,30 @@ class VisionToolBase:
                 # An unknown key is kept: plugins may read their own extra keys, and
                 # dropping it would silently lose data on a save/load round trip.
                 self.parameters[key] = value
+
+    @classmethod
+    def _coerce_display(cls, stored: Any) -> Dict[str, Any]:
+        """A project file's ``display`` block, made safe.
+
+        A hand-edited or older file may omit it, use the wrong type, or name a colour that
+        is not ``#rrggbb``; anything invalid falls back to the default rather than reaching
+        the renderer.
+        """
+        out = dict(cls.DEFAULT_DISPLAY)
+        if not isinstance(stored, dict):
+            return out
+        for key in ("roi", "labels", "boxes"):
+            if isinstance(stored.get(key), bool):
+                out[key] = stored[key]
+        colour = stored.get("colour")
+        if isinstance(colour, str) and len(colour) == 7 and colour.startswith("#"):
+            try:
+                int(colour[1:], 16)
+            except ValueError:
+                pass
+            else:
+                out["colour"] = colour.lower()
+        return out
 
     def get_input_image(
         self,
@@ -297,6 +345,8 @@ class VisionToolBase:
 
         if img_shape is not None and len(img_shape) >= 2:
             h, w = img_shape[:2]
+            if rw <= 0 or rh <= 0:                      # no region drawn: the whole picture
+                return 0, 0, w, h
             rx = max(0, min(rx, max(0, w - 1)))
             ry = max(0, min(ry, max(0, h - 1)))
             rw = max(1, min(rw, max(1, w - rx)))
@@ -419,6 +469,11 @@ class MissingPluginPlaceholderTool(VisionToolBase):
     def __init__(self, instance_id: str, name: str = None, missing_tool_name: str = ""):
         super().__init__(instance_id, name)
         self.missing_tool_name = missing_tool_name or name or "Unknown"
+        self._saved_category = None         # the plugin module's own category, kept so saving the project does not rewrite it
+
+    def load_dict(self, data: Dict[str, Any]):
+        super().load_dict(data)
+        self._saved_category = data.get("category") or None
 
     def execute(self, context: Dict[str, Any]) -> ToolExecutionResult:
         return ToolExecutionResult(
@@ -429,6 +484,8 @@ class MissingPluginPlaceholderTool(VisionToolBase):
     def to_dict(self) -> Dict[str, Any]:
         d = super().to_dict()
         d["tool_name"] = self.missing_tool_name
+        if self._saved_category:
+            d["category"] = self._saved_category
         return d
 
 

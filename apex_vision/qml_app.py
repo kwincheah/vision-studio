@@ -14,6 +14,13 @@ def run(argv: Optional[List[str]] = None) -> int:
     from PyQt6.QtGui import QGuiApplication
     from PyQt6.QtQml import QQmlApplicationEngine
 
+    # The interface customises its own controls, but a few Qt Quick Controls items are used
+    # as-is (ScrollBar, ToolTip).  Under the platform's native style those cannot be
+    # recoloured and draw near-black scrollbars against the light panels, so pin the
+    # stylable Basic style.  Qt reads this at start-up, before any QML is loaded (the
+    # PyQt6 QtQuickControls2 binding is not installed, so it cannot be set from Python).
+    os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Basic")
+
     from apex_vision.core.logging_setup import install_global_excepthook, setup_logging
     from apex_vision.qml_backend import AppBackend, FrameProvider
     from apex_vision.qml_services import install_services

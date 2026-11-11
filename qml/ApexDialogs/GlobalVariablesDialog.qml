@@ -26,12 +26,32 @@ DialogFrame {
             rows: root.variables
         }
         Row {
+            // The four controls were fixed at 190 + 124 + 170 + 120 = 604 px plus 3 x 8
+            // spacing = 628 px, inside a 608 px body, so "+ Add Variable" ended 4 px past
+            // the dialog's right edge and was clipped.  The button keeps a fixed width and
+            // the three fields share whatever is left.
+            id: addRow
+            width: parent.width
             spacing: 8
-            TextBox { id: nameField; width: 190; placeholder: "Variable name (e.g. g_Total)" }
-            SelectBox { id: typeBox; width: 124; model: ["Integer", "Float", "String", "Boolean"] }
-            TextBox { id: valueField; width: 170; placeholder: "Initial value" }
+            readonly property int buttonW: 120
+            TextBox {
+                id: nameField
+                width: Math.max(96, (addRow.width - addRow.buttonW - 24) * 0.42)
+                placeholder: "Variable name (e.g. g_Total)"
+            }
+            SelectBox {
+                id: typeBox
+                width: Math.min(124, Math.max(90, addRow.width * 0.2))
+                model: ["Integer", "Float", "String", "Boolean"]
+            }
+            TextBox {
+                id: valueField
+                width: Math.max(80, addRow.width - addRow.buttonW - 24
+                                   - nameField.width - typeBox.width)
+                placeholder: "Initial value"
+            }
             AppButton {
-                text: "+ Add Variable"; kind: "primary"; width: 120
+                text: "+ Add Variable"; kind: "primary"; width: addRow.buttonW
                 onClicked: if (root.backend && nameField.text !== "") {
                     root.backend.setGlobal(nameField.text, typeBox.currentText, valueField.text)
                     nameField.text = ""; valueField.text = ""

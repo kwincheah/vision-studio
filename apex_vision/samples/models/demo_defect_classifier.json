@@ -1,0 +1,16 @@
+{
+  "task": "classify",
+  "labels": [
+    "blotch",
+    "good",
+    "scratch"
+  ],
+  "input_size": [
+    64,
+    64
+  ],
+  "normalize": "0 to 1",
+  "resize": "Stretch",
+  "rgb": true,
+  "validation_accuracy": 1.0
+}

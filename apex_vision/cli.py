@@ -224,6 +224,38 @@ def cmd_serve(args) -> int:
 
 
 # ---------------------------------------------------------------------------
+# deep-learning models
+# ---------------------------------------------------------------------------
+def cmd_train(args) -> int:
+    """Train a small model from your own pictures and export it as ONNX for the DL modules."""
+    from apex_vision import dl_train
+    try:
+        if args.kind == "classify":
+            dl_train.train_classifier(args.data, args.out, epochs=args.epochs or 20, size=args.size or 64, arch=args.arch,
+                                      pretrained=args.pretrained, batch=args.batch)
+        elif args.kind == "segment":
+            dl_train.train_segmenter(args.data, args.out, epochs=args.epochs or 30, size=args.size or 128,
+                                     labels=[x.strip() for x in args.labels.split(",")] if args.labels else None, batch=args.batch)
+        elif args.kind == "anomaly":
+            dl_train.train_anomaly(args.data, args.out, epochs=args.epochs or 60, size=args.size or 128, batch=args.batch)
+        else:
+            dl_train.train_detector(args.data, args.out, epochs=args.epochs or 50, size=args.size or 640, base=args.base, batch=args.batch)
+    except dl_train.TrainError as exc:
+        return _fail(str(exc), 2)
+    return 0
+
+
+def cmd_model_info(args) -> int:
+    from apex_vision import dl_train
+    from apex_vision.core.dl_engine import DLModelError
+    try:
+        print(dl_train.model_info(args.model))
+    except DLModelError as exc:
+        return _fail(str(exc), 2)
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # evaluate
 # ---------------------------------------------------------------------------
 def cmd_evaluate(args) -> int:
@@ -510,6 +542,25 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--cors-origin", action="append",
                    help="allow a browser web app at this origin to call the API, e.g. http://localhost:3000 (repeatable)")
     p.set_defaults(func=cmd_serve)
+
+    # train / model-info ---------------------------------------------------
+    p = child("train", help="train a classify / segment / anomaly / detect model and export it as ONNX")
+    p.add_argument("kind", choices=["classify", "segment", "anomaly", "detect"])
+    p.add_argument("--data", required=True, help="classify: folder with one sub-folder per class; segment: folder with images/ and masks/; "
+                                                 "anomaly: folder of good images; detect: a YOLO data.yaml")
+    p.add_argument("--out", required=True, help="the .onnx file to write (a .json with labels and settings is written beside it)")
+    p.add_argument("--epochs", type=int, default=0, help="training passes (default depends on the kind)")
+    p.add_argument("--size", type=int, default=0, help="network input size in pixels (default depends on the kind)")
+    p.add_argument("--batch", type=int, default=8)
+    p.add_argument("--arch", choices=["small", "resnet18"], default="small", help="classify only")
+    p.add_argument("--pretrained", action="store_true", help="classify with resnet18: start from ImageNet weights (downloads them)")
+    p.add_argument("--labels", help="segment only: class names in order, comma separated (background first)")
+    p.add_argument("--base", default="yolo11n.pt", help="detect only: the YOLO weights to start from")
+    p.set_defaults(func=cmd_train)
+
+    p = child("model-info", help="show what an .onnx model expects and returns")
+    p.add_argument("model", help="path to the .onnx file")
+    p.set_defaults(func=cmd_model_info)
 
     # evaluate -------------------------------------------------------------
     p = child("evaluate", help="evaluate a detector over a labelled dataset")
