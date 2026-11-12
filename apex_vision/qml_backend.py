@@ -108,6 +108,10 @@ class AppBackend(QObject):
         self._all_summary: Dict[str, str] = {}
         self._rerun_later = False
         self._undo: List[str] = []
+        #: runtime variable values as last written to disk (see flushRuntimeState)
+        self._runtime_saved: dict = {}
+        #: True between a project load and the automatic first run it triggers (see _on_cycle)
+        self._clean_after_load: bool = False
         self._redo: List[str] = []
         self._cameras: List[Dict[str, str]] = []
         self._pending = None                      # action waiting for the unsaved-changes answer
@@ -473,7 +477,9 @@ class AppBackend(QObject):
 
     @pyqtProperty("QVariantList", notify=changed)
     def globalVariables(self):  # noqa: N802
-        return [{"name": k, "type": type(v).__name__, "value": str(v)}
+        runtime = self._solution.runtime_globals
+        return [{"name": k, "type": type(v).__name__, "value": str(v),
+                 "runtime": k in runtime}
                 for k, v in self._solution.global_variables.items()]
 
     @pyqtProperty("QVariantMap", notify=changed)
@@ -750,6 +756,8 @@ class AppBackend(QObject):
             self._pool.clear()
             self.engine.batch = None
         self._project.mark_saved(solution)
+        self._runtime_saved = self._runtime_values()
+        self._clean_after_load = True          # the rerun() below is ours, not the operator's
         self._notify(f"Loaded solution '{solution.name}' ({len(solution.flows)} flow(s))")
         self.workspaceRequested.emit()
         self._rerun()
@@ -808,10 +816,41 @@ class AppBackend(QObject):
         if self._pm.get_show_on_startup():
             self.startPageRequested.emit()
 
+    def _runtime_values(self):
+        sol = self._solution
+        return {k: sol.global_variables.get(k) for k in sol.runtime_globals
+                if k in sol.global_variables}
+
+    @pyqtSlot()
+    def flushRuntimeState(self):  # noqa: N802
+        """Write runtime values to the project without claiming they are unsaved edits.
+
+        A run updates a lot tally, and the operator should not be asked to save that - but it
+        should still be there tomorrow.  So when the document is otherwise clean and only
+        runtime values moved, the file is written quietly.  Anything the operator changed
+        makes the project dirty and takes the normal save path instead.
+        """
+        if self.dirty or not self._project.path or not self._solution.runtime_globals:
+            return
+        current = self._runtime_values()
+        if current == getattr(self, "_runtime_saved", None):
+            return
+        try:
+            self._project.save(self._solution, self._project.path)
+            self._runtime_saved = dict(current)
+            self._notify("Runtime values saved")
+        except Exception as exc:                              # never block a close on this
+            self._notify(f"Could not save runtime values: {exc}")
+
     @pyqtSlot()
     def requestClose(self):  # noqa: N802
         """The window asked to close: ask about unsaved edits first."""
-        self._guard(self.closeApproved.emit)
+        self._flush_runtime_then(self.closeApproved.emit)
+
+    def _flush_runtime_then(self, action) -> None:
+        if not self.dirty:
+            self.flushRuntimeState()
+        self._guard(action)
 
     #: Picture extensions the strip lists when it seeds itself from a sample folder.
     PICTURE_SUFFIXES = (".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff")
@@ -943,6 +982,7 @@ class AppBackend(QObject):
         except Exception as exc:
             self._notify(f"Save failed: {exc}")
             return
+        self._runtime_saved = self._runtime_values()
         self._notify(f"Saved to {path}")
 
     @pyqtSlot(int)
@@ -1354,11 +1394,33 @@ class AppBackend(QObject):
         self._solution.global_variables[name] = value
         self._notify(f"Variable {name} = {value}")
 
+    @pyqtSlot(str, bool, result=bool)
+    def setGlobalRuntime(self, name, runtime):  # noqa: N802
+        """Mark a variable as runtime state rather than a setting.
+
+        Runtime values are saved with the project but left out of the "unsaved changes"
+        comparison, because the flow writes them on every run and that is the machine
+        working, not the operator editing.  Marking is itself a document change.
+        """
+        if name not in self._solution.global_variables or not self._editable():
+            return False
+        if (name in self._solution.runtime_globals) == bool(runtime):
+            return True
+        self._push_undo()
+        if runtime:
+            self._solution.runtime_globals.add(name)
+        else:
+            self._solution.runtime_globals.discard(name)
+        self._notify(f"{name} is now {'runtime state' if runtime else 'a saved setting'}")
+        self.changed.emit()
+        return True
+
     @pyqtSlot(str)
     def removeGlobal(self, name):  # noqa: N802
         if name in self._solution.global_variables and self._editable():
             self._push_undo()
             del self._solution.global_variables[name]
+            self._solution.runtime_globals.discard(name)
             self._notify(f"Removed {name}")
 
     @pyqtSlot(float, float, bool, bool)
@@ -1728,6 +1790,14 @@ class AppBackend(QObject):
         self._formatted = format_flow_outputs(pipe, results)
         self._render_view()
         self._refresh_results()
+        # Opening a project runs it once so the window is not blank.  Whatever that run wrote
+        # (a script's global counter, say) is not an edit by the operator, so a project must not
+        # be "modified" the moment it is opened.  Only adopt it when the operator has not done
+        # anything yet - any real edit pushes an undo step, which rules this out.
+        if self._clean_after_load:
+            self._clean_after_load = False
+            if not self._undo and not self._redo:
+                self._project.mark_saved(self._solution)
         error = payload["script_error"] or payload["failure"]
         if error:
             self._notify(error)

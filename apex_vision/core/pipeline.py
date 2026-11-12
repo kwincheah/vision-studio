@@ -8,7 +8,7 @@ import math
 import json
 import time
 import copy
-from typing import Dict, List, Any, Optional, Callable
+from typing import Dict, List, Any, Optional, Callable, Set
 
 # Root elements of the saved XML. Files written before the rename use the legacy names and are still read.
 FLOW_TAG = "ApexFlow"
@@ -878,6 +878,11 @@ class SolutionManager:
             "g_LotNumber": "LOT-2026-A1",
             "g_TriggerEnable": True
         }
+        #: Variables that hold *runtime* state rather than settings - a lot tally, a running
+        #: count.  They live in the same shared namespace and are still saved, but a value the
+        #: flow wrote during a run must not count as an unsaved edit by the operator.  See
+        #: ProjectState.snapshot, which leaves them out of the comparison.
+        self.runtime_globals: Set[str] = set()
         # Initialize default main flow
         self.add_flow("Flow1")
 
@@ -1034,6 +1039,8 @@ class SolutionManager:
             "active_flow": self.active_flow_name,
             "trigger_flow": self.trigger_flow_name,
             "global_variables": self.global_variables,
+            # only when some are marked, so a file that never used the feature is unchanged
+            **({"runtime_globals": sorted(self.runtime_globals)} if self.runtime_globals else {}),
             "global_script": self.global_script,
             **({"comm_devices": self.comm_devices} if self.comm_devices else {}),
             "flows": [flow.to_dict() for flow in self.flows.values()]
@@ -1047,6 +1054,9 @@ class SolutionManager:
         sol.trigger_flow_name = data.get("trigger_flow", sol.active_flow_name)
         if "global_variables" in data and isinstance(data["global_variables"], dict):
             sol.global_variables = copy.deepcopy(data["global_variables"])
+        if isinstance(data.get("runtime_globals"), list):
+            sol.runtime_globals = {str(n) for n in data["runtime_globals"]
+                                   if str(n) in sol.global_variables}
 
         if isinstance(data.get("global_script"), str):
             sol.global_script = data["global_script"]
@@ -1074,7 +1084,10 @@ class SolutionManager:
         vars_el = ET.SubElement(root, "GlobalVariables")
         for key, val in self.global_variables.items():
             vtype, enc = VisionPipeline._encode_xml_value(val)
-            ET.SubElement(vars_el, "Variable", attrib={"name": str(key), "type": vtype}).text = enc
+            attrs = {"name": str(key), "type": vtype}
+            if str(key) in self.runtime_globals:      # only when true, so old files stay identical
+                attrs["runtime"] = "true"
+            ET.SubElement(vars_el, "Variable", attrib=attrs).text = enc
         if self.comm_devices:
             devs_el = ET.SubElement(root, "CommDevices")
             for d in self.comm_devices:
@@ -1110,11 +1123,14 @@ class SolutionManager:
         vars_el = root.find("GlobalVariables")
         if vars_el is not None:
             sol.global_variables = {}
+            sol.runtime_globals = set()
             for v_el in vars_el.findall("Variable"):
                 vname = v_el.attrib.get("name")
                 if vname:
                     sol.global_variables[vname] = VisionPipeline._decode_xml_value(
                         v_el.attrib.get("type"), v_el.text)
+                    if str(v_el.attrib.get("runtime", "")).lower() in ("true", "1", "yes"):
+                        sol.runtime_globals.add(vname)
         devs_el = root.find("CommDevices")
         if devs_el is not None:
             for d_el in devs_el.findall("Device"):

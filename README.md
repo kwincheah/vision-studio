@@ -91,6 +91,15 @@ Click a thumbnail to switch pictures; the flow re-runs on the one you picked. Tu
 with **Run all** and the PASS/FAIL flips as it alternates the two. The rejected object is
 outlined and labelled on the image, and the **Result** tab lists all eight modules.
 
+`07_LotTracker` keeps its tally in **global variables**, which are shared by every flow in the
+solution. Six of them (`g_Total`, `g_History`, `g_CountOK`, `g_CountNG`, `g_LastCount`,
+`g_LastVerdict`) are marked *runtime state* here: the flow writes them every run, they are saved
+with the project, but running never asks you to save changes. The tuning values (`g_SmallMax`,
+`g_MinArea`, `g_RejectElongated`, ...) stay ordinary settings — edit one and the project does
+become unsaved. You can switch a variable between the two in **Global Variables**.
+
+![Global variables, with the flow's counters marked as runtime state](docs/screenshots/qml/globals_runtime.png)
+
 The same thing from another program — the two pictures are in `apex_vision/samples/parts/`:
 
 ```bash

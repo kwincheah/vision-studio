@@ -121,7 +121,9 @@ def test_backend_editing_commands_and_undo(gui):
     b.redo()
     assert len(b.nodes) == n + 1
     b.setGlobal("g_Test", "Integer", "41")
-    assert {"name": "g_Test", "type": "int", "value": "41"} in b.globalVariables
+    added = next(v for v in b.globalVariables if v["name"] == "g_Test")
+    assert added["type"] == "int" and added["value"] == "41"
+    assert added["runtime"] is False, "a new variable is a setting, not runtime state"
     b.setGlobal("g_Bad", "Integer", "x")
     assert not any(v["name"] == "g_Bad" for v in b.globalVariables)
     b.removeGlobal("g_Test")

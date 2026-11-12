@@ -1,18 +1,18 @@
 <?xml version='1.0' encoding='utf-8'?>
 <ApexSolution version="4.3" name="Parts_Sorter_Demo" active_flow="Parts_Sorter" trigger_flow="Parts_Sorter">
   <GlobalVariables>
-    <Variable name="g_CountOK" type="int">0</Variable>
-    <Variable name="g_CountNG" type="int">0</Variable>
+    <Variable name="g_CountOK" type="int" runtime="true">3</Variable>
+    <Variable name="g_CountNG" type="int" runtime="true">0</Variable>
     <Variable name="g_LotNumber" type="str">LOT-2026-A1</Variable>
     <Variable name="g_TriggerEnable" type="bool">true</Variable>
     <Variable name="g_SmallMax" type="int">2000</Variable>
     <Variable name="g_LargeMin" type="int">8000</Variable>
     <Variable name="g_MinArea" type="int">500</Variable>
     <Variable name="g_RejectElongated" type="bool">true</Variable>
-    <Variable name="g_History" type="str" />
-    <Variable name="g_Total" type="int">0</Variable>
-    <Variable name="g_LastCount" type="int">0</Variable>
-    <Variable name="g_LastVerdict" type="str">OK</Variable>
+    <Variable name="g_History" type="str" runtime="true">6,6,6</Variable>
+    <Variable name="g_Total" type="int" runtime="true">3</Variable>
+    <Variable name="g_LastCount" type="int" runtime="true">6</Variable>
+    <Variable name="g_LastVerdict" type="str" runtime="true">OK</Variable>
   </GlobalVariables>
   <Flows>
     <ApexFlow version="4.3" name="Parts_Sorter">
@@ -21,7 +21,7 @@
         <Property name="run_interval_ms" type="float">50.0</Property>
         <Property name="stop_on_ng" type="bool">false</Property>
         <Property name="flow_timeout_ms" type="float">5000.0</Property>
-        <Property name="execution_count" type="int">0</Property>
+        <Property name="execution_count" type="int">3</Property>
       </Properties>
       <Nodes>
         <Node instance_id="node_cam" tool_name="Image Source" name="01_Camera" category="Acquisition" enabled="true">

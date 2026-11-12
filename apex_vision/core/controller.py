@@ -404,13 +404,30 @@ class ProjectState:
 
     @staticmethod
     def snapshot(solution, before: Optional[Callable[[], None]] = None) -> Optional[str]:
-        """Serialised solution minus transient counters (``None`` if it cannot be serialised)."""
+        """Serialised solution minus transient run state (``None`` if it cannot be serialised).
+
+        Two things are left out because a run writes them, and a run is the machine working,
+        not the operator editing:
+
+        * each flow's ``execution_count``;
+        * the value of every *runtime* global (a lot tally, a running count).  Marking a
+          variable as runtime is itself a document change and is compared; the numbers the
+          flow stores in it are not.  The values are still saved - see
+          ``AppBackend.flushRuntimeState``, which writes them without claiming an edit.
+        """
         try:
             if before is not None:
                 before()
             data = solution.to_dict()
             for flow in data.get("flows", []):
                 flow.pop("execution_count", None)
+            runtime = getattr(solution, "runtime_globals", None) or ()
+            globals_ = data.get("global_variables")
+            if runtime and isinstance(globals_, dict):
+                # to_dict hands back the solution's own dict, so build a filtered copy -
+                # popping here would delete the variables from the running solution
+                data["global_variables"] = {k: v for k, v in globals_.items()
+                                            if k not in runtime}
             return json.dumps(data, sort_keys=True, default=str)
         except Exception:
             return None
