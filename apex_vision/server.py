@@ -198,7 +198,15 @@ class FlowService:
         return {"name": name, "default_flow": sol.get_active_flow().name if sol.flows else None, "flows": flows}
 
     # -- inputs ------------------------------------------------------------------------
-    def decode_image(self, data: bytes) -> np.ndarray:
+    def decode_image(self, data: bytes) -> Optional[np.ndarray]:
+        """Decode an uploaded image; empty data means "no image was sent".
+
+        A POST with an empty body is the documented way to run a flow on its own Image
+        Source, so it must reach the engine as ``None``.  Handing the empty buffer to
+        OpenCV raised ``cv2.error: !buf.empty()``, which surfaced as a 500.
+        """
+        if not data:
+            return None
         if len(data) > self.max_image_bytes:
             raise ApiError(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, "image_too_large",
                            f"image is larger than {self.max_image_bytes // (1024 * 1024)} MB")

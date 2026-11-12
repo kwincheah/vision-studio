@@ -29,8 +29,9 @@ folder is available straight away; no restart needed.
 
 The server prints its address and the flows it found when it starts. Stop it with <kbd>Ctrl</kbd>+<kbd>C</kbd>.
 
-> The server is started from source (`python main.py serve`). The packaged Windows app is a windowed program and has
-> no console, so it does not offer `serve` yet.
+> The packaged Windows app accepts `serve` too — `ApexVisionStudio.exe serve --flows DIR` listens and answers
+> exactly as the source build does. It is a windowed program, so the banner and the request log go nowhere unless you
+> start it from a terminal that captures them (for example `ApexVisionStudio.exe serve 2> server.log`).
 
 ## Endpoints
 
@@ -40,6 +41,46 @@ The server prints its address and the flows it found when it starts. Stop it wit
 | `GET /v1/flows` | the flows in the folder |
 | `GET /v1/flows/{name}` | its modules, ports, and the parameters a caller may change (with limits) |
 | `POST /v1/flows/{name}/run` | run it on an image |
+
+### Describing a flow
+
+`GET /v1/flows/{name}` is what a client reads before it calls `run`: it names every flow in
+the solution and, for each module, the parameters that may be overridden and their limits.
+The flow file name from `GET /v1/flows` is the `{name}` to use.
+
+```json
+{
+  "name": "PCB_Inspection_Demo",
+  "default_flow": "PCB_AOI_Solution",
+  "flows": [
+    {
+      "name": "PCB_AOI_Solution",
+      "accepts_image": true,
+      "modules": [
+        {
+          "id": "node_template",
+          "name": "02_IC_Alignment",
+          "tool": "Template Match",
+          "enabled": true,
+          "inputs": ["Image"],
+          "outputs": ["Image", "Score", "Center_X", "Center_Y", "Angle", "Box"],
+          "parameters": {
+            "min_score":    { "kind": "float", "value": 0.7, "min": 0, "max": 1 },
+            "template_roi": { "kind": "rect", "value": [260, 240, 180, 120] },
+            "start_angle":  { "kind": "float", "value": -15.0, "min": -180, "max": 180, "unit": "deg" }
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+`parameters` maps the key to use in `params` to its current value and limits; a key that is
+absent is one the API will not change. `accepts_image` says whether the flow owns an Image
+Source, so whether sending an image will be rejected with `422 no_image_source`. `flows` is a
+list because one solution file can hold several flows — pass `?flow=<name>` (or `"flow"` in a
+JSON body) to pick one; without it the `default_flow` runs.
 
 ### Running a flow
 
@@ -102,14 +143,24 @@ Errors always look like `{"error": {"code": "...", "message": "..."}}`.
 | Status | `code` | Meaning |
 |---|---|---|
 | 400 | `bad_image`, `bad_json`, `bad_params` | the request could not be understood |
+| 400 | `bad_length` | the `Content-Length` header is not a number |
 | 401 | `unauthorized` | missing or wrong API key |
 | 403 | `image_path_disabled`, `image_path_outside_root` | `image_path` not allowed |
 | 404 | `flow_not_found`, `image_not_found` | no such flow or file |
+| 404 | `not_found` | no such endpoint (for example `/v1/nope`) |
 | 405 / 415 | `not_allowed`, `unsupported_media_type` | wrong method or content type |
+| 411 | `length_required` | a chunked body: send `Content-Length` instead |
 | 413 | `image_too_large`, `request_too_large` | over the size limits |
 | 422 | `invalid_params`, `unknown_module`, `no_image_source`, `flow_unreadable` | understood but not valid |
+| 422 | `ambiguous_module` | the `params` key matches more than one module: use its id |
+| 422 | `empty_solution` | the flow file contains no flow |
 | 500 | `engine_error` | the flow crashed (details in the server log) |
+| 500 | `internal_error` | an unexpected server error; the request was not a flow problem |
 | 503 | `busy` | other jobs are still running; retry |
+
+A body sent with `Transfer-Encoding: chunked` is refused with `411 length_required`: the
+server needs `Content-Length` to reject an oversized upload before reading it. `requests`
+and `curl` set it for you; a hand-rolled stream must set it explicitly.
 
 ## Examples
 

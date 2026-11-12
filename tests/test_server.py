@@ -80,6 +80,27 @@ def test_run_without_an_image_uses_the_flows_own_source(api):
     json.dumps(body)                                     # fully JSON-serialisable
 
 
+def test_an_empty_image_typed_body_runs_the_flows_own_source(api):
+    """An empty POST with an image content type means "no image", not a broken image.
+
+    `decode_image` handed the empty buffer to OpenCV, which raised `!buf.empty()` and
+    surfaced as a 500 - while the documented behaviour is that no image at all runs the
+    flow's own Image Source.  The no-image test above never caught it because it sends no
+    content type, so it skipped the decoder entirely.
+    """
+    status, body, _ = call(f"{api}/flows/{DEMO}/run", "POST", b"", "image/png")
+    assert status == 200, f"empty image body returned {status}: {body}"
+    assert body["verdict"] in ("PASS", "FAIL")
+
+    # a JSON request with no image key means the same thing
+    status, body, _ = post_json(f"{api}/flows/{DEMO}/run", {"return_image": False})
+    assert status == 200, f"JSON without an image returned {status}: {body}"
+
+    # but genuinely corrupt bytes must still be refused
+    status, body, _ = call(f"{api}/flows/{DEMO}/run", "POST", b"not an image", "image/png")
+    assert status == 400 and body["error"]["code"] == "bad_image"
+
+
 def test_run_with_an_uploaded_png_and_an_overlay_image(api):
     data = open(SAMPLE, "rb").read()
     status, body, _ = call(f"{api}/flows/{DEMO}/run?return_image=1", "POST", data, "image/png")
