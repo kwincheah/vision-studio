@@ -37,6 +37,7 @@ hidden_imports = [
 # Collect data files and model weights
 datas = [
     ('apex_vision/samples/*.png', 'apex_vision/samples'),
+    ('apex_vision/samples/parts', 'apex_vision/samples/parts'),        # the Parts Sorter demo's two pictures
     ('apex_vision/samples/models', 'apex_vision/samples/models'),     # small demo models for the deep-learning modules
     ('plugins/sample_sobel_edge_plugin', 'plugins/sample_sobel_edge_plugin'),   # only the published sample plugin; private plugins stay out
     ('apex_vision/assets', 'apex_vision/assets'),            # application icon

@@ -813,15 +813,44 @@ class AppBackend(QObject):
         """The window asked to close: ask about unsaved edits first."""
         self._guard(self.closeApproved.emit)
 
-    def _seed_sample_images(self) -> None:
-        """Like the widget app, start with the two bundled sample boards in the image strip.
+    #: Picture extensions the strip lists when it seeds itself from a sample folder.
+    PICTURE_SUFFIXES = (".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff")
 
-        They are only listed - the Image Source keeps its own input until one is selected."""
+    def _seed_sample_images(self) -> None:
+        """List the bundled pictures that belong to the flow being opened.
+
+        Each shipped demo keeps its pictures in its own folder under ``samples/``, so the strip
+        shows the images that flow actually inspects: the PCB boards for the PCB demo, the good
+        and mixed parts for the Parts Sorter. Previously the strip was hardcoded to the two PCB
+        boards, which meant every other demo listed pictures its flow had nothing to do with.
+
+        They are only listed - the Image Source keeps its own input until one is selected.
+        """
         if len(self._pool):
-            return
+            self._pool.clear()                       # opening another project: its pictures, not the last one's
         samples = os.path.join(os.path.dirname(os.path.abspath(__file__)), "samples")
-        for name in ("pcb_sample.png", "pcb_sample_defect.png"):
-            self._pool.add_path(os.path.join(samples, name))
+
+        folder = None
+        for node in self._pipeline.nodes.values():
+            if node.tool_name != "Image Source" or node.get_param("source_type") != "File":
+                continue
+            path = str(node.get_param("file_path", "") or "").strip().strip('"')
+            if not path:
+                continue
+            full = os.path.abspath(path)
+            if not os.path.normcase(full).startswith(os.path.normcase(samples)):
+                continue
+            folder = os.path.dirname(full)
+            break
+
+        if folder and os.path.isdir(folder):
+            for name in sorted(os.listdir(folder))[:12]:
+                if name.lower().endswith(self.PICTURE_SUFFIXES):
+                    self._pool.add_path(os.path.join(folder, name))
+
+        if not len(self._pool):                      # no sample folder (or it is empty): the boards
+            for name in ("pcb_sample.png", "pcb_sample_defect.png"):
+                self._pool.add_path(os.path.join(samples, name))
         self._pool.index = 0
 
     @pyqtSlot(str)

@@ -59,9 +59,59 @@ chat's title bar at any time. Details, privacy notes and the MCP server are in [
 <img src="docs/screenshots/qml/ai_3_model_picker.png" alt="Switching model from the chat header" width="49%">
 </p>
 
+## Example: sorting parts
+
+The bundled **Parts Sorter** demo is a complete little inspection: it counts the parts in a
+bin, keeps a running lot tally, and passes only when the count is in range *and* every part
+looks right. Open `projects/Parts_Sorter_Demo.apex` with **File > Open**; once you have opened it, it also
+appears under **Recent projects** on the start page.
+
+| Module | What it does |
+|---|---|
+| `01_Camera` | Image Source — reads `parts_good.png` |
+| `02_Brightness` | Intensity Measure — mean and spread of the bin |
+| `03_Smooth` | Image Filter — Gaussian 5x5 |
+| `04_Binarize` | Image Binarization — Otsu |
+| `05_BlobCount` | BLOB Analysis — counts the parts |
+| `06_Classify` | Script — sorts each object by size and shape, rejects the odd ones |
+| `07_LotTracker` | Script — running tally in global variables, cross-checks the blob count |
+| `08_Count_1_to_8` | Condition Branch — in range for 1 to 8 parts |
+
+Its image strip lists the two pictures that ship with it, so you can compare a good bin with a
+bad one without loading anything:
+
+| Picture | What it shows | Result |
+|---|---|---|
+| `parts_good.png` | round parts, nothing else | **PASS** — 6 blobs, brightness mean 48.4 |
+| `parts_mixed.png` | the same bin with an elongated bar mixed in | **FAIL** — `06_Classify` and `07_LotTracker` report NG; mean 52.2 |
+
+![The Parts Sorter failing on parts_mixed.png](docs/screenshots/qml/parts_sorter.png)
+
+Click a thumbnail to switch pictures; the flow re-runs on the one you picked. Turn on **Loop**
+with **Run all** and the PASS/FAIL flips as it alternates the two. The rejected object is
+outlined and labelled on the image, and the **Result** tab lists all eight modules.
+
+The same thing from another program — the two pictures are in `apex_vision/samples/parts/`:
+
+```bash
+python main.py serve --flows projects
+
+curl -s -X POST -H "Content-Type: image/png" \
+     --data-binary @apex_vision/samples/parts/parts_mixed.png \
+     http://127.0.0.1:8800/v1/flows/Parts_Sorter_Demo/run
+```
+
+```json
+{ "flow": "Parts_Sorter_Demo", "flow_name": "Parts_Sorter", "verdict": "FAIL",
+  "failed_modules": ["06_Classify", "07_LotTracker"] }
+```
+
+Send `parts_good.png` instead and the same flow answers `"verdict": "PASS"` with an empty
+`failed_modules`. The API is described in [docs/API.md](docs/API.md).
+
 ## What you can do with it
 
-- **Design flows visually.** 58 built-in modules in 12 categories: acquisition, image processing (crop, resize / rotate, brightness, edge
+- **Design flows visually.** 152 built-in modules in 14 categories: acquisition, image processing (crop, resize / rotate, brightness, edge
   detection, filters), location (template match, circle / line search, caliper, Hough), measurement (distances, angles,
   intersections, focus), recognition (barcode, OCR), **deep learning** (classify, segment, anomaly and YOLO detection with your own ONNX models), defect detection, colour, calibration, communication (TCP, UDP,
   serial, Modbus, CSV log) and logic. Every module is listed in [docs/MODULES.md](docs/MODULES.md). Typed ports, no loops, one source per input.

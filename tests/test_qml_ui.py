@@ -426,6 +426,29 @@ def test_a_new_blank_project_starts_empty_and_sample_templates_keep_their_images
     assert len(b.imagePool) == 2
 
 
+def test_each_bundled_demo_lists_its_own_pictures(gui):
+    """The strip used to be hardcoded to the two PCB boards for every demo.
+
+    So the Parts Sorter showed boards it does not inspect, and switching projects kept the
+    previous project's pictures because seeding never cleared the pool. Each shipped demo now
+    lists the folder its own Image Source points at.
+    """
+    from apex_vision.qml_backend import AppBackend, FrameProvider
+
+    b = AppBackend(FrameProvider())
+    b.openRecent(os.path.join(ROOT, "projects", "Parts_Sorter_Demo.apex"))
+    b.engine.wait_for_run()
+    assert [i["name"] for i in b.imagePool] == ["parts_good.png", "parts_mixed.png"]
+
+    # the parts demo's Script modules write global counters, so it is dirty as soon as it
+    # opens; answer "Discard" the way the close prompt would
+    b._project.mark_saved(b._solution)
+    b.openRecent(DEMO)
+    b.engine.wait_for_run()
+    assert [i["name"] for i in b.imagePool] == ["pcb_sample.png", "pcb_sample_defect.png"], (
+        "switching projects inherited the previous project's pictures")
+
+
 def test_sample_pictures_are_listed_only_for_flows_that_use_them(gui, tmp_path):
     """The two bundled boards feed the demo flows' Image Source. A flow with another source (a camera, a plugin's own
     satellite module, your own files) must start with an empty strip, or 'Run all' would repeat it once per picture."""
