@@ -11,8 +11,13 @@ __pycache__/
 
 # Packaging & PyInstaller build outputs
 build/
+build_*/
 dist/
+# the model-converter build uses its own directory name
+build_conv/
 installer_output/
+# the release workflow builds this at the repo root
+ApexVisionStudio-*.zip
 *.egg-info/
 *.egg
 *.spec.bak
