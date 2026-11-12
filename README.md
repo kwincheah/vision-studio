@@ -172,12 +172,12 @@ The whole flow canvas can be used without a mouse. Help > Keyboard Shortcuts lis
 main.py                 entry point (Qt Quick UI by default)
 qml/                    the interface; open qml/ApexVision.qmlproject in Qt Design Studio
 apex_vision/core/          flow engine, project files, shared run controller
-apex_vision/tools/         the 58 built-in modules
+apex_vision/tools/         the 152 built-in modules
 apex_vision/flowgen/       AI Gen: module catalogue, spec validator, assistant, MCP server, reference docs
 apex_vision/ui/            the older widget interface
 plugins/                sample plugin
 projects/               sample solutions
-tests/                  pytest suite (1,400 tests)
+tests/                  pytest suite (2,600 tests)
 docs/                   guides and specs
 ```
 
