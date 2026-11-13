@@ -142,6 +142,25 @@ class ObjectDetectionTool(VisionToolBase):
             img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
         model_path = str(self.get_param("model_path", "yolo11n.onnx")).strip() or "yolo11n.onnx"
+
+        # If default/requested ONNX file is missing on disk and not embedded in project, check if ultralytics can run .pt
+        if model_path.lower().endswith(".onnx") and not self.parameters.get("model_data"):
+            resolved_candidate = _resolve_model_path(model_path)
+            if not os.path.exists(resolved_candidate):
+                pt_candidate = os.path.splitext(model_path)[0] + ".pt"
+                try:
+                    import ultralytics  # noqa: F401
+                    model_path = pt_candidate
+                except ImportError:
+                    return ToolExecutionResult(
+                        status=ToolStatus.ERROR,
+                        message=(
+                            f"Object Detection: Model file '{os.path.basename(model_path)}' not found. "
+                            "To enable YOLO object detection, install ultralytics via: 'pip install ultralytics'"
+                        ),
+                        outputs={"Image": img, "Count": 0, "Boxes": [], "Classes": [], "Scores": [], "Status": "NG", "Detections": []}
+                    )
+
         if model_path.lower().endswith(".pt") and not _pytorch_available():
             try:                                  # no PyTorch here: the model is converted to ONNX once and runs on the built-in engine
                 model_path = dl.convert_pt_to_onnx(_resolve_model_path(model_path), int(self.get_param("input_width", 0) or 640))
