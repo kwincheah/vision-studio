@@ -118,8 +118,14 @@ class OpenCVCameraDriver(CameraDriverBase):
             self.is_connected = True
             return True, "Already connected"
 
-        # On Windows, DirectShow is preferred for speed and index stability
-        backend = cv2.CAP_DSHOW if sys.platform == "win32" else cv2.CAP_ANY
+        # Platform-optimized OpenCV capture backend
+        if sys.platform == "win32":
+            backend = cv2.CAP_DSHOW
+        elif sys.platform == "darwin":
+            backend = cv2.CAP_AVFOUNDATION
+        else:
+            backend = cv2.CAP_ANY
+
         self._cap = cv2.VideoCapture(self.camera_index, backend)
 
         if not self._cap.isOpened():
@@ -129,6 +135,12 @@ class OpenCVCameraDriver(CameraDriverBase):
         if not self._cap.isOpened():
             self._cap = None
             self.is_connected = False
+            if sys.platform == "darwin":
+                return False, (
+                    f"Failed to open camera index {self.camera_index}. On macOS, ensure your Terminal or IDE "
+                    "has Camera permission in System Settings -> Privacy & Security -> Camera, "
+                    "or try switching camera_index to 1 (FaceTime camera vs Continuity Camera)."
+                )
             return False, f"Failed to open camera index {self.camera_index}"
 
         # Probe resolution
@@ -500,10 +512,18 @@ class CameraManager:
         self._devices[v_usb3.device_id] = v_usb3
 
         # 2. Probe physical OpenCV Webcams / UVC Cameras
-        for idx in range(3):
-            # Test directshow index
-            backend = cv2.CAP_DSHOW if sys.platform == "win32" else cv2.CAP_ANY
+        if sys.platform == "win32":
+            backend = cv2.CAP_DSHOW
+        elif sys.platform == "darwin":
+            backend = cv2.CAP_AVFOUNDATION
+        else:
+            backend = cv2.CAP_ANY
+
+        probe_range = 4 if sys.platform == "darwin" else 3
+        for idx in range(probe_range):
             cap = cv2.VideoCapture(idx, backend)
+            if not cap.isOpened() and sys.platform == "darwin":
+                cap = cv2.VideoCapture(idx)
             if cap.isOpened():
                 w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
                 h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -559,18 +579,24 @@ class CameraManager:
 
         info = self.get_device(device_id)
         if not info:
-            # Fallback for dynamic webcam index string e.g. "0", "1"
+            # Fallback for dynamic webcam index string e.g. "0", "1", "webcam_0"
+            idx = None
             if device_id.isdigit():
                 idx = int(device_id)
+            elif device_id.startswith("webcam_") and device_id[7:].isdigit():
+                idx = int(device_id[7:])
+
+            if idx is not None:
                 info = CameraDeviceInfo(
                     device_id=f"webcam_{idx}",
-                    name=f"USB Camera Index {idx}",
+                    name=f"Standard USB Camera / Webcam {idx}",
                     camera_type="USB/Webcam",
                     interface_name=f"USB Video Class (Index {idx})"
                 )
                 self._devices[info.device_id] = info
                 driver = OpenCVCameraDriver(info, camera_index=idx)
                 self._active_drivers[device_id] = driver
+                self._active_drivers[info.device_id] = driver
                 return driver
             return None
 
