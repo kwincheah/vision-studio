@@ -214,7 +214,7 @@ More reading:
 [Parameter editors](docs/PARAMETER_EDITORS.md) ·
 [XML format](docs/XML_FORMAT.md) ·
 [Plugin guide](docs/PLUGIN_DEVELOPMENT_GUIDE.md) ·
-[Release notes](docs/RELEASE_NOTES_v1.0.0-beta.4.md)
+[Release notes](docs/RELEASE_NOTES_v1.0.0-beta.5.md)
 
 ### Building the Windows app
 
