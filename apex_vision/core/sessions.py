@@ -203,8 +203,9 @@ class CameraSession(QObject):
         self._running = True
 
         def work():
+            last_err_ts = 0.0
             while self._running:
-                ok, frame, _message = self.driver.capture_frame(timeout_ms=500.0)
+                ok, frame, message = self.driver.capture_frame(timeout_ms=500.0)
                 if ok and frame is not None:
                     self._latest = frame
                     try:
@@ -212,6 +213,13 @@ class CameraSession(QObject):
                     except RuntimeError:         # the session was destroyed
                         return
                 else:
+                    now = time.monotonic()
+                    if message and (now - last_err_ts) >= 1.5:
+                        last_err_ts = now
+                        try:
+                            self.status.emit(f"Stream error: {message}")
+                        except RuntimeError:
+                            return
                     time.sleep(0.05)
 
         self._thread = threading.Thread(target=work, name="camera-preview", daemon=True)

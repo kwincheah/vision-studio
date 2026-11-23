@@ -13,7 +13,7 @@ DialogFrame {
     signal lensCalibrationRequested()
     title: "Camera Management - Industrial & Hikrobot MVS Cameras"
     dialogWidth: 900
-    dialogHeight: 600
+    dialogHeight: 635
 
     onVisibleChanged: {
         if (!cam) return
@@ -38,7 +38,8 @@ DialogFrame {
                 font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
             DataTable {
                 id: table
-                width: parent.width; height: 190
+                width: parent.width; height: 220
+                currentRow: root.cam ? root.cam.selected : -1
                 columns: [ { title: "Name / Model", key: "name", width: 0 }, { title: "Type", key: "type", width: 130 }, { title: "Serial / ID", key: "serial", width: 100 } ]
                 rows: root.devices
                 onRowClicked: function (row) { if (root.cam) { root.cam.select(row); root.push() } }

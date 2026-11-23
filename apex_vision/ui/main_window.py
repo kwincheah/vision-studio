@@ -2335,11 +2335,16 @@ class ApexMainWindow(QMainWindow):
     def on_canvas_roi_changed(self, roi: list):
         self.wait_for_run()
         self.btn_draw_roi.setChecked(False)
-        # The ROI is written straight into the selected module's parameters, which
-        # is where the reference keeps it (the module configuration window shows it).
+        # The ROI is written straight into the selected module's active ROI parameter.
         tool = self.pipeline.nodes.get(self.selected_node_id)
         if tool is not None:
-            tool.set_param("roi", list(roi))
+            target_key = getattr(self, "_active_roi_key", None)
+            if not target_key or target_key not in tool.parameters:
+                target_key = next(
+                    (k for k in ("roi", "template_roi", "search_roi", "shelf_roi", "aisle_roi") if k in tool.parameters),
+                    "roi",
+                )
+            tool.set_param(target_key, list(roi))
         self._set_hint(f"ROI applied: {roi}", 3000)
         self.run_pipeline_step()
 

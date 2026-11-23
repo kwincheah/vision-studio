@@ -8,6 +8,8 @@ import math
 import json
 import time
 import copy
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Any, Optional, Callable, Set
 
 # Root elements of the saved XML. Files written before the rename use the legacy names and are still read.
@@ -175,6 +177,34 @@ class VisionPipeline:
         ]
         self._update_execution_order()
 
+    def disconnect_stale_from(self, node_id: str) -> int:
+        """Drop stale or type-incompatible connections attached to ``node_id`` (incoming or outgoing)."""
+        node = self.nodes.get(node_id)
+        if node is None:
+            return 0
+        kept: List[FlowConnection] = []
+        for c in self.connections:
+            if c.from_node == node_id:
+                if c.from_port not in node.outputs:
+                    continue
+                dst = self.nodes.get(c.to_node)
+                if dst is not None and c.to_port in dst.inputs:
+                    if not is_compatible_type(node.outputs[c.from_port].data_type, dst.inputs[c.to_port].data_type):
+                        continue
+            elif c.to_node == node_id:
+                if c.to_port not in node.inputs:
+                    continue
+                src = self.nodes.get(c.from_node)
+                if src is not None and c.from_port in src.outputs:
+                    if not is_compatible_type(src.outputs[c.from_port].data_type, node.inputs[c.to_port].data_type):
+                        continue
+            kept.append(c)
+        removed = len(self.connections) - len(kept)
+        if removed:
+            self.connections = kept
+            self._update_execution_order()
+        return removed
+
     def group_of(self, node_id: str) -> str:
         """The id of the Group module a module belongs to, or '' (a Group is never a member of another)."""
         node = self.nodes.get(node_id)
@@ -202,23 +232,14 @@ class VisionPipeline:
 
     @staticmethod
     def _kahn(ids: List[str], edges: List[tuple]) -> List[str]:
-        adj: Dict[str, List[str]] = {n: [] for n in ids}
-        indeg: Dict[str, int] = {n: 0 for n in ids}
-        for a, b in edges:
-            if a in adj and b in indeg and a != b:
-                adj[a].append(b)
-                indeg[b] += 1
-        queue = [n for n in ids if indeg[n] == 0]
-        order: List[str] = []
-        while queue:
-            cur = queue.pop(0)
-            order.append(cur)
-            for nxt in adj.get(cur, []):
-                indeg[nxt] -= 1
-                if indeg[nxt] == 0:
-                    queue.append(nxt)
-        order += [n for n in ids if n not in order]
-        return order
+        from apex_vision.core._native import kahn_sort
+        return kahn_sort(list(ids), [(a, b) for a, b in edges])
+
+    def execution_waves(self) -> List[List[str]]:
+        """Group active execution_order into dependency-free topological waves via C++ core."""
+        from apex_vision.core._native import compute_execution_waves
+        edges = [(c.from_node, c.to_node) for c in self.connections if not self._internal_to_group(c)]
+        return compute_execution_waves(list(self.execution_order), edges)
 
     def _update_execution_order(self):
         """Topological sort for node execution order, fallback to insertion order.
@@ -241,40 +262,12 @@ class VisionPipeline:
         Comprehensive Flow Validation.
         Detects cycles, missing inputs, and isolated modules.
         """
+        from apex_vision.core._native import find_cycle_nodes
         issues = []
-        # 1. Cycle detection in overall graph (iterative 3-color DFS to avoid RecursionError)
-        adj: Dict[str, List[str]] = {n: [] for n in self.nodes}
-        for c in self.connections:
-            if c.from_node in adj and not self._internal_to_group(c):
-                adj[c.from_node].append(c.to_node)
-
-        # 0 = unvisited, 1 = visiting (in stack), 2 = visited
-        state: Dict[str, int] = {n: 0 for n in self.nodes}
-        has_cycle = False
-
-        for start_node in self.nodes:
-            if state[start_node] != 0:
-                continue
-            stack = [(start_node, 0)]
-            state[start_node] = 1
-            while stack:
-                curr, nbr_idx = stack[-1]
-                nbrs = adj.get(curr, [])
-                if nbr_idx < len(nbrs):
-                    stack[-1] = (curr, nbr_idx + 1)
-                    nbr = nbrs[nbr_idx]
-                    nbr_state = state.get(nbr, 0)
-                    if nbr_state == 1:
-                        has_cycle = True
-                        break
-                    elif nbr_state == 0:
-                        state[nbr] = 1
-                        stack.append((nbr, 0))
-                else:
-                    state[curr] = 2
-                    stack.pop()
-            if has_cycle:
-                break
+        # 1. Cycle detection in overall graph via C++17 iterative 3-color DFS
+        edges = [(c.from_node, c.to_node) for c in self.connections
+                 if c.from_node in self.nodes and not self._internal_to_group(c)]
+        has_cycle = len(find_cycle_nodes(list(self.nodes.keys()), edges)) > 0
 
         if has_cycle:
             issues.append({
@@ -282,8 +275,16 @@ class VisionPipeline:
                 "message": "Flow contains circular dependencies (cyclic loop detected)."
             })
 
-        # 2. Check each node for unconnected input ports and bypass status
+        # 2. Check each node for missing plugins, unconnected input ports and bypass status
         for nid, tool in self.nodes.items():
+            if getattr(tool, "tool_name", "") == "Missing Plugin Tool":
+                missing_name = getattr(tool, "missing_tool_name", tool.name)
+                issues.append({
+                    "severity": "error",
+                    "node_id": nid,
+                    "message": f"Module '{tool.name}' requires plugin tool '{missing_name}', which is not loaded."
+                })
+
             if not tool.enabled:
                 issues.append({
                     "severity": "info",
@@ -337,6 +338,11 @@ class VisionPipeline:
                     force=True
                 )
 
+        for nid, tool in self.nodes.items():
+            if tool.group:
+                new_pipe.nodes[id_map[nid]].group = id_map.get(tool.group, "")
+
+        new_pipe._update_execution_order()
         return new_pipe
 
     @staticmethod
@@ -654,7 +660,8 @@ class VisionPipeline:
     def execute_flow(
         self,
         global_vars: Optional[Dict[str, Any]] = None,
-        on_step_callback: Optional[Callable[[str, ToolExecutionResult], None]] = None
+        on_step_callback: Optional[Callable[[str, ToolExecutionResult], None]] = None,
+        global_lock: Optional[threading.RLock] = None
     ) -> Dict[str, ToolExecutionResult]:
         """
         Execute all enabled tools in topological sequence.
@@ -672,6 +679,7 @@ class VisionPipeline:
 
         global_ctx = {
             "globals": global_vars if global_vars is not None else {},
+            "global_lock": global_lock,
             "flow_name": self.name,
             # what Time Consuming needs: when the flow began, what has run so far (live), in what order, and the modules' names
             "flow_started": start_time,
@@ -883,6 +891,7 @@ class SolutionManager:
         #: flow wrote during a run must not count as an unsaved edit by the operator.  See
         #: ProjectState.snapshot, which leaves them out of the comparison.
         self.runtime_globals: Set[str] = set()
+        self._globals_lock = threading.RLock()
         # Initialize default main flow
         self.add_flow("Flow1")
 
@@ -987,9 +996,14 @@ class SolutionManager:
         return self.flows[self.active_flow_name]
 
     def set_global(self, name: str, value: Any):
-        self.global_variables[name] = value
+        with self._globals_lock:
+            self.global_variables[name] = value
 
-    def run_global_script(self, results: Optional[Dict[str, ToolExecutionResult]] = None) -> Optional[str]:
+    def run_global_script(
+        self,
+        results: Optional[Dict[str, ToolExecutionResult]] = None,
+        flow_name: Optional[str] = None
+    ) -> Optional[str]:
         """Run the solution's global script once; returns an error text, or None on success.
 
         The script must define ``process(context)``; ``context`` offers ``get_global``,
@@ -999,7 +1013,7 @@ class SolutionManager:
         if not code:
             return None
         results = results or {}
-        flow = self.flows.get(self.active_flow_name)
+        flow = self.flows.get(flow_name or self.active_flow_name)
         verdicts = {}
         for nid, res in results.items():
             node = flow.nodes.get(nid) if flow else None
@@ -1011,36 +1025,65 @@ class SolutionManager:
             process = env.get("process")
             if not callable(process):
                 return "Global script must define process(context)"
-            process(ctx)
+            with self._globals_lock:
+                process(ctx)
         except Exception as exc:
             return f"Global script error: {type(exc).__name__}: {exc}"
         return None
 
     def get_global(self, name: str, default: Any = None) -> Any:
-        return self.global_variables.get(name, default)
+        with self._globals_lock:
+            return self.global_variables.get(name, default)
 
     def trigger_flow(self, flow_name: str) -> Dict[str, ToolExecutionResult]:
         """Triggers a specific flow by name (Manual p. 588 Trigger Module)."""
         if flow_name in self.flows and self.flows[flow_name].enabled:
-            return self.flows[flow_name].execute_flow(global_vars=self.global_variables)
+            return self.flows[flow_name].execute_flow(
+                global_vars=self.global_variables,
+                global_lock=self._globals_lock,
+            )
         return {}
 
-    def execute_all_flows(self) -> Dict[str, Dict[str, ToolExecutionResult]]:
-        """Executes all enabled flows in the solution."""
-        all_results = {}
-        for fname, flow in self.flows.items():
-            if flow.enabled:
-                all_results[fname] = flow.execute_flow(global_vars=self.global_variables)
-        return all_results
+    def execute_all_flows(self, parallel: bool = True) -> Dict[str, Dict[str, ToolExecutionResult]]:
+        """Executes all enabled flows in the solution (concurrently by default)."""
+        enabled = [(fname, flow) for fname, flow in self.flows.items() if flow.enabled]
+        if not enabled:
+            return {}
+        if not parallel or len(enabled) == 1:
+            return {
+                fname: flow.execute_flow(
+                    global_vars=self.global_variables,
+                    global_lock=self._globals_lock,
+                )
+                for fname, flow in enabled
+            }
+
+        all_results: Dict[str, Dict[str, ToolExecutionResult]] = {}
+        with ThreadPoolExecutor(max_workers=len(enabled), thread_name_prefix="apex-flow") as pool:
+            futures = {
+                pool.submit(
+                    flow.execute_flow,
+                    global_vars=self.global_variables,
+                    global_lock=self._globals_lock,
+                ): fname
+                for fname, flow in enabled
+            }
+            for fut, fname in futures.items():
+                all_results[fname] = fut.result()
+        # Preserve original dict order
+        return {fname: all_results[fname] for fname, _ in enabled if fname in all_results}
 
     def to_dict(self) -> Dict[str, Any]:
+        with self._globals_lock:
+            gv_snapshot = copy.deepcopy(self.global_variables)
+            rg_snapshot = sorted(self.runtime_globals) if self.runtime_globals else []
         return {
             "name": self.name,
             "active_flow": self.active_flow_name,
             "trigger_flow": self.trigger_flow_name,
-            "global_variables": self.global_variables,
+            "global_variables": gv_snapshot,
             # only when some are marked, so a file that never used the feature is unchanged
-            **({"runtime_globals": sorted(self.runtime_globals)} if self.runtime_globals else {}),
+            **({"runtime_globals": rg_snapshot} if rg_snapshot else {}),
             "global_script": self.global_script,
             **({"comm_devices": self.comm_devices} if self.comm_devices else {}),
             "flows": [flow.to_dict() for flow in self.flows.values()]

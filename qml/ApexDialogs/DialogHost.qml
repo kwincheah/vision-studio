@@ -11,6 +11,8 @@ import QtQuick 2.15
 Item {
     id: host
     property string current: ""
+    property string _drawReturnNodeId: ""
+    property string _drawReturnModuleName: ""
     visible: current !== ""
     signal projectCreated()
 
@@ -26,13 +28,20 @@ Item {
     CommunicationDialog { anchors.fill: parent; visible: host.current === "comm"; onClosed: host.close() }
     FlowSettingsDialog { anchors.fill: parent; visible: host.current === "flowSettings"; onClosed: host.close() }
     ValidationDialog { anchors.fill: parent; visible: host.current === "validation"; onClosed: host.close() }
-    ModuleConfigDialog { id: moduleConfig; anchors.fill: parent; visible: host.current === "moduleConfig"; onClosed: host.close() }
+    ModuleConfigDialog {
+        id: moduleConfig; anchors.fill: parent; visible: host.current === "moduleConfig"; onClosed: host.close()
+        onDrawRequested: function (nodeId, moduleName) {
+            host._drawReturnNodeId = nodeId
+            host._drawReturnModuleName = moduleName
+            host.close()
+        }
+    }
     CameraSetDialog { anchors.fill: parent; visible: host.current === "cameraSet"; onClosed: host.close()
         onLensCalibrationRequested: host.current = "lensCal" }
     LensCalibrationDialog { anchors.fill: parent; visible: host.current === "lensCal"; onClosed: host.close() }
     PluginManagerDialog { id: plugins; anchors.fill: parent; visible: host.current === "plugins"; onClosed: host.close() }
     NewProjectDialog { anchors.fill: parent; visible: host.current === "newProject"; onClosed: host.close()
-        onCreated: { host.close(); host.projectCreated() } }
+        onCreated: { if (host.current === "newProject") host.close(); if (host.current !== "confirm") host.projectCreated() } }
     RenameDialog { id: rename; anchors.fill: parent; visible: host.current === "rename"; onClosed: host.close() }
     ConfirmDialog { id: confirm; anchors.fill: parent; visible: host.current === "confirm"; onClosed: host.close() }
 
@@ -41,5 +50,14 @@ Item {
         target: typeof appBackend !== "undefined" ? appBackend : null
         ignoreUnknownSignals: true
         function onConfirmRequested(text) { confirm.message = text; host.current = "confirm" }
+        function onDrawModeFinished(nodeId, committed) {
+            if (host._drawReturnNodeId !== "" && host._drawReturnNodeId === nodeId) {
+                var nid = host._drawReturnNodeId
+                var mname = host._drawReturnModuleName
+                host._drawReturnNodeId = ""
+                host._drawReturnModuleName = ""
+                host.showModule(nid, mname)
+            }
+        }
     }
 }

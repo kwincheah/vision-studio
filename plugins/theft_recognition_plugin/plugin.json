@@ -1,0 +1,20 @@
+{
+  "id": "theft_recognition_plugin",
+  "name": "Modular Vision Tracking & VLM Suite",
+  "version": "3.1.0",
+  "author": "Apex Vision",
+  "description": "Production theft-recognition plugin suite: Motion Gate, ROI Zone Manager, shared-ONNX YOLO Pose & Context Object Detector, BoT-SORT Tracker, Behavior Gate, and VLM Audit.",
+  "category": "Theft Recognition",
+  "min_sdk_version": "1.0.0",
+  "entrypoint": "__init__.py",
+  "tags": [
+    "roi",
+    "motion",
+    "yolo",
+    "pose",
+    "botsort",
+    "behavior",
+    "vlm",
+    "tracking"
+  ]
+}

@@ -276,3 +276,27 @@ def test_left_drag_pans_a_zoomed_image_when_the_module_has_no_region(ui):
     assert vp.property("viewPanX") > x0 + 30 and vp.property("viewPanY") > 10, "the image followed the mouse"
     click_icon(ui, "viewFit")
     assert vp.property("viewPanX") == 0
+
+
+def test_current_result_shows_dict_fields_and_clips_scrollable_single_line_values(ui):
+    ui.reset()
+    ui.settle()
+    scr = ui.be._pipeline.nodes[next(n["id"] for n in ui.be.nodes)]
+    from apex_vision.core.base_tool import ToolExecutionResult, ToolStatus
+    long_msg = "line1 very long summary text " + ("abcdef0123456789" * 8) + "\nsecond line"
+    ui.be._pipeline.last_results[scr.instance_id] = ToolExecutionResult(
+        status=ToolStatus.OK,
+        message="Done",
+        outputs={"Payload": {"track_id": 1, "note": long_msg}, "Flag": True},
+    )
+    ui.be._selected = scr.instance_id
+    ui.be._refresh_results()
+    ui.be.changed.emit()
+    ui.spin(40)
+
+    assert any(r["name"] == "Payload" and "track_id" in r["value"] for r in ui.be.results)
+    assert all("\n" not in r["value"] for r in ui.be.results)
+    flick = named(ui, "currentResultValFlick0")
+    assert flick.property("clip") is True
+    assert flick.property("contentWidth") > flick.property("width")
+    assert not ui.warnings, ui.warnings

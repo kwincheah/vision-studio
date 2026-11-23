@@ -13,17 +13,18 @@
         <Property name="run_interval_ms" type="float">50.0</Property>
         <Property name="stop_on_ng" type="bool">false</Property>
         <Property name="flow_timeout_ms" type="float">5000.0</Property>
-        <Property name="execution_count" type="int">26</Property>
+        <Property name="execution_count" type="int">36</Property>
       </Properties>
       <Nodes>
         <Node instance_id="node_source" tool_name="Image Source" name="01_ImageAcquisition" category="Acquisition" enabled="true">
           <Parameters>
             <Parameter name="source_type" type="str">Synthetic</Parameter>
             <Parameter name="file_path" type="str">apex_vision/samples/pcb_sample.png</Parameter>
-            <Parameter name="pattern_type" type="str">PCB Inspection</Parameter>
+            <Parameter name="pattern_type" type="str">Part with Defects</Parameter>
             <Parameter name="color_mode" type="str">BGR</Parameter>
             <Parameter name="camera_device" type="str">mvs_gige_0</Parameter>
             <Parameter name="camera_index" type="int">0</Parameter>
+            <Parameter name="auto_exposure" type="bool">true</Parameter>
             <Parameter name="exposure_time_us" type="float">20000.0</Parameter>
             <Parameter name="gain" type="float">1.0</Parameter>
             <Parameter name="trigger_mode" type="str">Continuous</Parameter>
@@ -66,10 +67,14 @@
         <Node instance_id="node_defect" tool_name="Defect Detection" name="05_SurfaceScratchCheck" category="Defect Detection" enabled="true">
           <Parameters>
             <Parameter name="roi" type="json">[260, 240, 180, 120]</Parameter>
+            <Parameter name="method" type="str">Classical (contrast)</Parameter>
             <Parameter name="defect_type" type="str">Dark / Scratch</Parameter>
             <Parameter name="sensitivity" type="int">30</Parameter>
             <Parameter name="min_defect_area" type="int">10</Parameter>
             <Parameter name="max_defect_area" type="int">500</Parameter>
+            <Parameter name="model_path" type="str" />
+            <Parameter name="model_task" type="str">Segmentation</Parameter>
+            <Parameter name="dl_threshold" type="float">0.0</Parameter>
           </Parameters>
         </Node>
         <Node instance_id="node_branch" tool_name="Condition Branch" name="06_QualityJudge" category="Logic Tools" enabled="true">

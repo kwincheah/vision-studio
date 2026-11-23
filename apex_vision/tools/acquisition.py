@@ -3,6 +3,7 @@ Acquisition Tools: Image Source, Synthetic Generator, Camera / Video capture.
 Matches the reference product Acquisition category.
 """
 import os
+import time
 import cv2
 import numpy as np
 from typing import Dict, Any
@@ -38,6 +39,7 @@ class ImageSourceTool(VisionToolBase):
         self.outputs["Image"] = ToolPort("Image", DataType.IMAGE, "Acquired color or grayscale image")
         self.outputs["Width"] = ToolPort("Width", DataType.VALUE, "Image width")
         self.outputs["Height"] = ToolPort("Height", DataType.VALUE, "Image height")
+        self.outputs["Timestamp"] = ToolPort("Timestamp", DataType.VALUE, "Frame timestamp in seconds (media PTS for video files, else monotonic)")
 
     def _init_parameters(self):
         default_sample = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "samples", "pcb_sample.png"))
@@ -151,9 +153,12 @@ class ImageSourceTool(VisionToolBase):
         src_type = self.get_param("source_type", "Synthetic")
         color_mode = self.get_param("color_mode", "BGR")
         camera_label = ""
+        frame_ts = time.monotonic()
 
         if hasattr(self, "_override_image") and self._override_image is not None:
-            img = self._override_image.copy()
+            img = self._override_image if getattr(self, "_override_nocopy", False) else self._override_image.copy()
+            if getattr(self, "_override_timestamp", None) is not None:
+                frame_ts = float(self._override_timestamp)
             camera_label = getattr(self, "_override_name", "Input Image")
         elif src_type == "File":
             fpath = str(self.get_param("file_path", "")).strip().strip('"').strip("'")
@@ -205,7 +210,10 @@ class ImageSourceTool(VisionToolBase):
                 # the simulated Hikrobot camera there) must never keep producing a test picture.
                 target_device_id = default_device(src_type, self.get_param("camera_index", 0))
 
-            stream_url = str(self.get_param("stream_url", "")).strip()
+            stream_url = str(self.get_param("stream_url", "")).strip().strip('"').strip("'")
+            if stream_url.lower().startswith("file:///"):
+                from urllib.parse import unquote
+                stream_url = unquote(stream_url[8:])
             driver = cm.get_or_create_driver(target_device_id, stream_url=stream_url)
 
             if driver is None:
@@ -246,6 +254,7 @@ class ImageSourceTool(VisionToolBase):
                     status=ToolStatus.NG,
                     message=f"Camera acquisition failed ({driver.device_info.name}): {err_msg}"
                 )
+            frame_ts = driver.last_capture_timestamp() if hasattr(driver, "last_capture_timestamp") else time.monotonic()
             camera_label = f"[{driver.device_info.camera_type}] {driver.device_info.name}"
 
         else:  # Synthetic
@@ -263,7 +272,8 @@ class ImageSourceTool(VisionToolBase):
             outputs={
                 "Image": img,
                 "Width": w,
-                "Height": h
+                "Height": h,
+                "Timestamp": float(frame_ts),
             },
             overlays=[
                 {"type": "text", "text": f"{desc} ({w}x{h})", "pt": (15, 25), "color": (0, 255, 0)}

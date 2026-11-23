@@ -172,7 +172,7 @@ class FlowService:
             return {}
         specs: Dict[str, Dict[str, Any]] = {}
         for key, current in node.parameters.items():
-            spec = param_schema.spec_for(node.tool_name, key, current)
+            spec = param_schema.spec_for_tool(node, key, current)
             if spec["kind"] not in OVERRIDABLE_KINDS:
                 continue
             item: Dict[str, Any] = {"kind": spec["kind"], "value": to_jsonable(current)}
@@ -271,7 +271,7 @@ class FlowService:
                 elif key not in allowed:
                     problems.append(f"{ref}.{key}: this parameter cannot be changed through the API")
                 else:
-                    why = param_schema.problem(node.tool_name, key, node.parameters[key], value)
+                    why = param_schema.problem_for_tool(node, key, node.parameters[key], value)
                     if why:
                         problems.append(f"{ref}.{key}: {why}")
                     else:

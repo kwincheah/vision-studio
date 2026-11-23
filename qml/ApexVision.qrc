@@ -1,5 +1,6 @@
 <RCC>
     <qresource>
+        <file>ApexComponents/ApexScrollBar.qml</file>
         <file>ApexComponents/AppButton.qml</file>
         <file>ApexComponents/CheckLabel.qml</file>
         <file>ApexComponents/Chip.qml</file>
@@ -11,11 +12,13 @@
         <file>ApexComponents/FocusTrap.qml</file>
         <file>ApexComponents/FormRow.qml</file>
         <file>ApexComponents/Icon.qml</file>
+        <file>ApexComponents/ModelPicker.qml</file>
         <file>ApexComponents/NodeCard.qml</file>
         <file>ApexComponents/NumberBox.qml</file>
         <file>ApexComponents/ParamEditor.qml</file>
         <file>ApexComponents/PortDot.qml</file>
         <file>ApexComponents/qmldir</file>
+        <file>ApexComponents/ScriptEditor.qml</file>
         <file>ApexComponents/SectionLabel.qml</file>
         <file>ApexComponents/SelectBox.qml</file>
         <file>ApexComponents/StatusBadge.qml</file>
@@ -24,6 +27,7 @@
         <file>ApexComponents/TextBox.qml</file>
         <file>ApexComponents/ToggleSwitch.qml</file>
         <file>ApexDialogs/CameraSetDialog.qml</file>
+        <file>ApexDialogs/CommunicationDialog.qml</file>
         <file>ApexDialogs/ConfirmDialog.qml</file>
         <file>ApexDialogs/DialogHost.qml</file>
         <file>ApexDialogs/FlowSettingsDialog.qml</file>
@@ -80,6 +84,7 @@
         <file>images/accent/undo.svg</file>
         <file>images/accent/user.svg</file>
         <file>images/accent/variable.svg</file>
+        <file>images/app_icon.svg</file>
         <file>images/dark/bolt.svg</file>
         <file>images/dark/camera.svg</file>
         <file>images/dark/check.svg</file>
@@ -207,8 +212,8 @@
         <file>screens/AiSettings.qml</file>
         <file>screens/InspectionPanel.qml</file>
         <file>screens/MainScreen.qml</file>
+        <file>screens/ResizeGrip.qml</file>
         <file>screens/StartScreen.qml</file>
         <file>screens/ToolFlyout.qml</file>
-        <file>images/app_icon.svg</file>
     </qresource>
 </RCC>

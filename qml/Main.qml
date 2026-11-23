@@ -48,6 +48,7 @@ Window {
         ignoreUnknownSignals: true
         function onStartPageRequested() { window.startPageVisible = true }
         function onWorkspaceRequested() { window.startPageVisible = false }
+        function onConfirmRequested() { window.startPageVisible = false }
         function onCloseApproved() { window.closeApproved = true; window.close() }
     }
 }

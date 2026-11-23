@@ -59,11 +59,11 @@ DialogFrame {
     }
     buttons: [
         AppButton { text: "Start"; width: 80; objectName: "commStart"
-            onClicked: if (root.backend && table.currentRow >= 0) root.problem = root.backend.startCommDevice(root.devices[table.currentRow].name) },
+            onClicked: if (root.backend && table.currentRow >= 0 && table.currentRow < root.devices.length) root.problem = root.backend.startCommDevice(root.devices[table.currentRow].name) },
         AppButton { text: "Stop"; width: 80; objectName: "commStop"
-            onClicked: if (root.backend && table.currentRow >= 0) root.backend.stopCommDevice(root.devices[table.currentRow].name) },
+            onClicked: if (root.backend && table.currentRow >= 0 && table.currentRow < root.devices.length) root.backend.stopCommDevice(root.devices[table.currentRow].name) },
         AppButton { text: "Delete Selected"; kind: "danger"; width: 120; objectName: "commDelete"
-            onClicked: if (root.backend && table.currentRow >= 0) root.backend.removeCommDevice(root.devices[table.currentRow].name) },
+            onClicked: if (root.backend && table.currentRow >= 0 && table.currentRow < root.devices.length) root.backend.removeCommDevice(root.devices[table.currentRow].name) },
         AppButton { text: "Close"; width: 90; onClicked: root.closed() }
     ]
 }

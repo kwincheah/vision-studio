@@ -15,9 +15,12 @@ import sys
 import time
 import ctypes
 import logging
+import threading
 from typing import Dict, List, Any, Optional, Tuple
 import cv2
 import numpy as np
+
+from apex_vision.core._native import create_ring_buffer
 
 logger = logging.getLogger("apex_vision.camera")
 
@@ -75,6 +78,26 @@ class CameraDriverBase:
         self.pixel_format: str = "BGR8"  # BGR8, Mono8
         self.trigger_mode: str = "Off"  # Off (Continuous/FreeRun), On (Software/Hardware Trigger)
         self.frame_rate: float = 30.0
+        self._io_lock = threading.RLock()
+        self._frame_seq: int = 0
+        self._last_capture_timestamp: Optional[float] = None
+        self.ring_buffer = create_ring_buffer(capacity=4)
+
+    def _record_frame(self, frame: np.ndarray) -> None:
+        self._frame_seq += 1
+        try:
+            self.ring_buffer.push(frame, self._frame_seq, time.time())
+        except Exception:
+            pass
+
+    def last_capture_timestamp(self) -> float:
+        """Return timestamp in seconds of the most recently captured frame."""
+        if self._last_capture_timestamp is not None:
+            return float(self._last_capture_timestamp)
+        return time.monotonic()
+
+    def latest_buffered_frame(self) -> Optional[Tuple[np.ndarray, Dict[str, Any]]]:
+        return self.ring_buffer.latest()
 
     def open(self) -> Tuple[bool, str]:
         raise NotImplementedError
@@ -114,61 +137,64 @@ class OpenCVCameraDriver(CameraDriverBase):
         self._auto_applied: Optional[bool] = None    # what the camera has been told since it was opened
 
     def open(self) -> Tuple[bool, str]:
-        if self._cap is not None and self._cap.isOpened():
+        with self._io_lock:
+            if self._cap is not None and self._cap.isOpened():
+                self.is_connected = True
+                return True, "Already connected"
+
+            # Platform-optimized OpenCV capture backend
+            if sys.platform == "win32":
+                backend = cv2.CAP_DSHOW
+            elif sys.platform == "darwin":
+                backend = cv2.CAP_AVFOUNDATION
+            else:
+                backend = cv2.CAP_ANY
+
+            self._cap = cv2.VideoCapture(self.camera_index, backend)
+
+            if not self._cap.isOpened():
+                # Fallback to default backend
+                self._cap = cv2.VideoCapture(self.camera_index)
+
+            if not self._cap.isOpened():
+                self._cap = None
+                self.is_connected = False
+                if sys.platform == "darwin":
+                    return False, (
+                        f"Failed to open camera index {self.camera_index}. On macOS, ensure your Terminal or IDE "
+                        "has Camera permission in System Settings -> Privacy & Security -> Camera, "
+                        "or try switching camera_index to 1 (FaceTime camera vs Continuity Camera)."
+                    )
+                return False, f"Failed to open camera index {self.camera_index}"
+
+            # Probe resolution
+            w = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            h = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            if w > 0 and h > 0:
+                self.width = w
+                self.height = h
+
             self.is_connected = True
-            return True, "Already connected"
-
-        # Platform-optimized OpenCV capture backend
-        if sys.platform == "win32":
-            backend = cv2.CAP_DSHOW
-        elif sys.platform == "darwin":
-            backend = cv2.CAP_AVFOUNDATION
-        else:
-            backend = cv2.CAP_ANY
-
-        self._cap = cv2.VideoCapture(self.camera_index, backend)
-
-        if not self._cap.isOpened():
-            # Fallback to default backend
-            self._cap = cv2.VideoCapture(self.camera_index)
-
-        if not self._cap.isOpened():
-            self._cap = None
-            self.is_connected = False
-            if sys.platform == "darwin":
-                return False, (
-                    f"Failed to open camera index {self.camera_index}. On macOS, ensure your Terminal or IDE "
-                    "has Camera permission in System Settings -> Privacy & Security -> Camera, "
-                    "or try switching camera_index to 1 (FaceTime camera vs Continuity Camera)."
-                )
-            return False, f"Failed to open camera index {self.camera_index}"
-
-        # Probe resolution
-        w = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        h = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        if w > 0 and h > 0:
-            self.width = w
-            self.height = h
-
-        self.is_connected = True
-        self._auto_applied = None
-        return True, f"Connected to camera {self.camera_index} ({self.width}x{self.height})"
+            self._auto_applied = None
+            return True, f"Connected to camera {self.camera_index} ({self.width}x{self.height})"
 
     def close(self):
-        if self._cap is not None:
-            try:
-                self._cap.release()
-            except Exception:
-                pass
-            self._cap = None
-        self.is_connected = False
+        with self._io_lock:
+            if self._cap is not None:
+                try:
+                    self._cap.release()
+                except Exception:
+                    pass
+                self._cap = None
+            self.is_connected = False
 
     def set_auto_exposure(self, on: bool) -> bool:
         """Let the camera set exposure (and brightness) itself, as a webcam does in any other program. Applied on the next capture."""
-        self._auto = bool(on)
-        if on:
-            self.gain = 1.0                       # no leftover digital gain from a fixed setting
-        return True
+        with self._io_lock:
+            self._auto = bool(on)
+            if on:
+                self.gain = 1.0                       # no leftover digital gain from a fixed setting
+            return True
 
     def _apply_auto_exposure(self) -> None:
         if self._auto is None or self._auto == self._auto_applied or self._cap is None:
@@ -184,60 +210,75 @@ class OpenCVCameraDriver(CameraDriverBase):
         self._auto_applied = self._auto
 
     def set_exposure(self, exposure_us: float) -> bool:
-        self.exposure_time_us = exposure_us
-        if self._cap and self._cap.isOpened():
-            # DirectShow exposure property is typically log2(seconds) or arbitrary units
-            try:
-                # Convert us to approximate cv2 exposure
-                exp_sec = exposure_us / 1000000.0
-                if exp_sec > 0:
-                    exp_val = np.log2(exp_sec)
-                    self._cap.set(cv2.CAP_PROP_EXPOSURE, float(exp_val))
-            except Exception:
-                pass
-        return True
+        with self._io_lock:
+            self.exposure_time_us = exposure_us
+            if self._cap and self._cap.isOpened():
+                # DirectShow exposure property is typically log2(seconds) or arbitrary units
+                try:
+                    # Convert us to approximate cv2 exposure
+                    exp_sec = exposure_us / 1000000.0
+                    if exp_sec > 0:
+                        exp_val = np.log2(exp_sec)
+                        self._cap.set(cv2.CAP_PROP_EXPOSURE, float(exp_val))
+                except Exception:
+                    pass
+            return True
 
     def set_gain(self, gain: float) -> bool:
-        self.gain = gain
-        if self._cap and self._cap.isOpened():
-            try:
-                self._cap.set(cv2.CAP_PROP_GAIN, float(gain))
-            except Exception:
-                pass
-        return True
+        with self._io_lock:
+            self.gain = gain
+            if self._cap and self._cap.isOpened():
+                try:
+                    self._cap.set(cv2.CAP_PROP_GAIN, float(gain))
+                except Exception:
+                    pass
+            return True
 
     def set_roi(self, width: int, height: int, offset_x: int = 0, offset_y: int = 0) -> bool:
-        self.width = width
-        self.height = height
-        if self._cap and self._cap.isOpened():
-            try:
-                self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, float(width))
-                self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, float(height))
-                self.width = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-                self.height = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            except Exception:
-                pass
-        return True
+        with self._io_lock:
+            self.width = width
+            self.height = height
+            if self._cap and self._cap.isOpened():
+                try:
+                    self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, float(width))
+                    self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, float(height))
+                    self.width = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                    self.height = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                except Exception:
+                    pass
+            return True
 
     def capture_frame(self, timeout_ms: float = 2000.0) -> Tuple[bool, Optional[np.ndarray], str]:
-        if not self.is_connected or self._cap is None or not self._cap.isOpened():
-            ok, msg = self.open()
-            if not ok:
-                return False, None, msg
+        with self._io_lock:
+            if not self.is_connected or self._cap is None or not self._cap.isOpened():
+                ok, msg = self.open()
+                if not ok:
+                    return False, None, msg
 
-        self._apply_auto_exposure()
-        ret, frame = self._cap.read()
-        if not ret or frame is None:
-            return False, None, f"Camera index {self.camera_index} frame acquisition timed out"
+            self._apply_auto_exposure()
+            ret, frame = self._cap.read()
+            if not ret or frame is None:
+                return False, None, f"Camera index {self.camera_index} frame acquisition timed out"
 
-        # Apply digital gain/exposure adjustments if hardware didn't satisfy
-        if self.gain != 1.0 and self.gain > 0:
-            frame = cv2.convertScaleAbs(frame, alpha=float(self.gain), beta=0)
+            # Apply digital gain/exposure adjustments if hardware didn't satisfy
+            if self.gain != 1.0 and self.gain > 0:
+                frame = cv2.convertScaleAbs(frame, alpha=float(self.gain), beta=0)
 
-        if self.pixel_format == "Mono8" and len(frame.shape) == 3:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            if self.pixel_format == "Mono8" and len(frame.shape) == 3:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        return True, frame, "OK"
+            self._last_capture_timestamp = time.monotonic()
+
+            self._record_frame(frame)
+            return True, frame, "OK"
+
+
+def _clean_stream_url(url: str) -> str:
+    clean = str(url or "").strip().strip('"').strip("'")
+    if clean.lower().startswith("file:///"):
+        from urllib.parse import unquote
+        clean = unquote(clean[8:])
+    return clean
 
 
 class StreamCameraDriver(CameraDriverBase):
@@ -245,50 +286,99 @@ class StreamCameraDriver(CameraDriverBase):
 
     def __init__(self, device_info: CameraDeviceInfo, stream_url: str):
         super().__init__(device_info)
-        self.stream_url = stream_url
+        self.stream_url = _clean_stream_url(stream_url)
         self._cap: Optional[cv2.VideoCapture] = None
 
     def open(self) -> Tuple[bool, str]:
-        if not self.stream_url:
-            return False, "Stream URL is empty"
-        self.close()
-        self._cap = cv2.VideoCapture(self.stream_url)
-        if not self._cap.isOpened():
-            self._cap = None
-            self.is_connected = False
-            return False, f"Could not connect to stream: {self.stream_url}"
+        with self._io_lock:
+            self.stream_url = _clean_stream_url(self.stream_url)
+            if not self.stream_url:
+                return False, "Stream URL is empty"
+            self.close()
+            is_net = self.stream_url.lower().startswith(("rtsp://", "rtsps://", "http://", "https://"))
+            if is_net:
+                os.environ.setdefault(
+                    "OPENCV_FFMPEG_CAPTURE_OPTIONS",
+                    "rtsp_transport;tcp|timeout;3000000|stimeout;3000000",
+                )
+                if hasattr(cv2, "CAP_PROP_OPEN_TIMEOUT_MSEC") and hasattr(cv2, "CAP_FFMPEG"):
+                    try:
+                        self._cap = cv2.VideoCapture(
+                            self.stream_url,
+                            cv2.CAP_FFMPEG,
+                            [cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 3000, cv2.CAP_PROP_READ_TIMEOUT_MSEC, 3000],
+                        )
+                    except TypeError:
+                        self._cap = cv2.VideoCapture(self.stream_url)
+                else:
+                    self._cap = cv2.VideoCapture(self.stream_url)
+            else:
+                self._cap = cv2.VideoCapture(self.stream_url)
+            if not self._cap.isOpened():
+                self._cap = None
+                self.is_connected = False
+                return False, f"Could not connect to stream: {self.stream_url}"
 
-        self.is_connected = True
-        w = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        h = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        if w > 0 and h > 0:
-            self.width = w
-            self.height = h
-        return True, f"Connected to stream {self.stream_url}"
-
-    def close(self):
-        if self._cap is not None:
             try:
-                self._cap.release()
+                # Minimize RTSP/network frame buffering so tracking sees near-real-time frames
+                self._cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             except Exception:
                 pass
-            self._cap = None
-        self.is_connected = False
+
+            self.is_connected = True
+            w = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            h = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            if w > 0 and h > 0:
+                self.width = w
+                self.height = h
+            return True, f"Connected to stream {self.stream_url}"
+
+    def close(self):
+        with self._io_lock:
+            if self._cap is not None:
+                try:
+                    self._cap.release()
+                except Exception:
+                    pass
+                self._cap = None
+            self.is_connected = False
 
     def capture_frame(self, timeout_ms: float = 2000.0) -> Tuple[bool, Optional[np.ndarray], str]:
-        if not self.is_connected or self._cap is None or not self._cap.isOpened():
-            ok, msg = self.open()
-            if not ok:
-                return False, None, msg
+        with self._io_lock:
+            if not self.is_connected or self._cap is None or not self._cap.isOpened():
+                ok, msg = self.open()
+                if not ok:
+                    return False, None, msg
 
-        ret, frame = self._cap.read()
-        if not ret or frame is None:
-            return False, None, f"Failed to grab frame from stream: {self.stream_url}"
+            ret, frame = self._cap.read()
+            if not ret or frame is None:
+                # Attempt one transparent reconnect on transient RTSP drop before failing
+                self.close()
+                ok, msg = self.open()
+                if not ok or self._cap is None:
+                    return False, None, f"Failed to grab frame from stream: {self.stream_url} ({msg})"
+                ret, frame = self._cap.read()
+                if not ret or frame is None:
+                    return False, None, f"Failed to grab frame from stream: {self.stream_url}"
 
-        if self.pixel_format == "Mono8" and len(frame.shape) == 3:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            if self.pixel_format == "Mono8" and len(frame.shape) == 3:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        return True, frame, "OK"
+            if os.path.isfile(self.stream_url):
+                fps = float(self._cap.get(cv2.CAP_PROP_FPS) or 0.0)
+                pos_frames = float(self._cap.get(cv2.CAP_PROP_POS_FRAMES) or 0.0)
+                pos_msec = float(self._cap.get(cv2.CAP_PROP_POS_MSEC) or 0.0)
+                if fps > 0.0 and pos_frames >= 1.0:
+                    self._last_capture_timestamp = max(0.0, (pos_frames - 1.0) / fps)
+                elif pos_msec >= 0.0:
+                    self._last_capture_timestamp = pos_msec / 1000.0
+                else:
+                    self._last_capture_timestamp = time.monotonic()
+            else:
+                self._last_capture_timestamp = time.monotonic()
+
+            self._record_frame(frame)
+            return True, frame, "OK"
 
 
 class IndustrialCameraDriver(CameraDriverBase):
@@ -317,64 +407,60 @@ class IndustrialCameraDriver(CameraDriverBase):
         self.is_connected = False
 
     def capture_frame(self, timeout_ms: float = 2000.0) -> Tuple[bool, Optional[np.ndarray], str]:
-        if not self.is_connected:
-            ok, msg = self.open()
-            if not ok:
-                return False, None, msg
+        with self._io_lock:
+            if not self.is_connected:
+                ok, msg = self.open()
+                if not ok:
+                    return False, None, msg
 
-        self._frame_count += 1
-        w, h = self.width, self.height
+            self._frame_count += 1
+            frame_num = self._frame_count
+            w, h = self.width, self.height
+            exp_us = self.exposure_time_us
+            gain_val = self.gain
+            px_fmt = self.pixel_format
+            sn = self.device_info.serial_number
 
-        # Generate realistic industrial machine vision frame (PCB / High Precision Machined Part)
+        # Generate synthetic industrial frame outside the lock so multiple threads don't stall
         img = np.zeros((h, w, 3), dtype=np.uint8)
-        # Industrial matte background
         img[:] = (45, 52, 48)
 
-        # Draw machined component or PCB with dynamic conveyor position
         t_shift = int((time.time() * 30) % w)
         cx = (w // 2 + (t_shift % 60) - 30)
         cy = h // 2
 
-        # Outer aluminum casing with chamfered edges
         cv2.rectangle(img, (cx - 240, cy - 180), (cx + 240, cy + 180), (120, 125, 130), -1)
         cv2.rectangle(img, (cx - 240, cy - 180), (cx + 240, cy + 180), (200, 205, 210), 3)
-
-        # Inner PCB substrate
         cv2.rectangle(img, (cx - 210, cy - 150), (cx + 210, cy + 150), (30, 90, 45), -1)
 
-        # Precision fiducial markers (for template matching & alignment)
         cv2.circle(img, (cx - 180, cy - 120), 16, (220, 220, 220), -1)
         cv2.circle(img, (cx - 180, cy - 120), 6, (10, 10, 10), -1)
         cv2.circle(img, (cx + 180, cy + 120), 16, (220, 220, 220), -1)
         cv2.circle(img, (cx + 180, cy + 120), 6, (10, 10, 10), -1)
 
-        # High-contrast calibrated circular bore / hole
         cv2.circle(img, (cx, cy), 65, (25, 25, 25), -1)
         cv2.circle(img, (cx, cy), 65, (230, 230, 230), 4)
         cv2.circle(img, (cx, cy), 18, (180, 180, 180), -1)
 
-        # Precision linear measurement edges
         cv2.line(img, (cx - 150, cy + 80), (cx + 150, cy + 80), (240, 240, 240), 2)
         cv2.line(img, (cx - 150, cy + 110), (cx + 150, cy + 110), (240, 240, 240), 2)
 
-        # Telemetry watermark on industrial frame
-        stamp = f"ID: {self.device_info.serial_number} | Exp: {self.exposure_time_us:.0f}us | Gain: {self.gain:.1f}x | F#{self._frame_count}"
+        stamp = f"ID: {sn} | Exp: {exp_us:.0f}us | Gain: {gain_val:.1f}x | F#{frame_num}"
         cv2.putText(img, stamp, (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 128), 1, cv2.LINE_AA)
 
-        # Simulate exposure intensity response (exposure_time_us relative to 20000us nominal)
-        exp_factor = max(0.2, min(2.5, self.exposure_time_us / 20000.0))
-        gain_factor = max(0.5, min(4.0, self.gain))
+        exp_factor = max(0.2, min(2.5, exp_us / 20000.0))
+        gain_factor = max(0.5, min(4.0, gain_val))
         if exp_factor != 1.0 or gain_factor != 1.0:
             scale = exp_factor * gain_factor
             img = cv2.convertScaleAbs(img, alpha=scale, beta=0)
 
-        # Sensor photon noise simulation
         noise = np.random.normal(0, 3.0, img.shape).astype(np.int16)
         img = np.clip(img.astype(np.int16) + noise, 0, 255).astype(np.uint8)
 
-        if self.pixel_format == "Mono8":
+        if px_fmt == "Mono8":
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
+        self._record_frame(img)
         return True, img, "OK"
 
 
@@ -384,23 +470,26 @@ class CameraManager:
     and camera setting dialogs across all supported protocols.
     """
     _instance: Optional["CameraManager"] = None
+    _instance_lock = threading.RLock()
 
     @classmethod
     def get_instance(cls) -> "CameraManager":
-        if cls._instance is None:
-            cls._instance = CameraManager()
-        return cls._instance
+        with cls._instance_lock:
+            if cls._instance is None:
+                cls._instance = CameraManager()
+            return cls._instance
 
     def __init__(self):
         self._devices: Dict[str, CameraDeviceInfo] = {}
         self._user_streams: Dict[str, CameraDeviceInfo] = {}
         self._active_drivers: Dict[str, CameraDriverBase] = {}
+        self._drivers_lock = threading.RLock()
         self.default_camera_id: str = "virtual_gige_0"
         self.refresh_devices()
 
     def add_network_stream(self, stream_url: str, name: Optional[str] = None) -> CameraDeviceInfo:
         """Register a persistent user-configured RTSP/HTTP network stream."""
-        clean_url = stream_url.strip()
+        clean_url = _clean_stream_url(stream_url)
         dev_id = f"rtsp_{abs(hash(clean_url)) % 10000000}"
         display_name = name or f"Network Stream ({clean_url})"
         info = CameraDeviceInfo(
@@ -569,60 +658,63 @@ class CameraManager:
         device_id: str,
         stream_url: Optional[str] = None
     ) -> Optional[CameraDriverBase]:
-        """Returns or instantiates a driver for the specified device ID."""
-        if device_id in self._active_drivers:
-            existing = self._active_drivers[device_id]
-            if isinstance(existing, StreamCameraDriver) and stream_url and existing.stream_url != stream_url:
-                existing.close()
-                existing.stream_url = stream_url
-            return existing
+        """Returns or instantiates a driver for the specified device ID (thread-safe)."""
+        with self._drivers_lock:
+            clean_url = _clean_stream_url(stream_url) if stream_url else None
+            driver_key = f"{device_id}::{clean_url}" if (device_id == "ip_stream_custom" and clean_url) else device_id
+            if driver_key in self._active_drivers:
+                existing = self._active_drivers[driver_key]
+                if isinstance(existing, StreamCameraDriver) and clean_url and existing.stream_url != clean_url:
+                    existing.close()
+                    existing.stream_url = clean_url
+                return existing
 
-        info = self.get_device(device_id)
-        if not info:
-            # Fallback for dynamic webcam index string e.g. "0", "1", "webcam_0"
-            idx = None
-            if device_id.isdigit():
-                idx = int(device_id)
-            elif device_id.startswith("webcam_") and device_id[7:].isdigit():
-                idx = int(device_id[7:])
+            info = self.get_device(device_id)
+            if not info:
+                # Fallback for dynamic webcam index string e.g. "0", "1", "webcam_0"
+                idx = None
+                if device_id.isdigit():
+                    idx = int(device_id)
+                elif device_id.startswith("webcam_") and device_id[7:].isdigit():
+                    idx = int(device_id[7:])
 
-            if idx is not None:
-                info = CameraDeviceInfo(
-                    device_id=f"webcam_{idx}",
-                    name=f"Standard USB Camera / Webcam {idx}",
-                    camera_type="USB/Webcam",
-                    interface_name=f"USB Video Class (Index {idx})"
-                )
-                self._devices[info.device_id] = info
+                if idx is not None:
+                    info = CameraDeviceInfo(
+                        device_id=f"webcam_{idx}",
+                        name=f"Standard USB Camera / Webcam {idx}",
+                        camera_type="USB/Webcam",
+                        interface_name=f"USB Video Class (Index {idx})"
+                    )
+                    self._devices[info.device_id] = info
+                    driver = OpenCVCameraDriver(info, camera_index=idx)
+                    self._active_drivers[driver_key] = driver
+                    self._active_drivers[info.device_id] = driver
+                    return driver
+                return None
+
+            driver: Optional[CameraDriverBase] = None
+            if info.camera_type in ("Hikrobot MVS GigE", "Hikrobot MVS USB3") or device_id.startswith("mvs_"):
+                from apex_vision.core.mvs_sdk import MvsCameraDriver
+                driver = MvsCameraDriver(info)
+            elif info.camera_type == "USB/Webcam":
+                # Extract index
+                idx = 0
+                if "webcam_" in device_id:
+                    try:
+                        idx = int(device_id.split("webcam_")[1])
+                    except Exception:
+                        idx = 0
                 driver = OpenCVCameraDriver(info, camera_index=idx)
-                self._active_drivers[device_id] = driver
-                self._active_drivers[info.device_id] = driver
-                return driver
-            return None
+            elif info.camera_type == "IP/RTSP Stream":
+                url = clean_url or stream_url or getattr(info, "stream_url", None) or "rtsp://192.168.1.64:554/ch1/main"
+                driver = StreamCameraDriver(info, stream_url=url)
+            else:
+                # Industrial GigE or USB3
+                driver = IndustrialCameraDriver(info)
 
-        driver: Optional[CameraDriverBase] = None
-        if info.camera_type in ("Hikrobot MVS GigE", "Hikrobot MVS USB3") or device_id.startswith("mvs_"):
-            from apex_vision.core.mvs_sdk import MvsCameraDriver
-            driver = MvsCameraDriver(info)
-        elif info.camera_type == "USB/Webcam":
-            # Extract index
-            idx = 0
-            if "webcam_" in device_id:
-                try:
-                    idx = int(device_id.split("webcam_")[1])
-                except Exception:
-                    idx = 0
-            driver = OpenCVCameraDriver(info, camera_index=idx)
-        elif info.camera_type == "IP/RTSP Stream":
-            url = stream_url or getattr(info, "stream_url", None) or "rtsp://192.168.1.64:554/ch1/main"
-            driver = StreamCameraDriver(info, stream_url=url)
-        else:
-            # Industrial GigE or USB3
-            driver = IndustrialCameraDriver(info)
-
-        if driver:
-            self._active_drivers[device_id] = driver
-        return driver
+            if driver:
+                self._active_drivers[driver_key] = driver
+            return driver
 
     def is_mvs_sdk_active(self) -> bool:
         """Checks if native Hikrobot MVS C SDK is loaded and operational."""
@@ -650,9 +742,10 @@ class CameraManager:
 
     def close_all(self):
         """Closes and releases all active camera drivers."""
-        for d in self._active_drivers.values():
-            try:
-                d.close()
-            except Exception as e:
-                logger.warning("Error releasing camera driver %s: %s", d, e)
-        self._active_drivers.clear()
+        with self._drivers_lock:
+            for d in self._active_drivers.values():
+                try:
+                    d.close()
+                except Exception as e:
+                    logger.warning("Error releasing camera driver %s: %s", d, e)
+            self._active_drivers.clear()

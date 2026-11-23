@@ -11,6 +11,13 @@ DialogFrame {
     dialogWidth: 420
     dialogHeight: 300
 
+    onVisibleChanged: if (visible) {
+        interval.value = root.settings.runIntervalMs
+        timeout.value = root.settings.timeoutMs
+        stopOnNg.checked = root.settings.stopOnNg
+        enabledBox.checked = root.settings.enabled
+    }
+
     Grid {
         columns: 2
         columnSpacing: 16

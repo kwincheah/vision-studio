@@ -194,11 +194,8 @@ class ObjectDetectionTool(VisionToolBase):
                 if isinstance(roi[0], dict) and "box" in roi[0]:
                     valid_boxes = [b["box"] for b in roi if isinstance(b, dict) and "box" in b and len(b["box"]) >= 4]
                     if valid_boxes:
-                        min_x = min(int(b[0]) for b in valid_boxes)
-                        min_y = min(int(b[1]) for b in valid_boxes)
-                        max_x = max(int(b[0]) + int(b[2]) for b in valid_boxes)
-                        max_y = max(int(b[1]) + int(b[3]) for b in valid_boxes)
-                        box = [min_x, min_y, max_x - min_x, max_y - min_y]
+                        from apex_vision.core._native import compute_union_box
+                        box = compute_union_box(valid_boxes)
                 elif len(roi) >= 4 and all(isinstance(v, (int, float, str)) and not isinstance(v, (dict, list, tuple)) for v in roi[:4]):
                     box = roi[:4]
 
@@ -240,8 +237,7 @@ class ObjectDetectionTool(VisionToolBase):
             }
             if class_filter is not None:
                 predict_kwargs["classes"] = class_filter
-            if device_param in ("cpu", "cuda"):
-                predict_kwargs["device"] = device_param
+            predict_kwargs["device"] = dl.resolve_torch_device(device_param)
 
             results = model.predict(**predict_kwargs)
             res0 = results[0] if results else None
@@ -280,16 +276,21 @@ class ObjectDetectionTool(VisionToolBase):
 
     def _package(self, img, raw):
         """Turn [(x, y, w, h, score, name), ...] into the module's outputs and overlays."""
+        import cv2
+
         boxes: List[List[int]] = []
         class_names: List[str] = []
         scores: List[float] = []
         detection_records: List[Dict[str, Any]] = []
         overlays: List[Dict[str, Any]] = []
+        vis = img.copy() if img is not None and hasattr(img, "copy") else img
 
         for idx, (bx, by, bw, bh, score, cls_name) in enumerate(raw):
             cx = bx + bw // 2
             cy = by + bh // 2
             box_rect = [bx, by, bw, bh]
+            label_text = f"{cls_name} {score:.2f}"
+            box_color = (232, 121, 43)
             boxes.append(box_rect)
             class_names.append(cls_name)
             scores.append(round(score, 4))
@@ -298,12 +299,45 @@ class ObjectDetectionTool(VisionToolBase):
                 "Width": bw, "Height": bh, "Box": box_rect
             })
             overlays.append({
-                "type": "rect", "box": box_rect, "color": (232, 121, 43),
-                "label": f"{cls_name} {score:.2f}", "thickness": 2
+                "type": "rect", "box": box_rect, "color": box_color,
+                "label": label_text, "thickness": 2
             })
             overlays.append({
-                "type": "text", "text": f"{cls_name} {score:.2f}", "pt": (bx, max(14, by - 5)), "color": (232, 121, 43)
+                "type": "text", "text": label_text, "pt": (bx, max(14, by - 5)), "color": box_color
             })
+
+            if vis is not None and hasattr(vis, "shape") and len(vis.shape) >= 2:
+                h_img, w_img = vis.shape[:2]
+                is_color = len(vis.shape) >= 3 and vis.shape[2] >= 3
+                draw_col = box_color if is_color else 255
+                pill_bg = (20, 24, 32) if is_color else 24
+                text_col = (255, 255, 255) if is_color else 255
+
+                x1 = max(0, min(w_img - 1, int(bx)))
+                y1 = max(0, min(h_img - 1, int(by)))
+                x2 = max(x1 + 1, min(w_img - 1, int(bx + bw)))
+                y2 = max(y1 + 1, min(h_img - 1, int(by + bh)))
+                cv2.rectangle(vis, (x1, y1), (x2, y2), draw_col, 2)
+
+                (tw, th), baseline = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+                pill_h = th + baseline + 6
+                pill_y2 = max(pill_h, y1)
+                pill_y1 = max(0, pill_y2 - pill_h)
+                pill_x1 = x1
+                pill_x2 = min(w_img, pill_x1 + tw + 8)
+                if pill_x2 > pill_x1 and pill_y2 > pill_y1:
+                    cv2.rectangle(vis, (pill_x1, pill_y1), (pill_x2, pill_y2), pill_bg, -1)
+                    cv2.rectangle(vis, (pill_x1, pill_y1), (pill_x2, pill_y2), draw_col, 1)
+                    cv2.putText(
+                        vis,
+                        label_text,
+                        (pill_x1 + 4, pill_y2 - baseline - 3),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        text_col,
+                        1,
+                        cv2.LINE_AA,
+                    )
 
         count = len(boxes)
         status_verdict = ToolStatus.OK if count > 0 else ToolStatus.READY
@@ -316,7 +350,7 @@ class ObjectDetectionTool(VisionToolBase):
             status=status_verdict,
             message=msg,
             outputs={
-                "Image": img,
+                "Image": vis,
                 "Count": count,
                 "Boxes": boxes,
                 "Classes": class_names,

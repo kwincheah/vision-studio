@@ -296,3 +296,27 @@ def test_a_pt_model_converts_in_process_where_pytorch_is_installed(tmp_path):
     shutil.copyfile("yolo11n.pt", pt)
     out = dl.convert_pt_to_onnx(str(pt), 640)
     assert out.endswith("m.onnx") and os.path.getsize(out) > 1_000_000
+
+
+def test_package_always_draws_bounding_box_without_mutating_input():
+    import numpy as np
+    from apex_vision.tools.object_detection import ObjectDetectionTool
+
+    tool = ObjectDetectionTool("od_test")
+    img = np.zeros((180, 220, 3), dtype=np.uint8)
+    raw = [(24, 48, 80, 72, 0.92, "bottle")]
+    res = tool._package(img, raw)
+
+    # Original input frame must not be mutated in place
+    assert np.all(img == 0)
+
+    out_img = res.outputs["Image"]
+    assert out_img is not None
+    assert out_img is not img
+    # Top/bottom edges of drawn box should carry the (232, 121, 43) BGR color
+    assert tuple(int(v) for v in out_img[48, 64]) == (232, 121, 43)
+    assert tuple(int(v) for v in out_img[48 + 72, 64]) == (232, 121, 43)
+    # Dark pill + white text above box should modify pixels in header band
+    assert int(out_img[25:48, 24:110].max()) > 0
+    assert res.outputs["Count"] == 1
+    assert len(res.overlays) == 2

@@ -18,6 +18,11 @@ Rectangle {
     property bool wrapCells: false        // long values wrap to two lines instead of being elided
     signal rowClicked(int row)
 
+    onRowsChanged: {
+        if (!rows || rows.length === 0) currentRow = -1
+        else if (currentRow >= rows.length) currentRow = rows.length - 1
+    }
+
     color: Theme.fieldBg
     border.width: 1
     border.color: Theme.fieldBorder
@@ -78,7 +83,8 @@ Rectangle {
                     x: root.colX(index) + 10
                     anchors.verticalCenter: parent.verticalCenter
                     width: root.colWidth(index) - 14
-                    text: rowData[modelData.key] === undefined ? "" : String(rowData[modelData.key])
+                    clip: true
+                    text: rowData[modelData.key] === undefined ? "" : String(rowData[modelData.key]).replace(/[\r\n]+/g, " ")
                     elide: Text.ElideRight
                     wrapMode: root.wrapCells ? Text.WordWrap : Text.NoWrap
                     maximumLineCount: root.wrapCells ? 2 : 1

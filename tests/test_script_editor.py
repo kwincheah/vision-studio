@@ -44,6 +44,13 @@ def test_newlines_become_breaks():
     assert sh.highlight("a = 1\nb = 2").count("<br/>") == 1
 
 
+def test_indentation_spaces_preserved_for_richtext():
+    out = sh.highlight("def f():\n    x = 1\n        return x")
+    assert "<br/>&nbsp;&nbsp;&nbsp;&nbsp;" in out
+    assert "<br/>" + "&nbsp;" * 8 in out
+    assert 'class="keyword">def' in out
+
+
 def test_empty_source_is_safe():
     assert sh.highlight("") == ""
     assert sh.highlight(None) == ""

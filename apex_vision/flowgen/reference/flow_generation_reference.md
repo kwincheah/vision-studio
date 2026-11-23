@@ -1014,7 +1014,7 @@ One section per tool: description, ports with types, parameters with defaults an
 - Parameters:
   - `model_path` (path), default ""
   - `backend` (enum), default "Auto"; choices: Auto | ONNX Runtime | OpenCV DNN
-  - `device` (enum), default "cpu"; choices: cpu | cuda
+  - `device` (enum), default "cpu"; choices: auto | cpu | cuda | cuda:0
   - `input_width` (int), default 0; range 0 to 8192 px
   - `input_height` (int), default 0; range 0 to 8192 px
   - `resize` (enum), default "Auto"; choices: Auto | Stretch | Letterbox
@@ -1090,7 +1090,7 @@ One section per tool: description, ports with types, parameters with defaults an
 - Parameters:
   - `model_path` (path), default ""
   - `backend` (enum), default "Auto"; choices: Auto | ONNX Runtime | OpenCV DNN
-  - `device` (enum), default "cpu"; choices: cpu | cuda
+  - `device` (enum), default "cpu"; choices: auto | cpu | cuda | cuda:0
   - `labels` (text), default ""
   - `input_width` (int), default 0; range 0 to 8192 px
   - `input_height` (int), default 0; range 0 to 8192 px
@@ -1179,7 +1179,7 @@ One section per tool: description, ports with types, parameters with defaults an
 - Parameters:
   - `model_path` (path), default ""
   - `backend` (enum), default "Auto"; choices: Auto | ONNX Runtime | OpenCV DNN
-  - `device` (enum), default "cpu"; choices: cpu | cuda
+  - `device` (enum), default "cpu"; choices: auto | cpu | cuda | cuda:0
   - `labels` (text), default ""
   - `input_width` (int), default 0; range 0 to 8192 px
   - `input_height` (int), default 0; range 0 to 8192 px
@@ -1755,7 +1755,7 @@ One section per tool: description, ports with types, parameters with defaults an
 ### Image Source
 *Category:* Acquisition. Load image from local disk, camera, or synthetic test pattern.
 - Inputs: none
-- Outputs: `Image` (IMAGE), `Width` (VALUE), `Height` (VALUE)
+- Outputs: `Image` (IMAGE), `Width` (VALUE), `Height` (VALUE), `Timestamp` (VALUE)
 - Parameters:
   - `source_type` (enum), default "Synthetic"; choices: Synthetic | File | Camera | Industrial GigE | Industrial USB3 | Hikrobot MVS | IP Stream
   - `file_path` (path), default "<app>/apex_vision/samples/pcb_sample.png"
@@ -2220,7 +2220,7 @@ One section per tool: description, ports with types, parameters with defaults an
   - `confidence` (float), default 0.25; range 0 to 1
   - `iou` (float), default 0.45; range 0 to 1
   - `classes` (text), default "all"
-  - `device` (enum), default "cpu"; choices: cpu | cuda | auto
+  - `device` (enum), default "cpu"; choices: auto | cpu | cuda | cuda:0
   - `max_detections` (int), default 100; range 1 to 1000
   - `roi` (rect), default [0, 0, 0, 0]
   - `labels` (text), default ""
@@ -2495,11 +2495,13 @@ One section per tool: description, ports with types, parameters with defaults an
 ### Script
 *Category:* Logic Tools. Runs your own Python with the image, the Val1 / Val2 inputs, OpenCV (cv2) and NumPy (np). Set outputs['Result'], outputs['Status'] ('OK' passes, anything else fails), outputs['Image'] and add overlays. get_global(name) / set_global(name, value) read and write the solution's global variables, and print() goes to the Log output. A script that runs longer than its time limit is stopped.  
 **Has side effects** (network, files, hardware or user code): mention it to the user.
-- Inputs: `Image` (IMAGE), `Val1` (VALUE), `Val2` (VALUE)
-- Outputs: `Image` (IMAGE), `Result` (ANY), `Status` (STRING), `Log` (STRING)
+- Inputs: `Image` (IMAGE), `Val1` (VALUE), `Val2` (VALUE), `Data1` (ANY), `Data2` (ANY), `Data3` (ANY), `Data4` (ANY), `Trigger` (BOOLEAN)
+- Outputs: `Image` (IMAGE), `Result` (ANY), `Status` (STRING), `Log` (STRING), `Text` (STRING), `System_Prompt` (STRING), `Trigger` (BOOLEAN), `Value` (VALUE), `Data` (ANY)
 - Parameters:
   - `code` (code), default "(multi-line text)"
   - `timeout_ms` (int), default 5000; range 100 to 600000 ms
+  - `custom_inputs` (port_list), default []
+  - `custom_outputs` (port_list), default []
 
 ### Send Data
 *Category:* Communication. Puts a result where other flows or modules can pick it up: into a named global variable, or onto a named queue (first in, first out). To send to a PLC, robot or computer use TCP Send, UDP Send, Serial Send or Modbus TCP Write.

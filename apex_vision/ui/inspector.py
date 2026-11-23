@@ -104,6 +104,7 @@ def abbreviate_path(value: str, max_chars: int = 38) -> str:
 class ParameterInspectorWidget(QWidget):
     param_changed = pyqtSignal(str, object)
     request_roi_draw = pyqtSignal()
+    request_roi_key = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -315,16 +316,27 @@ class ParameterInspectorWidget(QWidget):
         row end on the same vertical line.
         """
         button = None
+        is_image_source_file = (
+            getattr(self.current_tool, "tool_name", "") == "Image Source"
+            and key == "file_path"
+        )
         if _is_path_key(key):
             is_dir = _is_dir_key(key)
             button = QPushButton("Browse")
             button.setObjectName("fieldAction")
             button.setFixedWidth(BROWSE_W)
             button.setFixedHeight(FIELD_H)
-            button.setToolTip(
-                "Select a folder from local disk" if is_dir
-                else "Select an image file from local disk"
-            )
+            if is_image_source_file:
+                widget.setEnabled(False)
+                button.setEnabled(False)
+                tip = "Use '+' under the Image tab to choose image files"
+                widget.setToolTip(tip)
+                button.setToolTip(tip)
+            else:
+                button.setToolTip(
+                    "Select a folder from local disk" if is_dir
+                    else "Select an image file from local disk"
+                )
             button.clicked.connect(
                 lambda _=False, k=key, line=widget, d=is_dir: (
                     self._on_browse_dir(k, line) if d else self._on_browse_file(k, line)
@@ -335,8 +347,8 @@ class ParameterInspectorWidget(QWidget):
             button.setObjectName("fieldAction")
             button.setFixedWidth(BROWSE_W)
             button.setFixedHeight(FIELD_H)
-            button.setToolTip("Draw this ROI on the image viewport")
-            button.clicked.connect(self.request_roi_draw.emit)
+            button.setToolTip(f"Draw {key} on the image viewport")
+            button.clicked.connect(lambda _=False, k=key: (self.request_roi_key.emit(k), self.request_roi_draw.emit()))
 
         if button is None:
             return widget

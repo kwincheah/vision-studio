@@ -30,7 +30,9 @@ Rectangle {
     property var nodeIds: []
     property var groupFrameList: []
     property var tabList: []                  // the flow tabs; replaced only when something in them changed
-    readonly property string tabKey: tabList.length + "|" + tabList.map(function (t) { return t.active ? t.name : "" }).join("")
+    readonly property string activeFlowName: tabList.filter(function (t) { return t.active }).map(function (t) { return t.name }).join("")
+    readonly property string tabKey: tabList.length + "|" + activeFlowName
+    onActiveFlowNameChanged: { root.zoom = 1; root.panX = 0; root.panY = 0; fitTimer.restart() }
     function cardData(id) {
         for (var i = 0; i < nodes.length; i++) if (nodes[i].id === id) return nodes[i]
         return ({ id: id, title: "", tool: "", status: "PASS", ms: 0, x: 0, y: 0, inputs: [], outputs: [] })
@@ -74,23 +76,65 @@ Rectangle {
     // after a project loads, bring clipped modules into view (never zoom in)
     Timer { id: fitTimer; interval: 120; onTriggered: root.fitIfClipped() }
     function fitIfClipped() {
-        var right = 0, bottom = 0
+        if (!nodes || !nodes.length || !pos) return;
+        if (canvas.width <= 20 || canvas.height <= 20) return; // Ignore uninitialized canvas
+
+        var minX = Infinity, minY = Infinity;
+        var maxX = -Infinity, maxY = -Infinity;
+        var validNodeCount = 0;
+
         for (var i = 0; i < nodes.length; i++) {
-            var p = pos[nodes[i].id]
-            if (!p) continue
-            right = Math.max(right, p.x + 190); bottom = Math.max(bottom, p.y + 54 + 14 * Math.max(nodes[i].inputs.length, nodes[i].outputs.length, 1))
+            var node = nodes[i];
+            if (!node) continue;
+            var p = pos[node.id];
+            if (!p) continue;
+
+            validNodeCount++;
+            var inCount = (node.inputs && node.inputs.length) ? node.inputs.length : 0;
+            var outCount = (node.outputs && node.outputs.length) ? node.outputs.length : 0;
+            var nodeH = 54 + 14 * Math.max(inCount, outCount, 1);
+            var nodeW = 190;
+
+            minX = Math.min(minX, p.x);
+            minY = Math.min(minY, p.y);
+            maxX = Math.max(maxX, p.x + nodeW);
+            maxY = Math.max(maxY, p.y + nodeH);
         }
-        if (right * zoom + panX > canvas.width - 10 || bottom * zoom + panY > canvas.height - 10) fitViewTo(1.0)
+
+        if (validNodeCount === 0) return;
+
+        // Screen coordinates
+        var screenLeft   = minX * zoom + panX;
+        var screenTop    = minY * zoom + panY;
+        var screenRight  = maxX * zoom + panX;
+        var screenBottom = maxY * zoom + panY;
+
+        var margin = 10;
+        var bottomClearance = 50; // Keep cards clear of bottom floating HUD bar
+        var isClipped = (screenLeft < margin) ||
+                        (screenTop < margin) ||
+                        (screenRight > canvas.width - margin) ||
+                        (screenBottom > canvas.height - bottomClearance);
+
+        if (isClipped) {
+            fitViewTo(1.0);
+        }
     }
-    Connections {                // a loaded / replaced / edited flow may no longer contain the selected module
+    Connections {                // keep UI selection synchronized when backend selects, adds, loads, or deletes a module
         target: root.backend
         ignoreUnknownSignals: true
-        function onChanged() { if (root.backend && !root.nodeById(root.selectedNode)) root.selectedNode = root.backend.selectedId }
+        function onChanged() {
+            if (!root.backend) return
+            if (!root.nodeById(root.selectedNode) || (root.backend.selectedId !== "" && root.backend.selectedId !== root.selectedNode)) {
+                root.selectedNode = root.backend.selectedId
+            }
+        }
     }
     Connections {
         target: root.backend
         ignoreUnknownSignals: true
         function onWorkspaceRequested() { root.zoom = 1; root.panX = 0; root.panY = 0; viewport.resetView(); fitTimer.restart() }
+        function onDrawModeStarted(nodeId, key, label, kind) { root.viewTab = "image" }
     }
     property var pos: ({})                    // node id -> {x, y}, kept live while dragging
 
@@ -109,6 +153,9 @@ Rectangle {
     property real wireCy: 0
     readonly property real snapRadius: 26
     readonly property var roi: backend ? backend.selectedRoi : [300, 250, 200, 100]
+    readonly property var drawingParam: backend && backend.drawingParam
+                                        ? backend.drawingParam
+                                        : ({ active: false, nodeId: "", key: "", label: "", kind: "" })
     // The selected module's Display Setup (its overlay switches and colour).
     readonly property var displaySetup: backend && backend.selectedDisplay
                                         ? backend.selectedDisplay
@@ -139,10 +186,10 @@ Rectangle {
             maxX = Math.max(maxX, p.x + 180); maxY = Math.max(maxY, p.y + 54 + 14 * Math.max(nodes[i].inputs.length, nodes[i].outputs.length, 1))
         }
         if (!any) { zoom = 1; panX = 0; panY = 0; return }
-        var w = maxX - minX + 80, h = maxY - minY + 80
+        var w = maxX - minX + 80, h = maxY - minY + 115
         zoom = Math.max(0.25, Math.min(maxZoom === undefined ? 1.5 : maxZoom, Math.min(canvas.width / w, canvas.height / h)))
         panX = (canvas.width - (maxX - minX) * zoom) / 2 - minX * zoom
-        panY = (canvas.height - (maxY - minY) * zoom) / 2 - minY * zoom
+        panY = (canvas.height - 40 - (maxY - minY) * zoom) / 2 - minY * zoom
     }
     // ---- link (wire) selection
     property var selectedLink: null           // {from, fromPort, to, toPort} of the highlighted wire
@@ -891,27 +938,41 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
             width: Theme.railWidth
             height: parent.height
             color: Theme.rail
+            clip: true
             property int current: root.railCategory
-            Column {
+            Flickable {
                 anchors.top: parent.top
                 anchors.topMargin: 4
+                anchors.bottom: railSearchBtn.top
                 width: parent.width
-                Repeater {
-                    model: root.categories
-                    delegate: Rectangle {
-                        width: rail.width; height: 40
-                        color: rail.current === index ? Theme.panelAlt : (railMouse.containsMouse ? Theme.railHover : "transparent")
-                        Rectangle { visible: rail.current === index; width: 3; height: parent.height; color: Theme.accent }
-                        Icon { anchors.centerIn: parent; name: modelData.icon; tone: rail.current === index ? "dark" : "light"; size: 20 }
-                        MouseArea {
-                            id: railMouse; anchors.fill: parent; hoverEnabled: true
-                            onClicked: root.railCategory = (root.railCategory === index ? -1 : index)
+                clip: true
+                contentWidth: width
+                contentHeight: railCol.implicitHeight
+                boundsBehavior: Flickable.StopAtBounds
+                Column {
+                    id: railCol
+                    width: parent.width
+                    Repeater {
+                        model: root.categories
+                        delegate: Rectangle {
+                            width: rail.width; height: 40
+                            color: rail.current === index ? Theme.panelAlt : (railMouse.containsMouse ? Theme.railHover : "transparent")
+                            Rectangle { visible: rail.current === index; width: 3; height: parent.height; color: Theme.accent }
+                            Icon { anchors.centerIn: parent; name: modelData.icon; tone: rail.current === index ? "dark" : "light"; size: 20 }
+                            MouseArea {
+                                id: railMouse; anchors.fill: parent; hoverEnabled: true
+                                onClicked: root.railCategory = (root.railCategory === index ? -1 : index)
+                            }
                         }
                     }
                 }
             }
-            Icon { name: "search"; tone: "light"; size: 20; anchors.bottom: parent.bottom; anchors.bottomMargin: 12; anchors.horizontalCenter: parent.horizontalCenter }
-            MouseArea { width: parent.width; height: 40; anchors.bottom: parent.bottom; onClicked: root.railCategory = (root.railCategory < 0 ? 0 : -1) }
+            MouseArea {
+                id: railSearchBtn
+                width: parent.width; height: 40; anchors.bottom: parent.bottom
+                onClicked: root.railCategory = (root.railCategory < 0 ? 0 : -1)
+                Icon { name: "search"; tone: "light"; size: 20; anchors.centerIn: parent }
+            }
         }
 
         // ---- workspace (left) ---------------------------------------------------------
@@ -938,7 +999,7 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                 id: canvas
                 objectName: "flowCanvas"
                 anchors.top: wsTabs.bottom
-                anchors.bottom: parent.bottom
+                anchors.bottom: canvasFooter.top
                 width: parent.width
                 color: Theme.canvas
                 clip: true
@@ -948,10 +1009,6 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                 Canvas {
                     visible: root.showGrid
                     anchors.fill: parent
-                    anchors.leftMargin: -37
-                    anchors.rightMargin: 37
-                    anchors.topMargin: -8
-                    anchors.bottomMargin: 8
                     onPaint: {
                         var c = getContext("2d")
                         c.fillStyle = "" + Theme.canvasDot
@@ -994,7 +1051,7 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                         lastX = m.x; lastY = m.y; canvas.forceActiveFocus(); root.railCategory = -1
                         var hit = root.linkAt((m.x - root.panX) / root.zoom, (m.y - root.panY) / root.zoom)
                         root.selectedLink = hit
-                        if (hit != null && m.button === Qt.RightButton) { linkMenu.x = m.x; linkMenu.y = m.y; linkMenu.open() }
+                        if (hit !== null && m.button === Qt.RightButton) { linkMenu.x = m.x; linkMenu.y = m.y; linkMenu.open() }
                     }
                     onPositionChanged: function (m) {
                         if (!pressed) { root.hoverLink = root.wireDrag.active ? null : root.linkAt((m.x - root.panX) / root.zoom, (m.y - root.panY) / root.zoom); return }
@@ -1113,7 +1170,11 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                             inputState: (root.portStates[modelData] || { inputs: [] }).inputs
                             outputState: (root.portStates[modelData] || { outputs: [] }).outputs
                             inputLinked: root.linkedInputs(modelData)
-                            onWireStarted: function (index) { root.selectedNode = modelData; root.beginWire(modelData, index, true, null) }
+                            onWireStarted: function (index) {
+                                root.selectedNode = modelData
+                                if (root.backend) root.backend.selectNode(modelData)
+                                root.beginWire(modelData, index, true, null)
+                            }
                             onWireMoved: function (p) { root.moveWire(p) }
                             onWireDropped: function (p) { root.endWire(p) }
                             onInputWireStarted: function (index) {
@@ -1130,6 +1191,7 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                             }
                             onContextRequested: function (p) {
                                 root.selectedNode = modelData
+                                if (root.backend) root.backend.selectNode(modelData)
                                 var c = scene.mapToItem(canvas, p.x, p.y)
                                 cardMenu.x = c.x; cardMenu.y = c.y
                                 var base = [ { text: "Module Configuration...", key: "cfg", shortcut: "Enter" }, { text: "Rename...", key: "rename", shortcut: "F2" },
@@ -1203,13 +1265,23 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                 border.color: Theme.primary
                 Accessible.role: Accessible.Pane
                 Accessible.name: "Flow canvas. Arrow keys select modules, Shift plus arrows move, L links, K selects links, Delete removes."
+            }
 
-                // zoom tool + telemetry chips (lower-left, as in the widget UI)
+            // Dedicated non-overlapping footer strip for zoom + telemetry (below flowCanvas)
+            Rectangle {
+                id: canvasFooter
+                visible: root.workspaceTab === 0
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 34
+                color: Theme.panelHeader
+                Rectangle { anchors.top: parent.top; width: parent.width; height: 1; color: Theme.fieldBorder }
+
                 Row {
                     anchors.left: parent.left
                     anchors.leftMargin: 8
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
                     spacing: 8
                     Rectangle {
                         width: 118; height: 24
@@ -1239,9 +1311,9 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                             }
                         }
                     }
-                    TelemetryChip { color: "#00f8fafb"; text: "Flow: " + root.flowMs.toFixed(2) + "ms"; border.color: "#006f4a04"; emphasis: true; anchors.verticalCenter: parent.verticalCenter ;clip: false }
-                    TelemetryChip { color: "#00f8fafb"; text: "Tools: " + root.toolCount; border.color: "#00aab3b9"; anchors.verticalCenter: parent.verticalCenter }
-                    TelemetryChip { color: "#00f8fafb"; text: "Algo: " + root.algoMs.toFixed(2) + "ms"; anchors.verticalCenter: parent.verticalCenter }
+                    TelemetryChip { text: "Flow: " + root.flowMs.toFixed(2) + "ms"; emphasis: true; anchors.verticalCenter: parent.verticalCenter }
+                    TelemetryChip { text: "Tools: " + root.toolCount; anchors.verticalCenter: parent.verticalCenter }
+                    TelemetryChip { text: "Algo: " + root.algoMs.toFixed(2) + "ms"; anchors.verticalCenter: parent.verticalCenter }
                 }
             }
 
@@ -1325,8 +1397,9 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                             Row {
                                 x: 10; y: 34; spacing: 8
                                 AppButton { text: ""; icon: "run"; kind: "secondary"; width: 36
-                                            onClicked: if (root.backend) root.backend.selectFlow(modelData.name) }
-                                AppButton { text: ""; icon: "loop"; kind: "secondary"; width: 36 }
+                                            onClicked: if (root.backend) { root.backend.selectFlow(modelData.name); root.backend.run() } }
+                                AppButton { text: ""; icon: "loop"; kind: "secondary"; width: 36
+                                            onClicked: if (root.backend) { root.backend.selectFlow(modelData.name); root.backend.loop = !root.backend.loop; if (root.backend.loop) root.backend.run(); else root.backend.stop() } }
                             }
                             Text { x: 10; y: 74
                                    text: modelData.ms !== undefined ? modelData.ms + "ms" : "-"
@@ -1369,13 +1442,15 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                 visible: root.viewTab === "result"
                 anchors.top: rcTabs.bottom
                 width: parent.width
-                height: 350                   // the room the image header, viewer and read-out use
+                height: imgHeader.height + viewport.height + readout.height
                 color: Theme.panelAlt
+                clip: true
                 Rectangle {
                     id: rpHead
                     width: parent.width; height: 28
                     color: Theme.panelHeader
-                    Text { x: 8; anchors.verticalCenter: parent.verticalCenter
+                    clip: true
+                    Text { x: 8; width: parent.width - 16; elide: Text.ElideRight; clip: true; anchors.verticalCenter: parent.verticalCenter
                            text: "Module Results  ·  " + root.verdict + "  ·  " + root.flowMs.toFixed(1) + " ms"
                            font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; font.weight: Font.DemiBold; color: Theme.textPrimary }
                 }
@@ -1384,10 +1459,11 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                     anchors.top: rpHead.bottom
                     width: parent.width; height: 24
                     color: "#e6eaec"
-                    Text { x: 10;  anchors.verticalCenter: parent.verticalCenter; text: "Module"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
-                    Text { x: 196; anchors.verticalCenter: parent.verticalCenter; text: "Status"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
-                    Text { x: 262; anchors.verticalCenter: parent.verticalCenter; text: "Time";   font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
-                    Text { x: 330; anchors.verticalCenter: parent.verticalCenter; text: "Result"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    clip: true
+                    Text { x: 10;  width: 178; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: "Module"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    Text { x: 196; width: 60;  elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: "Status"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    Text { x: 262; width: 60;  elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: "Time";   font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
+                    Text { x: 330; width: Math.max(80, parent.width - 340); elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: "Result"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
                 }
                 ListView {
                     id: rpList
@@ -1396,21 +1472,50 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                     anchors.bottom: parent.bottom
                     width: parent.width
                     clip: true
+                    ScrollBar.vertical: ApexScrollBar { }
                     model: root.moduleRows
                     delegate: Rectangle {
                         width: ListView.view.width; height: 36
+                        clip: true
                         color: root.selectedNode === modelData.id ? Theme.accentDim : (index % 2 ? "#f1f4f5" : Theme.panelAlt)
-                        Text { x: 10; width: 178; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
+                        MouseArea { anchors.fill: parent; onClicked: root.selectModule(modelData.id) }
+                        Text { x: 10; width: 178; clip: true; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
                                text: modelData.name; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; font.weight: Font.DemiBold; color: Theme.textPrimary }
-                        Text { x: 196; width: 60; anchors.verticalCenter: parent.verticalCenter
+                        Text { x: 196; width: 60; clip: true; anchors.verticalCenter: parent.verticalCenter
                                text: modelData.status; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; font.weight: Font.Bold
                                color: modelData.bad ? Theme.errorText : modelData.status === "OK" ? Theme.okText : Theme.textMuted }
-                        Text { x: 262; width: 60; anchors.verticalCenter: parent.verticalCenter
+                        Text { x: 262; width: 60; clip: true; anchors.verticalCenter: parent.verticalCenter
                                text: modelData.status === "-" ? "" : modelData.ms.toFixed(1) + " ms"; font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textSecondary }
-                        Text { x: 330; width: 300; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
-                               text: modelData.summary !== "" ? modelData.summary : modelData.message
-                               font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textPrimary }
-                        MouseArea { anchors.fill: parent; onClicked: root.selectModule(modelData.id) }
+                        Flickable {
+                            x: 330; width: Math.max(80, parent.width - 340); height: parent.height
+                            clip: true
+                            contentWidth: Math.max(width, rpResTxt.implicitWidth + 10)
+                            contentHeight: height
+                            flickableDirection: Flickable.HorizontalFlick
+                            boundsBehavior: Flickable.StopAtBounds
+                            WheelHandler {
+                                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                onWheel: function (ev) {
+                                    var dx = ev.angleDelta.x !== 0 ? ev.angleDelta.x : ((ev.modifiers & Qt.ShiftModifier) ? ev.angleDelta.y : 0)
+                                    if (dx !== 0) {
+                                        var maxX = Math.max(0, parent.contentWidth - parent.width)
+                                        parent.contentX = Math.max(0, Math.min(maxX, parent.contentX - dx * 0.5))
+                                        ev.accepted = true
+                                    } else {
+                                        ev.accepted = false
+                                    }
+                                }
+                            }
+                            Text {
+                                id: rpResTxt
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: String(modelData.summary !== "" ? modelData.summary : modelData.message).replace(/[\r\n]+/g, " ")
+                                wrapMode: Text.NoWrap
+                                maximumLineCount: 1
+                                font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textPrimary
+                            }
+                            TapHandler { onTapped: root.selectModule(modelData.id) }
+                        }
                     }
                 }
             }
@@ -1420,9 +1525,13 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                 anchors.top: rcTabs.bottom
                 width: parent.width; height: 28
                 color: Theme.panelHeader
+                clip: true
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     x: 8
+                    width: Math.max(80, parent.width - 210)
+                    elide: Text.ElideRight
+                    clip: true
                     text: (root.nodeById(root.selectedNode) ? root.nodeById(root.selectedNode).title : "") + ".Output Image"
                     font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; font.weight: Font.DemiBold; color: Theme.textPrimary
                 }
@@ -1532,12 +1641,59 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                     border.width: 2
                     border.color: root.displaySetup.colour || Theme.accent
                 }
-                Rectangle {          // rubber band while drawing
+                Rectangle {          // rubber band while drawing rect
                     id: band
                     visible: false
                     color: "#2200a0ff"
+                    border.width: 2
+                    border.color: "#00a0ff"
+                }
+                Rectangle {          // line segment preview while drawing a "line" parameter
+                    id: lineBand
+                    visible: false
+                    height: 2
+                    color: "#00d4ff"
+                    transformOrigin: Item.Left
+                    property real x1: 0
+                    property real y1: 0
+                    property real x2: 0
+                    property real y2: 0
+                    x: x1
+                    y: y1 - 1
+                    width: Math.hypot(x2 - x1, y2 - y1)
+                    rotation: Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI
+                }
+                Rectangle {          // floating interactive-draw prompt banner
+                    visible: root.drawingParam.active === true
+                    z: 20
+                    anchors.top: parent.top
+                    anchors.topMargin: 8
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: Math.min(parent.width - 20, drawHintRow.implicitWidth + 20)
+                    height: 30
+                    radius: 4
+                    color: "#e61d2430"
                     border.width: 1
                     border.color: "#00a0ff"
+                    Row {
+                        id: drawHintRow
+                        anchors.centerIn: parent
+                        spacing: 10
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: (root.drawingParam.kind === "point" ? "Click image to set " : "Drag on image to draw ") + (root.drawingParam.label || "Region")
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontCaption
+                            font.weight: Font.DemiBold
+                            color: "#ffffff"
+                        }
+                        AppButton {
+                            text: "Cancel"
+                            width: 62
+                            height: 22
+                            onClicked: if (root.backend) root.backend.cancelDrawParam()
+                        }
+                    }
                 }
                 PinchHandler {
                     id: viewerPinch
@@ -1567,19 +1723,36 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                     property bool noRoiPress: false     // pressed on a module that has no region to draw
                     property real px0: 0
                     property real py0: 0
+                    readonly property bool canDraw: root.drawingParam.active === true || root.roi.length === 4
+                    readonly property string activeDrawKind: root.drawingParam.active === true ? root.drawingParam.kind : "rect"
                     acceptedButtons: Qt.AllButtons
-                    cursorShape: panning ? Qt.ClosedHandCursor : (root.roi.length === 4 ? Qt.CrossCursor : Qt.ArrowCursor)
+                    cursorShape: panning ? Qt.ClosedHandCursor : (canDraw ? Qt.CrossCursor : Qt.ArrowCursor)
                     hoverEnabled: true
                     onExited: viewport.cursorX = -1
                     onWheel: function (w) { viewport.zoomBy(root.wheelFactor(w), w.x, w.y) }
                     onPressed: function (m) {
-                        // drag moves a zoomed image: right / middle button always, left button when no ROI is being drawn
-                        if (viewport.viewZoom > 1.001 && (m.button !== Qt.LeftButton || root.roi.length !== 4)) {
+                        // drag moves a zoomed image: right / middle button always, left button when no ROI/shape is being drawn
+                        if (viewport.viewZoom > 1.001 && (m.button !== Qt.LeftButton || !canDraw)) {
                             panning = true; px0 = m.x - viewport.viewPanX; py0 = m.y - viewport.viewPanY; return
                         }
                         if (m.button !== Qt.LeftButton) return
-                        if (root.roi.length !== 4) { sx = m.x; sy = m.y; noRoiPress = true; return }
-                        sx = m.x; sy = m.y; band.x = sx; band.y = sy; band.width = 0; band.height = 0; band.visible = true }
+                        if (!canDraw) { sx = m.x; sy = m.y; noRoiPress = true; return }
+                        sx = m.x; sy = m.y
+                        if (activeDrawKind === "point") {
+                            var s = viewport.imgScale
+                            if (s > 0 && root.backend) {
+                                var px = Math.max(0, Math.round((m.x - viewport.imgX0) / s))
+                                var py = Math.max(0, Math.round((m.y - viewport.imgY0) / s))
+                                root.backend.commitDrawParam([px, py])
+                            }
+                            return
+                        }
+                        if (activeDrawKind === "line") {
+                            lineBand.x1 = sx; lineBand.y1 = sy; lineBand.x2 = sx; lineBand.y2 = sy; lineBand.visible = true
+                            return
+                        }
+                        band.x = sx; band.y = sy; band.width = 0; band.height = 0; band.visible = true
+                    }
                     onPositionChanged: function (m) {
                         viewport.cursorX = Math.floor((m.x - viewport.imgX0) / viewport.imgScale)
                         viewport.cursorY = Math.floor((m.y - viewport.imgY0) / viewport.imgScale)
@@ -1589,9 +1762,15 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                             viewport.viewPanY = Math.max(-limY, Math.min(limY, m.y - py0))
                             return
                         }
-                        if (!pressed || root.roi.length !== 4) return
-                        band.x = Math.min(sx, m.x); band.y = Math.min(sy, m.y)
-                        band.width = Math.abs(m.x - sx); band.height = Math.abs(m.y - sy)
+                        if (!pressed || !canDraw) return
+                        if (activeDrawKind === "line" && lineBand.visible) {
+                            lineBand.x2 = m.x; lineBand.y2 = m.y
+                            return
+                        }
+                        if (band.visible) {
+                            band.x = Math.min(sx, m.x); band.y = Math.min(sy, m.y)
+                            band.width = Math.abs(m.x - sx); band.height = Math.abs(m.y - sy)
+                        }
                     }
                     onReleased: function (m) {
                         if (panning) { panning = false; return }
@@ -1603,14 +1782,25 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                             }
                             return
                         }
+                        var s = viewport.imgScale
+                        if (lineBand.visible) {
+                            lineBand.visible = false
+                            if (s <= 0 || Math.hypot(m.x - sx, m.y - sy) < 4) return
+                            var lx1 = Math.max(0, Math.round((sx - viewport.imgX0) / s))
+                            var ly1 = Math.max(0, Math.round((sy - viewport.imgY0) / s))
+                            var lx2 = Math.max(0, Math.round((m.x - viewport.imgX0) / s))
+                            var ly2 = Math.max(0, Math.round((m.y - viewport.imgY0) / s))
+                            if (root.backend) root.backend.commitDrawParam([lx1, ly1, lx2, ly2])
+                            return
+                        }
                         if (!band.visible) return
                         band.visible = false
-                        var s = viewport.imgScale
                         if (s <= 0 || band.width < 6 || band.height < 6) return
                         var x = Math.max(0, Math.round((band.x - viewport.imgX0) / s))
                         var y = Math.max(0, Math.round((band.y - viewport.imgY0) / s))
                         var w = Math.round(band.width / s), h = Math.round(band.height / s)
-                        if (root.backend) root.backend.setRoi(x, y, w, h); else root.say("ROI " + [x, y, w, h].join(", "))
+                        if (root.drawingParam.active === true && root.backend) root.backend.commitDrawParam([x, y, w, h])
+                        else if (root.backend) root.backend.setRoi(x, y, w, h); else root.say("ROI " + [x, y, w, h].join(", "))
                     }
                 }
             }
@@ -1631,8 +1821,19 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                 anchors.top: readout.bottom
                 width: parent.width; height: 36
                 color: Theme.panelHeader
-                Text { x: 10; anchors.verticalCenter: parent.verticalCenter; text: root.imagePool.length ? root.imagePool[root.imageIndex].name + " (" + (root.imageIndex + 1) + "/" + root.imagePool.length + ")" : "No images"; font.family: Theme.fontFamily; font.pixelSize: Theme.fontLabel; font.weight: Font.DemiBold; color: Theme.textPrimary }
+                clip: true
+                Text {
+                    x: 10
+                    width: Math.max(40, stripHeader.width - stripControls.width - 20)
+                    elide: Text.ElideRight
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: (root.imagePool.length > 0 && root.imageIndex >= 0 && root.imageIndex < root.imagePool.length)
+                          ? root.imagePool[root.imageIndex].name + " (" + (root.imageIndex + 1) + "/" + root.imagePool.length + ")"
+                          : "No images"
+                    font.family: Theme.fontFamily; font.pixelSize: Theme.fontLabel; font.weight: Font.DemiBold; color: Theme.textPrimary
+                }
                 Row {
+                    id: stripControls
                     anchors.right: parent.right; anchors.rightMargin: 8
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 8
@@ -1646,7 +1847,7 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                         Icon { anchors.centerIn: parent; name: "close"; size: 16 }
                         MouseArea { id: clearMouse; anchors.fill: parent; hoverEnabled: true; onClicked: if (root.backend) root.backend.clearImages() } }
                     Text { text: "Loop"; anchors.verticalCenter: parent.verticalCenter; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
-                    ToggleSwitch { x: 110; anchors.verticalCenter: parent.verticalCenter; checked: root.loopOn; onToggled: function (value) { root.setLoop(value) } }
+                    ToggleSwitch { anchors.verticalCenter: parent.verticalCenter; checked: root.loopOn; onToggled: function (value) { root.setLoop(value) } }
                     SelectBox { width: 112; color: "#00ffffff"; model: root.scopes; anchors.verticalCenter: parent.verticalCenter; onActivated: if (root.backend) root.backend.setScope(currentText) }
                     AppButton {
                         width: 84
@@ -1663,18 +1864,44 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                 anchors.top: stripHeader.bottom
                 width: parent.width; height: 56
                 color: Theme.rail
-                Row {
-                    x: 10; anchors.verticalCenter: parent.verticalCenter
-                    spacing: 8
-                    Repeater {
-                        model: root.imagePool
-                        delegate: Rectangle {
-                            width: 62; height: 44
-                            color: Theme.viewport
-                            border.width: index === root.imageIndex ? 2 : 1
-                            border.color: index === root.imageIndex ? Theme.accent : "#888"
-                            Image { anchors.fill: parent; anchors.margins: 2; fillMode: Image.PreserveAspectFit; asynchronous: true; sourceSize.width: 124; source: modelData.url }
-                            MouseArea { anchors.fill: parent; onClicked: if (root.backend) root.backend.selectImage(index) }
+                clip: true
+                Flickable {
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    clip: true
+                    flickableDirection: Flickable.HorizontalFlick
+                    boundsBehavior: Flickable.StopAtBounds
+                    contentWidth: stripRow.implicitWidth
+                    contentHeight: height
+                    WheelHandler {
+                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                        onWheel: function (ev) {
+                            var dx = ev.angleDelta.x !== 0 ? ev.angleDelta.x : ev.angleDelta.y
+                            var maxX = Math.max(0, parent.contentWidth - parent.width)
+                            if (maxX > 0 && dx !== 0) {
+                                parent.contentX = Math.max(0, Math.min(maxX, parent.contentX - dx * 0.5))
+                                ev.accepted = true
+                            } else {
+                                ev.accepted = false
+                            }
+                        }
+                    }
+                    Row {
+                        id: stripRow
+                        y: Math.max(0, Math.round((strip.height - 44) / 2))
+                        height: 44
+                        spacing: 8
+                        Repeater {
+                            model: root.imagePool
+                            delegate: Rectangle {
+                                width: 62; height: 44
+                                color: Theme.viewport
+                                border.width: index === root.imageIndex ? 2 : 1
+                                border.color: index === root.imageIndex ? Theme.accent : "#888"
+                                Image { anchors.fill: parent; anchors.margins: 2; fillMode: Image.PreserveAspectFit; asynchronous: true; sourceSize.width: 124; source: modelData.url }
+                                MouseArea { anchors.fill: parent; onClicked: if (root.backend) root.backend.selectImage(index) }
+                            }
                         }
                     }
                 }
@@ -1689,29 +1916,104 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                     delegate: TabButton2 { text: modelData; selected: root.resultTab === index; onClicked: root.resultTab = index }
                 }
             }
-            Column {
+            Item {
+                id: currentResultPane
                 objectName: "currentResultPane"
                 visible: root.resultTab === 0
                 anchors.top: resTabs.bottom
                 anchors.bottom: parent.bottom
                 width: parent.width
+                clip: true
                 Text {
+                    id: curResTitle
                     x: 8; y: 6
+                    width: parent.width - 16
+                    elide: Text.ElideRight
+                    clip: true
                     text: (root.nodeById(root.selectedNode) ? root.nodeById(root.selectedNode).title : "") + " · " + (root.nodeById(root.selectedNode) ? root.nodeById(root.selectedNode).status : root.verdict)
                     font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; font.weight: Font.DemiBold; color: Theme.textPrimary
                 }
-                Item { width: 1; height: 12 }
-                Rectangle { width: parent.width; height: 26; color: Theme.panelHeader
-                    Text { x: 10; anchors.verticalCenter: parent.verticalCenter; text: "Parameter"; font.pixelSize: Theme.fontBody; font.family: Theme.fontFamily; color: Theme.textSecondary }
-                    Text { x: 190; anchors.verticalCenter: parent.verticalCenter; text: "Value"; font.pixelSize: Theme.fontBody; font.family: Theme.fontFamily; color: Theme.textSecondary }
+                Rectangle {
+                    id: curResHead
+                    anchors.top: curResTitle.bottom
+                    anchors.topMargin: 8
+                    width: parent.width; height: 26
+                    color: Theme.panelHeader
+                    clip: true
+                    Text { x: 10; width: 170; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: "Parameter"; font.pixelSize: Theme.fontBody; font.family: Theme.fontFamily; color: Theme.textSecondary }
+                    Text { x: 188; width: Math.max(80, parent.width - 198); elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: "Value"; font.pixelSize: Theme.fontBody; font.family: Theme.fontFamily; color: Theme.textSecondary }
                 }
-                Repeater {
+                ListView {
+                    id: currentResultList
+                    objectName: "currentResultList"
+                    anchors.top: curResHead.bottom
+                    anchors.bottom: parent.bottom
+                    width: parent.width
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    ScrollBar.vertical: ApexScrollBar { }
                     model: root.results
                     delegate: Rectangle {
-                        width: parent.width; height: 26
+                        width: ListView.view.width; height: 28
+                        clip: true
                         color: index % 2 ? "#f1f4f5" : Theme.panelAlt
-                        Text { x: 10; anchors.verticalCenter: parent.verticalCenter; text: modelData.name; font.pixelSize: Theme.fontBody; font.family: Theme.fontFamily; color: Theme.textPrimary }
-                        Text { x: 190; anchors.verticalCenter: parent.verticalCenter; text: modelData.value; font.pixelSize: Theme.fontBody; font.family: Theme.monoFamily; color: Theme.textPrimary }
+                        Text {
+                            x: 10; width: 170
+                            anchors.verticalCenter: parent.verticalCenter
+                            elide: Text.ElideRight
+                            clip: true
+                            text: modelData.name
+                            font.pixelSize: Theme.fontBody; font.family: Theme.fontFamily; color: Theme.textPrimary
+                        }
+                        Flickable {
+                            id: valFlick
+                            objectName: "currentResultValFlick" + index
+                            x: 188
+                            width: Math.max(80, parent.width - 198)
+                            height: parent.height
+                            clip: true
+                            contentWidth: Math.max(width, valTxt.implicitWidth + 10)
+                            contentHeight: height
+                            flickableDirection: Flickable.HorizontalFlick
+                            boundsBehavior: Flickable.StopAtBounds
+                            WheelHandler {
+                                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                onWheel: function (ev) {
+                                    var dx = ev.angleDelta.x !== 0 ? ev.angleDelta.x : ((ev.modifiers & Qt.ShiftModifier) ? ev.angleDelta.y : 0)
+                                    if (dx !== 0) {
+                                        var maxX = Math.max(0, valFlick.contentWidth - valFlick.width)
+                                        valFlick.contentX = Math.max(0, Math.min(maxX, valFlick.contentX - dx * 0.5))
+                                        ev.accepted = true
+                                    } else {
+                                        ev.accepted = false
+                                    }
+                                }
+                            }
+                            Text {
+                                id: valTxt
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: String(modelData.value === undefined ? "" : modelData.value).replace(/[\r\n]+/g, " ")
+                                wrapMode: Text.NoWrap
+                                maximumLineCount: 1
+                                font.pixelSize: Theme.fontBody; font.family: Theme.monoFamily; color: Theme.textPrimary
+                            }
+                            Rectangle {
+                                visible: valTxt.implicitWidth > valFlick.width
+                                anchors.bottom: parent.bottom
+                                anchors.bottomMargin: 1
+                                height: 3
+                                radius: 1.5
+                                color: Theme.fieldBorderHover
+                                width: Math.max(18, valFlick.width * valFlick.width / Math.max(1, valFlick.contentWidth))
+                                x: valFlick.contentX / Math.max(1, valFlick.contentWidth - valFlick.width) * (valFlick.width - width)
+                            }
+                        }
+                    }
+                    Text {
+                        visible: root.results.length === 0
+                        anchors.centerIn: parent
+                        text: "No output fields yet. Press Run."
+                        font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textMuted
                     }
                 }
             }
@@ -1748,17 +2050,18 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
                     model: root.runHistory
                     delegate: Rectangle {
                         width: ListView.view.width; height: 26
+                        clip: true
                         color: index % 2 ? "#f1f4f5" : Theme.panelAlt
-                        Text { x: 10;  anchors.verticalCenter: parent.verticalCenter; text: modelData.n;    font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textSecondary }
-                        Text { x: 44;  anchors.verticalCenter: parent.verticalCenter; text: modelData.time; font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textPrimary }
-                        Text { x: 118; width: 174; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight; text: modelData.source
+                        Text { x: 10; width: 32; clip: true; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: modelData.n;    font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textSecondary }
+                        Text { x: 44; width: 70; clip: true; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: modelData.time; font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textPrimary }
+                        Text { x: 118; width: 174; clip: true; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight; text: modelData.source
                                font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary }
-                        Text { x: 300; anchors.verticalCenter: parent.verticalCenter; text: modelData.verdict
+                        Text { x: 300; width: 56; clip: true; anchors.verticalCenter: parent.verticalCenter; text: modelData.verdict
                                font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; font.weight: Font.Bold
                                color: modelData.verdict === "PASS" ? Theme.okText : Theme.errorText }
-                        Text { x: 362; anchors.verticalCenter: parent.verticalCenter; text: modelData.flowMs.toFixed(1) + " ms"
+                        Text { x: 362; width: 74; clip: true; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: modelData.flowMs.toFixed(1) + " ms"
                                font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textPrimary }
-                        Text { x: 440; width: 190; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight; text: modelData.failed
+                        Text { x: 440; width: Math.max(60, parent.width - 450); clip: true; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight; text: modelData.failed
                                font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.errorText }
                     }
                     Text {
@@ -1852,6 +2155,7 @@ Drag from a free input to link backwards to an output.   Esc cancels.   Click a 
     // Reset the selected module's ROI back to the whole image.  Ctrl+0 fits the canvas, so
     // the ROI reset needs its own binding.
     Shortcut { sequence: "Ctrl+Shift+R"; onActivated: if (root.backend) root.backend.resetRoi() }
+    Shortcut { sequence: "Escape"; enabled: root.drawingParam.active === true; onActivated: if (root.backend) root.backend.cancelDrawParam() }
     Shortcut { sequence: "Ctrl+Z"; onActivated: if (root.backend) root.backend.undo() }
     Shortcut { sequence: "Ctrl+Y"; onActivated: if (root.backend) root.backend.redo() }
     Shortcut { sequence: "Ctrl+1"; onActivated: root.invoke("viewFlow") }

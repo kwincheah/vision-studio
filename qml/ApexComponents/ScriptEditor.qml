@@ -212,7 +212,22 @@ Item {
                     var indented = upto.substring(lineStart).match(/^[ \t]*/)[0]
 
                     if (e.key === Qt.Key_Tab) {
-                        if (e.modifiers & Qt.ShiftModifier) {
+                        var selStart = code.selectionStart
+                        var selEnd = code.selectionEnd
+                        if (selEnd > selStart && code.text.substring(selStart, selEnd).indexOf("\n") >= 0) {
+                            var blkStart = code.text.lastIndexOf("\n", selStart - 1) + 1
+                            var blkEnd = code.text.indexOf("\n", selEnd)
+                            if (blkEnd < 0) blkEnd = code.text.length
+                            var lines = code.text.substring(blkStart, blkEnd).split("\n")
+                            for (var li = 0; li < lines.length; li++) {
+                                if (e.modifiers & Qt.ShiftModifier) lines[li] = lines[li].replace(/^ {1,4}/, "")
+                                else lines[li] = "    " + lines[li]
+                            }
+                            var repl = lines.join("\n")
+                            code.remove(blkStart, blkEnd)
+                            code.insert(blkStart, repl)
+                            code.select(blkStart, blkStart + repl.length)
+                        } else if (e.modifiers & Qt.ShiftModifier) {
                             // dedent the whole current line by up to 4 spaces
                             var lineText = code.text.substring(lineStart)
                             var strip = lineText.match(/^ {1,4}/)

@@ -22,6 +22,25 @@ DEFAULT_LAYERS: Dict[str, bool] = {
 
 
 def _bgr(colour: Any, fallback=(0, 200, 90)):
+    if isinstance(colour, str):
+        s = colour.strip()
+        if s.startswith("#"):
+            h = s[1:]
+            if len(h) == 3:
+                try:
+                    r, g, b = (int(c * 2, 16) for c in h)
+                    return (b, g, r)
+                except ValueError:
+                    return fallback
+            if len(h) == 6:
+                try:
+                    r = int(h[0:2], 16)
+                    g = int(h[2:4], 16)
+                    b = int(h[4:6], 16)
+                    return (b, g, r)
+                except ValueError:
+                    return fallback
+        return fallback
     try:
         b, g, r = (int(colour[0]), int(colour[1]), int(colour[2]))
         return (b, g, r)
@@ -61,13 +80,31 @@ def render_overlays(image: Optional[np.ndarray], overlays: Iterable[Dict[str, An
             try:
                 alpha = item.get("alpha")
                 if alpha is not None and kind in ("rect", "circle") and 0.0 < float(alpha) < 1.0:     # a see-through filled shape
-                    tint = out.copy()
+                    a = float(alpha)
                     if kind == "rect":
-                        x, y, bw, bh = [int(v) for v in item.get("box", (0, 0, 0, 0))[:4]]
-                        cv2.rectangle(tint, (x, y), (x + bw, y + bh), col, -1)
+                        box_val = item.get("box") if item.get("box") is not None else item.get("rect", (0, 0, 0, 0))
+                        x, y, bw, bh = [int(v) for v in box_val[:4]]
+                        x1 = max(0, min(x, x + bw))
+                        y1 = max(0, min(y, y + bh))
+                        x2 = min(w, max(x, x + bw) + 1)
+                        y2 = min(h, max(y, y + bh) + 1)
+                        if x2 > x1 and y2 > y1:
+                            roi = out[y1:y2, x1:x2]
+                            tint = roi.copy()
+                            cv2.rectangle(tint, (x - x1, y - y1), (x + bw - x1, y + bh - y1), col, -1)
+                            cv2.addWeighted(tint, a, roi, 1.0 - a, 0.0, dst=roi)
                     else:
-                        cv2.circle(tint, tuple(int(v) for v in item.get("center", (0, 0))), int(item.get("radius", 10)), col, -1)
-                    out = cv2.addWeighted(tint, float(alpha), out, 1.0 - float(alpha), 0)
+                        cx, cy = (int(v) for v in item.get("center", (0, 0)))
+                        r = max(0, int(item.get("radius", 10)))
+                        x1 = max(0, cx - r - 1)
+                        y1 = max(0, cy - r - 1)
+                        x2 = min(w, cx + r + 2)
+                        y2 = min(h, cy + r + 2)
+                        if x2 > x1 and y2 > y1:
+                            roi = out[y1:y2, x1:x2]
+                            tint = roi.copy()
+                            cv2.circle(tint, (cx - x1, cy - y1), r, col, -1)
+                            cv2.addWeighted(tint, a, roi, 1.0 - a, 0.0, dst=roi)
                 if kind == "sector":
                     cx, cy = [int(v) for v in item.get("center", (0, 0))]
                     r_in, r_out = int(item.get("r_in", 0)), int(item.get("r_out", 10))
@@ -81,8 +118,9 @@ def render_overlays(image: Optional[np.ndarray], overlays: Iterable[Dict[str, An
                     if item.get("label"):
                         _label(out, str(item["label"]), cx + r_out + 4, cy, col)
                 elif kind == "rect":
-                    x, y, bw, bh = [int(v) for v in item.get("box", (0, 0, 0, 0))[:4]]
-                    cv2.rectangle(out, (x, y), (x + bw, y + bh), col, 2)
+                    box_val = item.get("box") if item.get("box") is not None else item.get("rect", (0, 0, 0, 0))
+                    x, y, bw, bh = [int(v) for v in box_val[:4]]
+                    cv2.rectangle(out, (x, y), (x + bw, y + bh), col, int(item.get("thickness", 2)))
                     if item.get("label"):
                         _label(out, str(item["label"]), x, y - 4, col)
                 elif kind == "circle":
@@ -92,8 +130,10 @@ def render_overlays(image: Optional[np.ndarray], overlays: Iterable[Dict[str, An
                     if item.get("label"):
                         _label(out, str(item["label"]), cx + r + 4, cy + 4, col)
                 elif kind == "line":
-                    p1 = tuple(int(v) for v in item.get("pt1", (0, 0)))
-                    p2 = tuple(int(v) for v in item.get("pt2", (0, 0)))
+                    p1_raw = item.get("pt1") if item.get("pt1") is not None else item.get("p1", (0, 0))
+                    p2_raw = item.get("pt2") if item.get("pt2") is not None else item.get("p2", (0, 0))
+                    p1 = tuple(int(v) for v in p1_raw)
+                    p2 = tuple(int(v) for v in p2_raw)
                     cv2.line(out, p1, p2, col, int(item.get("thickness", 2)), cv2.LINE_AA)
                 elif kind == "cross":
                     px, py = [int(v) for v in item.get("pt", (0, 0))]

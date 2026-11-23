@@ -7,7 +7,7 @@ Rectangle {
     id: root
     property var model: ["Option A", "Option B"]
     property int currentIndex: 0
-    readonly property string currentText: model.length > currentIndex ? model[currentIndex] : ""
+    readonly property string currentText: (model && currentIndex >= 0 && currentIndex < model.length) ? String(model[currentIndex]) : ""
     signal activated(int index)
 
     activeFocusOnTab: true
@@ -59,28 +59,43 @@ Rectangle {
         width: root.width
         padding: 2
         background: Rectangle { color: Theme.fieldBg; border.color: Theme.fieldBorder; radius: Theme.radiusPanel }
-        contentItem: Column {
-            Repeater {
-                model: root.model
-                delegate: Rectangle {
-                    width: popup.width - 4
-                    height: 24
-                    radius: 2
-                    color: hover.containsMouse ? Theme.primary : "transparent"
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.leftMargin: Theme.spBase
-                        text: modelData
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontBody
-                        color: hover.containsMouse ? "#ffffff" : Theme.textPrimary
-                    }
-                    MouseArea {
-                        id: hover
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: { root.currentIndex = index; root.activated(index); popup.close() }
+        contentItem: Flickable {
+            id: popupFlick
+            implicitWidth: popup.width - 4
+            implicitHeight: Math.min(360, popupCol.implicitHeight)
+            clip: true
+            contentWidth: width
+            contentHeight: popupCol.implicitHeight
+            boundsBehavior: Flickable.StopAtBounds
+            ScrollBar.vertical: ApexScrollBar { }
+            Column {
+                id: popupCol
+                width: popupFlick.width
+                Repeater {
+                    model: root.model
+                    delegate: Rectangle {
+                        width: popupCol.width
+                        height: 24
+                        radius: 2
+                        color: hover.containsMouse ? Theme.primary : "transparent"
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.left: parent.left
+                            anchors.leftMargin: Theme.spBase
+                            anchors.right: parent.right
+                            anchors.rightMargin: Theme.spBase
+                            elide: Text.ElideRight
+                            text: String(modelData)
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontBody
+                            color: hover.containsMouse ? "#ffffff" : Theme.textPrimary
+                        }
+                        MouseArea {
+                            id: hover
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: { root.currentIndex = index; root.activated(index); popup.close() }
+                        }
                     }
                 }
             }

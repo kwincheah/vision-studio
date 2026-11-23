@@ -28,7 +28,7 @@ Rectangle {
         onAccepted: if (root.svc) root.svc.generateDataset(selectedFolder.toString(), boards.value) }
     FolderDialog { id: storeDialog; title: "Experiment store folder"
         onAccepted: if (root.svc) root.svc.setStore(selectedFolder.toString()) }
-    TextEdit { id: clip; visible: false }
+    TextEdit { id: fileClip; visible: false }
 
     Rectangle {      // dock title
         id: dockTitle
@@ -74,9 +74,9 @@ Rectangle {
             SectionLabel { width: parent.width; text: "Evaluation settings" }
             Row { spacing: 10
                 Text { text: "Source:"; height: 26; verticalAlignment: Text.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary }
-                SelectBox { id: source; width: 170; model: ["Reference detector", "Active workflow"] }
+                SelectBox { id: flowSource; width: 170; model: ["Reference detector", "Active workflow"] }
                 Text { text: "Operating point:"; height: 26; verticalAlignment: Text.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary }
-                SelectBox { id: variant; width: 130; model: ["reference", "conservative"] }
+                SelectBox { id: datasetBox; width: 130; model: ["reference", "conservative"] }
                 Text { text: "IoU threshold:"; height: 26; verticalAlignment: Text.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary }
                 NumberBox { id: iou; width: 100; value: 0.5; from: 0.05; to: 0.95; step: 0.05; decimals: 2 }
                 Text { text: "Confidence:"; height: 26; verticalAlignment: Text.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary }
@@ -85,12 +85,12 @@ Rectangle {
             }
             Row { spacing: 8
                 AppButton { text: "Run evaluation"; kind: "run"; width: 140; enabledState: !root.busy
-                    onClicked: if (root.svc) root.svc.run(source.currentText, variant.currentText, iou.value, conf.value, layout.checked) }
+                    onClicked: if (root.svc) root.svc.run(flowSource.currentText, datasetBox.currentText, iou.value, conf.value, layout.checked) }
                 AppButton { text: "Cancel"; width: 90; enabledState: root.busy; onClicked: if (root.svc) root.svc.cancel() }
                 TextBox { id: expName; width: 170; placeholder: "experiment name" }
                 AppButton { text: "Save experiment"; width: 140; enabledState: !root.busy; onClicked: if (root.svc) root.svc.saveExperiment(expName.text) }
                 AppButton { text: "Copy text report"; width: 140
-                    onClicked: { clip.text = root.svc ? root.svc.reportText() : ""; clip.selectAll(); clip.copy() } } }
+                    onClicked: { fileClip.text = root.svc ? root.svc.reportText() : ""; fileClip.selectAll(); fileClip.copy() } } }
             Rectangle { visible: root.busy; width: parent.width; height: 8; radius: 4; color: "#d0d4d8"
                 Rectangle { width: parent.width * (root.svc ? root.svc.progress : 0); height: parent.height; radius: 4; color: Theme.primary } }
             Text { text: root.svc ? root.svc.progressText : ""; font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption; color: Theme.textMuted }
@@ -135,8 +135,8 @@ Rectangle {
                     Image { anchors.fill: parent; fillMode: Image.PreserveAspectFit; cache: false; source: root.svc ? root.svc.caseImageUrl : "" }
                     Text { visible: failTable.currentRow < 0; anchors.centerIn: parent; text: "Select a failure"; color: Theme.viewportText; font.pixelSize: Theme.fontCaption } } }
             Row { spacing: 8
-                AppButton { text: "Previous"; width: 90; onClicked: if (failTable.currentRow > 0) { failTable.currentRow--; if (root.svc) root.svc.showCase(failTable.currentRow) } }
-                AppButton { text: "Next"; width: 90; onClicked: if (failTable.currentRow < root.failures.length - 1) { failTable.currentRow++; if (root.svc) root.svc.showCase(failTable.currentRow) } } }
+                AppButton { text: "Previous"; width: 90; onClicked: if (root.failures && root.failures.length > 0 && failTable.currentRow > 0) { failTable.currentRow--; if (root.svc) root.svc.showCase(failTable.currentRow) } }
+                AppButton { text: "Next"; width: 90; onClicked: if (root.failures && failTable.currentRow < root.failures.length - 1) { failTable.currentRow++; if (root.svc) root.svc.showCase(failTable.currentRow) } } }
         }
 
         // ---------------------------------------------------------- Experiments

@@ -19,9 +19,104 @@ import cv2
 import numpy as np
 
 BACKENDS = ["Auto", "ONNX Runtime", "OpenCV DNN"]
+DEVICE_CHOICES = ["auto", "cpu", "cuda", "cuda:0"]
 NORMALIZE_MODES = ["0 to 1", "ImageNet (mean/std)", "-1 to 1", "0 to 255"]
 RESIZE_MODES = ["Stretch", "Letterbox"]
 DEFAULT_SIZE = 224
+
+
+def resolve_torch_device(device: str = "auto") -> str:
+    """Resolve 'auto'/'cpu'/'cuda'/'cuda:0'/'mps' to an available PyTorch/Ultralytics device string."""
+    req = str(device or "auto").strip().lower() or "auto"
+    try:
+        import torch
+        has_cuda = bool(torch.cuda.is_available())
+        has_mps = bool(getattr(torch.backends, "mps", None) and torch.backends.mps.is_available())
+    except Exception:
+        has_cuda = False
+        has_mps = False
+
+    if req == "auto":
+        if has_cuda:
+            return "cuda:0"
+        if has_mps:
+            return "mps"
+        return "cpu"
+    if req.startswith("cuda"):
+        return req if has_cuda else "cpu"
+    if req == "mps":
+        return "mps" if has_mps else "cpu"
+    return "cpu"
+
+
+def resolve_onnx_device(
+    device: str = "cpu",
+    *,
+    use_tensorrt: bool = False,
+    trt_cache_dir: Optional[str] = None,
+    trt_fp16: bool = True,
+) -> Tuple[List[Any], bool]:
+    """Resolve 'auto'/'cpu'/'cuda'/'cuda:N' into ONNX Runtime execution providers and GPU flag."""
+    req = str(device or "cpu").strip().lower() or "cpu"
+    try:
+        import onnxruntime as ort
+        available = ort.get_available_providers()
+    except Exception:
+        available = []
+
+    has_cuda = "CUDAExecutionProvider" in available
+    has_trt = "TensorrtExecutionProvider" in available
+    want_trt = bool(use_tensorrt or os.environ.get("APEX_TRT_ENABLE", "0") == "1")
+    if req == "cpu":
+        return ["CPUExecutionProvider"], False
+    if req == "auto" or req.startswith("cuda"):
+        dev_id = 0
+        has_explicit_dev = False
+        if ":" in req:
+            try:
+                dev_id = int(req.split(":", 1)[1])
+                has_explicit_dev = True
+            except (ValueError, TypeError):
+                has_explicit_dev = False
+
+        providers: List[Any] = []
+        if want_trt and has_trt:
+            cache_dir = trt_cache_dir or os.path.join(os.path.expanduser("~"), ".apex_vision", "trt_cache")
+            try:
+                os.makedirs(cache_dir, exist_ok=True)
+            except OSError:
+                pass
+            providers.append(
+                (
+                    "TensorrtExecutionProvider",
+                    {
+                        "device_id": dev_id,
+                        "trt_fp16_enable": bool(trt_fp16),
+                        "trt_engine_cache_enable": True,
+                        "trt_engine_cache_path": cache_dir,
+                    },
+                )
+            )
+        if has_cuda:
+            providers.append(("CUDAExecutionProvider", {"device_id": dev_id}) if has_explicit_dev else "CUDAExecutionProvider")
+        if providers:
+            providers.append("CPUExecutionProvider")
+            return providers, True
+    return ["CPUExecutionProvider"], False
+
+
+def get_onnx_execution_capabilities() -> Dict[str, Any]:
+    """Report ONNX Runtime providers including CUDA and TensorRT availability."""
+    try:
+        import onnxruntime as ort
+        available = list(ort.get_available_providers())
+    except Exception:
+        available = []
+    return {
+        "available_providers": available,
+        "cuda_available": "CUDAExecutionProvider" in available,
+        "tensorrt_available": "TensorrtExecutionProvider" in available,
+    }
 
 
 class DLModelError(Exception):
@@ -226,9 +321,7 @@ class DLModel:
     def _open(self, name: str, device: str) -> None:
         if name == "ONNX Runtime":
             import onnxruntime as ort
-            providers = ["CPUExecutionProvider"]
-            if device == "cuda" and "CUDAExecutionProvider" in ort.get_available_providers():
-                providers.insert(0, "CUDAExecutionProvider")
+            providers, using_gpu = resolve_onnx_device(device)
             opts = ort.SessionOptions()
             opts.log_severity_level = 3
             self._session = ort.InferenceSession(self.path, sess_options=opts, providers=providers)
@@ -236,7 +329,7 @@ class DLModel:
             self.input_name, self.input_shape = inp.name, list(inp.shape)
             self.output_shapes = [list(o.shape) for o in self._session.get_outputs()]
             self._read_embedded_meta()
-            self.backend = "ONNX Runtime" + (" (GPU)" if providers[0].startswith("CUDA") else "")
+            self.backend = "ONNX Runtime" + (" (GPU)" if using_gpu else "")
         else:
             self._net = cv2.dnn.readNetFromONNX(self.path)
             self._out_names = list(self._net.getUnconnectedOutLayersNames())
@@ -381,6 +474,10 @@ def decode_classification(outputs: Sequence[np.ndarray]) -> np.ndarray:
 def _nms(boxes_xywh: np.ndarray, scores: np.ndarray, classes: np.ndarray, iou: float, max_det: int) -> List[int]:
     if len(boxes_xywh) == 0:
         return []
+    from apex_vision.core._native import nms_batched
+    native_keep = nms_batched(boxes_xywh, scores, classes, float(iou), int(max_det))
+    if native_keep is not None:
+        return native_keep
     keep = cv2.dnn.NMSBoxesBatched([[float(a) for a in b] for b in boxes_xywh], [float(s) for s in scores],
                                    [int(c) for c in classes], 0.0, float(iou))
     keep = np.asarray(keep).reshape(-1).tolist()
@@ -401,6 +498,12 @@ def decode_detections(outputs: Sequence[np.ndarray], info: Dict[str, Any], conf:
     scale_x, scale_y = info["scale"]
     pad_x, pad_y = info["pad"]
     w0, h0 = info["orig"]
+
+    from apex_vision.core._native import decode_yolo_matrix
+    native_dets = decode_yolo_matrix(out, conf, iou, max_det, num_classes,
+                                     scale_x, scale_y, pad_x, pad_y, w0, h0)
+    if native_dets is not None:
+        return native_dets
 
     def to_original(x1, y1, x2, y2):
         x1, x2 = (x1 - pad_x) / scale_x, (x2 - pad_x) / scale_x

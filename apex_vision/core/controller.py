@@ -195,8 +195,12 @@ class RunEngine(QObject):
         import time
         t0 = time.perf_counter()
         try:
-            results = pipeline.execute_flow(global_vars=solution.global_variables)
-            script_error = solution.run_global_script(results)
+            lock = getattr(solution, "_globals_lock", None)
+            results = pipeline.execute_flow(global_vars=solution.global_variables, global_lock=lock)
+            try:
+                script_error = solution.run_global_script(results, flow_name=getattr(pipeline, "name", None))
+            except TypeError:
+                script_error = solution.run_global_script(results)
             failure = None
         except Exception as exc:  # a bug in the engine must not kill the worker silently
             results, script_error, failure = {}, None, f"{type(exc).__name__}: {exc}"

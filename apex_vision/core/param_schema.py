@@ -47,7 +47,7 @@ except Exception:                                        # pragma: no cover
 from apex_vision.core import dl_engine as _dl
 
 _DL_COMMON: Dict[str, Dict[str, Any]] = {          # the settings every deep-learning module shares
-    "model_path": path("ONNX model (*.onnx);;All files (*)"), "backend": enum(*_dl.BACKENDS), "device": enum("cpu", "cuda"),
+    "model_path": path("ONNX model (*.onnx);;All files (*)"), "backend": enum(*_dl.BACKENDS), "device": enum(*_dl.DEVICE_CHOICES),
     "input_width": num(0, 8192, unit="px"), "input_height": num(0, 8192, unit="px"),
     "resize": enum("Auto", *_dl.RESIZE_MODES), "normalize": enum("Auto", *_dl.NORMALIZE_MODES), "roi": {"kind": "rect"},
 }
@@ -95,7 +95,8 @@ SCHEMA: Dict[str, Dict[str, Dict[str, Any]]] = {
     "Image Output": {"save_directory": {"kind": "dir"}, "file_format": enum("PNG", "JPEG", "BMP"),
                      "save_mode": enum("Always Save", "Only on NG", "Only on OK"), "image_quality": num(1, 100, unit="%")},
     "Image Source": {"source_type": enum("Synthetic", "File", "Camera", "Industrial GigE", "Industrial USB3", "Hikrobot MVS", "IP Stream"),
-                     "file_path": path(IMAGE_FILES), "pattern_type": enum("Part with Defects", "Metal Surface (demo)", "Calibration Grid", "Circles & Holes", "Barcode Sample"),
+                     "file_path": {"kind": "path", "filters": IMAGE_FILES, "no_browse": True, "browse_hint": "Use '+' under the Image tab"},
+                     "pattern_type": enum("Part with Defects", "Metal Surface (demo)", "Calibration Grid", "Circles & Holes", "Barcode Sample"),
                      "color_mode": enum("BGR", "Grayscale"), "camera_device": {"kind": "device"}, "camera_index": num(0, 16),
                      "exposure_time_us": num(10, 10_000_000, 100, "us", 1), "gain": num(0, 48, 0.1, "x", 1),
                      "trigger_mode": enum("Continuous", "Software Trigger", "Hardware Trigger (Line0)", "Hardware Trigger (Line1)"),
@@ -119,7 +120,7 @@ SCHEMA: Dict[str, Dict[str, Dict[str, Any]]] = {
                         "expected_pattern": {"kind": "text", "hint": "* matches any characters, e.g. SN-*"}},
     "Object Detection": {"model_path": path("YOLO models (*.onnx *.pt);;All files (*)"), "confidence": num(0, 1, 0.05, decimals=2),
                          "iou": num(0, 1, 0.05, decimals=2), "classes": {"kind": "text", "hint": "all, or comma-separated class names"},
-                         "device": enum("cpu", "cuda", "auto"), "max_detections": num(1, 1000)},
+                         "device": enum(*_dl.DEVICE_CHOICES), "max_detections": num(1, 1000)},
     "P2P Measure": {"scale_factor": {"decimals": 4, "min": 0.000001, "max": 1_000_000}, "default_p1": {"kind": "point"},
                     "default_p2": {"kind": "point"}, "min_distance": num(0, 1e9, 1, decimals=2), "max_distance": num(0, 1e9, 1, decimals=2)},
     "PCB Board Layout": {"board_seed": num(0, 2_147_483_647), "image_width": num(64, 8192, unit="px"), "image_height": num(64, 8192, unit="px")},
@@ -128,7 +129,12 @@ SCHEMA: Dict[str, Dict[str, Dict[str, Any]]] = {
     "Pixel Count": {"roi": {"kind": "rect"}, "low_threshold": num(0, 255), "high_threshold": num(0, 255), "min_count": num(0, 1_000_000_000),
                     "max_count": num(0, 1_000_000_000)},
     "Position Correction": {"fiducial_angle": num(-360, 360, 0.5, "deg", 2)},
-    "Script": {"code": {"kind": "code"}, "timeout_ms": num(100, 600_000, 100, "ms")},
+    "Script": {
+        "code": {"kind": "code"},
+        "timeout_ms": num(100, 600_000, 100, "ms"),
+        "custom_inputs": {"kind": "port_list"},
+        "custom_outputs": {"kind": "port_list"},
+    },
     "TCP Send": {"mode": enum("Simulation (Loopback Log)", "TCP Client"), "server_ip": {"kind": "text", "hint": "IP address or host name"},
                  "server_port": num(1, 65535), "format": enum("CSV", "JSON", "Plain Text"), "connect_timeout_ms": num(50, 60_000, unit="ms")},
     "Template Match": {"min_score": num(0, 1, 0.05, decimals=2), "template_roi": {"kind": "rect"}, "start_angle": num(-180, 180, 1, "deg", 1),
@@ -256,9 +262,8 @@ def choices_for(tool_name: str, key: str) -> Optional[List[str]]:
     return list(spec["choices"]) if spec and spec.get("kind", "enum") == "enum" and "choices" in spec else None
 
 
-def problem(tool_name: str, key: str, default: Any, value: Any) -> Optional[str]:
-    """Why ``value`` is not acceptable for this parameter (None when it is)."""
-    spec = spec_for(tool_name, key, default)
+def _validate_spec_value(spec: Dict[str, Any], value: Any) -> Optional[str]:
+    """Validate ``value`` against an already-resolved editor spec dict."""
     kind = spec["kind"]
     if kind == "bool":
         return None if isinstance(value, bool) else "must be true or false"
@@ -273,7 +278,7 @@ def problem(tool_name: str, key: str, default: Any, value: Any) -> Optional[str]
             return f"must be at most {spec['max']:g}"
         return None
     if kind == "enum":
-        return None if value in spec["choices"] else f"must be one of {spec['choices']}"
+        return None if value in spec.get("choices", ()) else f"must be one of {spec.get('choices', [])}"
     if kind in ("text", "combo", "path", "dir", "code", "device", "flow"):
         return None if isinstance(value, str) else "must be text"
     expect = {"rect": 4, "line": 4, "point": 2, "rgb": 3}.get(kind)
@@ -285,7 +290,83 @@ def problem(tool_name: str, key: str, default: Any, value: Any) -> Optional[str]
         return None
     if kind == "points":
         return None if isinstance(value, (list, tuple)) and all(_numbers(p, 2) for p in value) else "must be a list of [x, y] points"
+    if kind == "roi_list":
+        if not isinstance(value, (list, tuple)):
+            return "must be a list of named ROI entries"
+        for item in value:
+            if not isinstance(item, dict) or not isinstance(item.get("name"), str) or not _numbers(item.get("rect"), 4):
+                return "each ROI entry must have a text name and 4 rect numbers [x, y, w, h]"
+        return None
+    if kind == "port_list":
+        if not isinstance(value, (list, tuple)):
+            return "must be a list of port entries"
+        valid_types = {"ANY", "IMAGE", "STRING", "VALUE", "BOOLEAN", "REGION"}
+        for item in value:
+            if not isinstance(item, dict) or not isinstance(item.get("name"), str) or str(item.get("type", "ANY")).upper() not in valid_types:
+                return "each port entry must have a name and valid type (ANY, IMAGE, STRING, VALUE, BOOLEAN, REGION)"
+        return None
     return None
+
+
+def problem(tool_name: str, key: str, default: Any, value: Any) -> Optional[str]:
+    """Why ``value`` is not acceptable for this parameter (None when it is)."""
+    return _validate_spec_value(spec_for(tool_name, key, default), value)
+
+
+def spec_for_tool(tool: Any, key: str, default: Any) -> Dict[str, Any]:
+    """Resolve editor metadata for a module instance, honouring SDK ``ParamDef`` on plugins."""
+    tool_name = getattr(tool, "tool_name", "")
+    spec = spec_for(tool_name, key, default)
+    if spec["kind"] == "hidden" or key in SCHEMA.get(tool_name, {}):
+        return spec
+
+    get_defs = getattr(tool, "get_param_defs", None)
+    if not callable(get_defs):
+        return spec
+    pdef = (get_defs() or {}).get(key)
+    if pdef is None:
+        return spec
+
+    ptype = getattr(getattr(pdef, "param_type", None), "value", "")
+    if ptype == "enum" and getattr(pdef, "choices", None):
+        spec["kind"] = "enum"
+        spec["choices"] = list(pdef.choices)
+    elif ptype == "int":
+        spec["kind"] = "int"
+        spec["decimals"] = 0
+    elif ptype == "float":
+        spec["kind"] = "float"
+        spec.setdefault("decimals", 2)
+    elif ptype == "bool":
+        spec["kind"] = "bool"
+    elif ptype == "roi":
+        spec["kind"] = "rect"
+    elif ptype == "file_path":
+        spec["kind"] = "path"
+        spec.setdefault("filters", "All files (*)")
+    elif ptype == "dir_path":
+        spec["kind"] = "dir"
+    elif ptype == "list" and (getattr(pdef, "unit", "") == "roi_list" or key == "zones"):
+        spec["kind"] = "roi_list"
+    elif ptype == "string":
+        spec["kind"] = "text"
+
+    if getattr(pdef, "min_value", None) is not None:
+        spec["min"] = pdef.min_value
+    if getattr(pdef, "max_value", None) is not None:
+        spec["max"] = pdef.max_value
+    if getattr(pdef, "step", None) is not None:
+        spec["step"] = pdef.step
+    if getattr(pdef, "unit", ""):
+        spec["unit"] = pdef.unit
+    if getattr(pdef, "description", ""):
+        spec.setdefault("hint", pdef.description)
+    return spec
+
+
+def problem_for_tool(tool: Any, key: str, default: Any, value: Any) -> Optional[str]:
+    """Validate ``value`` using ``spec_for_tool`` (supports both built-in SCHEMA and plugin ParamDef)."""
+    return _validate_spec_value(spec_for_tool(tool, key, default), value)
 
 
 def clamp(spec: Dict[str, Any], value: Any) -> Any:

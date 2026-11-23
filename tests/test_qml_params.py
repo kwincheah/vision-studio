@@ -209,3 +209,90 @@ def test_every_card_in_every_sample_names_a_module_that_is_in_the_toolbox(ui):
                  ps.create_precision_measurement_solution, ps.create_object_detection_solution):
         for n in make().nodes.values():
             assert n.tool_name in toolbox and type(n).__name__ != "MissingPluginPlaceholderTool"
+
+
+def test_every_roi_line_and_point_parameter_has_a_draw_button_and_draws_on_image(ui):
+    # 1. Multi-ROI tool (OCV has both roi and search_roi)
+    ui.be.addTool("OCV")
+    ui.settle()
+    open_config(ui, "OCV")
+    ed = editors(ui)
+    assert child(ui, ed["roi"], "paramDraw"), "roi must have a Draw button"
+    assert child(ui, ed["search_roi"], "paramDraw"), "search_roi must have a Draw button"
+
+    # Click Draw on search_roi -> dialog closes, viewport drag commits exact parameter, dialog reopens
+    draw_btn = child(ui, ed["search_roi"], "paramDraw")[0]
+    ui.click(ui.center(draw_btn))
+    ui.spin(40)
+    assert ui.host.property("current") == ""
+    assert ui.be.drawingParam["active"] is True
+    assert ui.be.drawingParam["key"] == "search_roi"
+
+    vp = next(c for c in ui.walk() if c.property("objectName") == "viewFrame")
+    vp_pos = vp.mapToScene(QPointF(vp.width() * 0.25, vp.height() * 0.25))
+    vp_end = vp.mapToScene(QPointF(vp.width() * 0.65, vp.height() * 0.65))
+    ui.drag(QPoint(int(vp_pos.x()), int(vp_pos.y())), QPoint(int(vp_end.x()), int(vp_end.y())))
+    ui.spin(60)
+    assert ui.host.property("current") == "moduleConfig"
+    assert node(ui, "OCV").parameters["search_roi"] != [0, 0, 0, 0]
+    ui.close_dialog()
+
+    # 2. Point & Line tools also get Draw buttons (L2L Measure has default_l1/default_l2 lines; Line Search has start_pt/end_pt)
+    ui.be.addTool("L2L Measure")
+    ui.settle()
+    open_config(ui, "L2L Measure")
+    ed_l2l = editors(ui)
+    assert child(ui, ed_l2l["default_l1"], "paramDraw"), "line parameter must have a Draw button"
+    ui.close_dialog()
+
+    ui.be.addTool("Line Search")
+    ui.settle()
+    open_config(ui, "Line Search")
+    ed_ls = editors(ui)
+    assert child(ui, ed_ls["start_pt"], "paramDraw"), "point parameter must have a Draw button"
+    ui.click(ui.center(child(ui, ed_ls["start_pt"], "paramDraw")[0]))
+    ui.spin(40)
+    assert ui.be.drawingParam["kind"] == "point"
+    vp = next(c for c in ui.walk() if c.property("objectName") == "viewFrame")
+    click_pt = vp.mapToScene(QPointF(vp.width() * 0.4, vp.height() * 0.4))
+    ui.click(QPoint(int(click_pt.x()), int(click_pt.y())))
+    ui.spin(60)
+    assert ui.host.property("current") == "moduleConfig"
+    assert ui.be.drawingParam["active"] is False
+    ui.close_dialog()
+
+
+def test_image_source_file_browse_is_disabled_and_greyed_out(ui):
+    nid = node(ui, "Image Source").instance_id
+    ui.be.setParamValue(nid, "source_type", "File")
+    ui.settle()
+    open_config(ui, "Image Source")
+    ed = editors(ui)["file_path"]
+    assert not child(ui, ed, "paramBrowse"), "Image Source File Path must not expose Browse...; files come from '+' under Image tab"
+    tb = child(ui, ed, "paramText")[0]
+    assert tb.isEnabled() is False
+    ui.close_dialog()
+
+    # Non-Image-Source path fields (like Object Detection.model_path) keep Browse...
+    ui.be.addTool("Object Detection")
+    ui.settle()
+    open_config(ui, "Object Detection")
+    ed_od = editors(ui)["model_path"]
+    assert child(ui, ed_od, "paramBrowse")
+    ui.close_dialog()
+
+
+def test_typing_text_param_and_clicking_close_without_enter_commits(ui):
+    ui.be.setParamValue(node(ui, "Image Source").instance_id, "source_type", "IP Stream")
+    ui.spin(40)
+    open_config(ui, "Image Source")
+    ed = editors(ui)["stream_url"]
+    tb = child(ui, ed, "paramText")[0]
+    ui.click(ui.center(tb))
+    ui.key(Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
+    for ch in "C:/videos/cam1.mp4":
+        QTest.keyClick(ui.w, ch)
+    # Clicking OK without pressing Return must still focus out & commit stream_url
+    ui.click_text("OK")
+    ui.spin(50)
+    assert node(ui, "Image Source").parameters["stream_url"] == "C:/videos/cam1.mp4"

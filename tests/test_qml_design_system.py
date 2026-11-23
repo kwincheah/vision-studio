@@ -177,3 +177,11 @@ def test_no_test_module_writes_into_the_real_config():
     # the cache path must be derived from an injectable workspace root
     assert "workspace_root" in project_manager
     assert "cache_file" in project_manager
+
+
+def test_default_project_manager_in_tests_is_isolated():
+    """Calling ProjectManager() directly from core must not resolve to repo .apex_config."""
+    from apex_vision.core.project_manager import ProjectManager
+    pm = ProjectManager()
+    assert os.path.abspath(pm.cache_dir) != os.path.abspath(os.path.join(ROOT, ".apex_config"))
+    assert "pytest" in pm.workspace_root.lower() or "tmp" in pm.workspace_root.lower()

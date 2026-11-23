@@ -175,3 +175,47 @@ def test_the_time_limit_is_an_editable_parameter_with_limits():
     spec = ps.spec_for("Script", "timeout_ms", 5000)
     assert spec["kind"] == "int" and spec["min"] == 100 and spec["max"] == 600000
     assert ps.problem("Script", "timeout_ms", 5000, 50) and ps.problem("Script", "timeout_ms", 5000, 3000) is None
+
+
+def test_script_custom_inputs_and_outputs_wire_execute_and_autodisconnect():
+    from PyQt6.QtWidgets import QApplication
+    from apex_vision.qml_backend import AppBackend, FrameProvider
+    from apex_vision.core.base_tool import DataType
+
+    QApplication.instance() or QApplication([])
+    b = AppBackend(FrameProvider())
+    src = create_tool_instance("Image Source", "s_src")
+    scr = create_tool_instance("Script", "s_scr")
+    dst = create_tool_instance("Condition Branch", "s_dst")
+    b._pipeline.add_node(src)
+    b._pipeline.add_node(scr)
+    b._pipeline.add_node(dst)
+
+    assert b.setParamValue("s_scr", "custom_inputs", [{"name": "FrameWidth", "type": "VALUE"}])
+    assert b.setParamValue("s_scr", "custom_outputs", [{"name": "ScaledScore", "type": "VALUE"}, {"name": "NoteText", "type": "STRING"}])
+    assert scr.inputs["FrameWidth"].data_type == DataType.VALUE
+    assert scr.outputs["ScaledScore"].data_type == DataType.VALUE
+    assert scr.outputs["NoteText"].data_type == DataType.STRING
+
+    assert b._pipeline.connect("s_src", "Width", "s_scr", "FrameWidth")
+    assert b._pipeline.connect("s_scr", "ScaledScore", "s_dst", "Val_In")
+
+    scr.set_param("code", "outputs['ScaledScore'] = float(context.get('FrameWidth', 0)) * 0.5\noutputs['NoteText'] = 'ok'")
+    out = b._pipeline.execute_flow()
+    assert abs(out["s_scr"].outputs["ScaledScore"] - out["s_src"].outputs["Width"] * 0.5) < 1e-6
+    assert out["s_scr"].outputs["NoteText"] == "ok"
+
+    # Renaming or deleting custom ports auto-disconnects stale incoming & outgoing wires
+    assert b.setParamValue("s_scr", "custom_inputs", [])
+    assert not any(c.to_node == "s_scr" and c.to_port == "FrameWidth" for c in b._pipeline.connections)
+    assert b.setParamValue("s_scr", "custom_outputs", [])
+    assert b._pipeline.connections == []
+
+    # Round-trip save/load preserves custom ports
+    b.setParamValue("s_scr", "custom_inputs", [{"name": "ExtraIn", "type": "ANY"}])
+    b.setParamValue("s_scr", "custom_outputs", [{"name": "ExtraOut", "type": "BOOLEAN"}])
+    data = scr.to_dict()
+    reloaded = create_tool_instance("Script", "s_scr2")
+    reloaded.load_dict(data)
+    assert "ExtraIn" in reloaded.inputs and reloaded.inputs["ExtraIn"].data_type == DataType.ANY
+    assert "ExtraOut" in reloaded.outputs and reloaded.outputs["ExtraOut"].data_type == DataType.BOOLEAN

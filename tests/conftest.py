@@ -5,6 +5,7 @@ import os
 # top-level Qt windows are not constrained by host/runner desktop resolutions (e.g. 1024x768).
 if "QT_QPA_PLATFORM" not in os.environ:
     os.environ["QT_QPA_PLATFORM"] = "offscreen"
+os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Basic")
 
 
 def _system_font_dir() -> str:
@@ -59,29 +60,25 @@ def _never_block_on_unsaved_changes_prompt(monkeypatch):
 def _isolate_default_project_manager(monkeypatch, tmp_path_factory):
     """Nothing a test builds may write into the developer's real recent-projects list.
 
-    Three modules construct a default `ProjectManager()` - the widget window, the QML
-    backend and the start page - and patching only the first left the other two writing
-    into `.apex_config/recent_projects.json`.  The visible symptom was a start screen whose
-    "Recent projects" list was mostly `...Temp/pytest-of-<user>/pytest-665/Mine2.apex`
-    entries: 28 of 30 records were test artefacts.  All three are patched here.
+    Wrapping ``apex_vision.core.project_manager.ProjectManager.__init__`` isolates every
+    default ``ProjectManager()`` construction globally—covering
+    ``apex_vision.qml_backend``, ``apex_vision.ui.main_window``,
+    ``apex_vision.ui.start_page``, and any test module that imports ``ProjectManager``
+    directly—without breaking ``isinstance(..., ProjectManager)`` or explicit
+    ``workspace_root=...`` arguments.
     """
     try:
-        import apex_vision.qml_backend as qb
-        import apex_vision.ui.main_window as mw
-        import apex_vision.ui.start_page as sp
         from apex_vision.core.project_manager import ProjectManager as _PM
-    except Exception:  # pragma: no cover - UI stack unavailable
+    except Exception:  # pragma: no cover
         return
 
     workspace = str(tmp_path_factory.mktemp("apex_workspace"))
+    _orig_init = _PM.__init__
 
-    def _scoped(*args, **kwargs):
-        # Only redirect a *default* construction; a caller that passed its own workspace
-        # root or arguments keeps them.
-        if not args and "workspace_root" not in kwargs:
-            kwargs = {**kwargs, "workspace_root": workspace}
-        return _PM(*args, **kwargs)
+    def _wrapped_init(self, workspace_root=None):
+        if workspace_root is None:
+            workspace_root = workspace
+        return _orig_init(self, workspace_root=workspace_root)
 
-    for module in (mw, qb, sp):
-        monkeypatch.setattr(module, "ProjectManager", _scoped)
+    monkeypatch.setattr(_PM, "__init__", _wrapped_init)
 

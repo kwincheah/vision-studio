@@ -11,6 +11,7 @@ import json
 import os
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, Optional
 
 import numpy as np
@@ -54,14 +55,28 @@ class FrameProvider(QQuickImageProvider):
         if arr is None:
             self.image = QImage()
             return
-        arr = np.ascontiguousarray(arr)
+        if arr.dtype != np.uint8:
+            arr = np.clip(arr, 0, 255).astype(np.uint8)
         if arr.ndim == 2:
+            arr = np.ascontiguousarray(arr)
             h, w = arr.shape
-            self.image = QImage(arr.data, w, h, w, QImage.Format.Format_Grayscale8).copy()
+            self.image = QImage(arr.data, w, h, int(arr.strides[0]), QImage.Format.Format_Grayscale8).copy()
+        elif arr.ndim == 3:
+            c = arr.shape[2]
+            if c == 1:
+                plane = np.ascontiguousarray(arr[:, :, 0])
+                h, w = plane.shape
+                self.image = QImage(plane.data, w, h, int(plane.strides[0]), QImage.Format.Format_Grayscale8).copy()
+            elif c == 2:
+                bgr = np.ascontiguousarray(np.dstack([arr[:, :, 0], arr[:, :, 1], arr[:, :, 0]]))
+                h, w = bgr.shape[:2]
+                self.image = QImage(bgr.data, w, h, int(bgr.strides[0]), QImage.Format.Format_BGR888).copy()
+            else:
+                bgr = np.ascontiguousarray(arr[:, :, :3] if c > 3 else arr)
+                h, w = bgr.shape[:2]
+                self.image = QImage(bgr.data, w, h, int(bgr.strides[0]), QImage.Format.Format_BGR888).copy()
         else:
-            h, w = arr.shape[:2]
-            rgb = np.ascontiguousarray(arr[:, :, 2::-1]) if arr.shape[2] >= 3 else arr
-            self.image = QImage(rgb.data, w, h, 3 * w, QImage.Format.Format_RGB888).copy()
+            self.image = QImage()
 
 
 def _is_picture(value) -> bool:
@@ -82,6 +97,8 @@ class AppBackend(QObject):
     closeApproved = pyqtSignal()            # the window may close (nothing unsaved, or the user decided)
     confirmRequested = pyqtSignal(str)      # unsaved edits would be lost - ask the user first
     commMessage = pyqtSignal(str, str)      # a communication device with a flow to run received a message (device, text)
+    drawModeStarted = pyqtSignal(str, str, str, str)   # nodeId, key, label, kind
+    drawModeFinished = pyqtSignal(str, bool)           # nodeId, committed
 
     def __init__(self, provider: FrameProvider, project_manager: Optional[ProjectManager] = None):
         super().__init__()
@@ -92,6 +109,8 @@ class AppBackend(QObject):
         self._role = "Engineer"
         self._hint = "Ready"
         self._selected = ""
+        self._active_roi_key: Optional[str] = None
+        self._active_draw: Optional[Dict[str, Any]] = None
         self._token = 0
         self._verdict = "PASS"
         self._flow_ms = 0.0
@@ -106,6 +125,9 @@ class AppBackend(QObject):
         self._all_loop = False
         self._all_flows: List[str] = []           # the flows the all-flows run is currently working on
         self._all_summary: Dict[str, str] = {}
+        self._all_lock = threading.Lock()
+        self._all_run_id = 0
+        self._all_workers: Dict[str, threading.Thread] = {}
         self._rerun_later = False
         self._undo: List[str] = []
         #: runtime variable values as last written to disk (see flushRuntimeState)
@@ -117,6 +139,9 @@ class AppBackend(QObject):
         self._pending = None                      # action waiting for the unsaved-changes answer
         self._last_image = None
         self._last_results: Dict[str, Any] = {}
+        self._recent_cache: Optional[List[Dict[str, str]]] = None
+        self._recent_cache_ts: float = 0.0
+        self._tool_categories_cache: Optional[List[Dict[str, Any]]] = None
         self._history: List[Dict[str, Any]] = []   # one entry per finished run, oldest first
         self._layers: Dict[str, bool] = dict(DEFAULT_LAYERS)
         self._formatted = ""
@@ -153,13 +178,22 @@ class AppBackend(QObject):
         self._redo.clear()
 
     def _restore(self, snapshot: str) -> None:
+        prev_flow = self._solution.active_flow_name
         self._solution = SolutionManager.from_dict(json.loads(snapshot))
         from apex_vision.core import comm_manager
         if comm_manager.get_manager().dump() != self._solution.comm_devices:        # undo/redo of adding or removing a device
             comm_manager.get_manager().load(self._solution.comm_devices)
         self._freeze_layout()
-        if self._selected not in self._pipeline.nodes:
-            self._selected = next(iter(self._pipeline.execution_order), "")
+        pipe = self._pipeline
+        if pipe.name != prev_flow:
+            self._last_results = {}
+            self._last_image = None
+        else:
+            self._last_results = {k: v for k, v in self._last_results.items() if k in pipe.nodes}
+        if self._selected not in pipe.nodes:
+            self._selected = next(iter(pipe.execution_order), "")
+        self._refresh_results()
+        self._render_view()
 
     # ------------------------------------------------------------------ properties
     @pyqtProperty(str, notify=changed)
@@ -274,6 +308,14 @@ class AppBackend(QObject):
     def selectedDisplay(self):
         """The selected module's Display Setup (checkboxes and colour)."""
         node = self._pipeline.nodes.get(self._selected)
+        if node is None:
+            return {}
+        return {**(node.display or {})}
+
+    @pyqtSlot(str, result="QVariantMap")
+    def moduleDisplay(self, node_id):  # noqa: N802
+        """Return a specific module's Display Setup (checkboxes and colour)."""
+        node = self._pipeline.nodes.get(node_id)
         if node is None:
             return {}
         return {**(node.display or {})}
@@ -418,7 +460,7 @@ class AppBackend(QObject):
             return {}
         params = []
         for key, current in node.parameters.items():
-            spec = param_schema.spec_for(node.tool_name, key, current)
+            spec = param_schema.spec_for_tool(node, key, current)
             if spec["kind"] == "hidden":
                 continue
             item = {"name": spec.get("label", key), "kind": spec["kind"], "value": str(current)[:40], "limits": ""}
@@ -440,9 +482,16 @@ class AppBackend(QObject):
 
     @pyqtProperty("QVariantList", notify=changed)
     def recentProjects(self):  # noqa: N802
-        return [{"name": r.get("name", ""), "path": r.get("path", ""),
-                 "when": str(r.get("last_opened", ""))}
-                for r in self._pm.get_recent_projects() if r.get("file_exists", True)]
+        now = time.monotonic()
+        if self._recent_cache is not None and (now - self._recent_cache_ts) < 1.0:
+            return self._recent_cache
+        self._recent_cache = [
+            {"name": r.get("name", ""), "path": r.get("path", ""),
+             "when": str(r.get("last_opened", ""))}
+            for r in self._pm.get_recent_projects() if r.get("file_exists", True)
+        ]
+        self._recent_cache_ts = now
+        return self._recent_cache
 
     @pyqtProperty("QVariantList", notify=changed)
     def imagePool(self):  # noqa: N802
@@ -495,12 +544,17 @@ class AppBackend(QObject):
     @pyqtProperty("QVariantList", notify=changed)
     def toolCategories(self):  # noqa: N802
         """Tool box content from the live registry, so plugin tools show up too."""
+        if self._tool_categories_cache is not None:
+            return self._tool_categories_cache
         from apex_vision.core.registry import list_categories
         icons = {"Acquisition": "camera", "Image Processing": "image", "Color Processing": "palette", "Location": "target", "Measurement": "measure",
                  "Image Generation": "roi", "Calibration": "grid", "Calculation": "variable", "Recognition": "text", "Defect Detection": "shield",
                  "Deep Learning": "layers", "Division and Combination": "table", "Logic Tools": "logic", "Communication": "comm"}
-        return [{"name": name, "icon": icons.get(name, "list"), "tools": list(tools)}
-                for name, tools in list_categories().items()]
+        self._tool_categories_cache = [
+            {"name": name, "icon": icons.get(name, "list"), "tools": list(tools)}
+            for name, tools in list_categories().items()
+        ]
+        return self._tool_categories_cache
 
     # ------------------------------------------------------------------ hooks for the services
     def currentFlowImage(self):  # noqa: N802
@@ -521,6 +575,7 @@ class AppBackend(QObject):
         return self._pipeline
 
     def toolsChanged(self) -> None:  # noqa: N802
+        self._tool_categories_cache = None
         self.changed.emit()
 
     def notify(self, text: str) -> None:
@@ -529,12 +584,29 @@ class AppBackend(QObject):
     def projectsDirectory(self) -> str:  # noqa: N802
         return self._pm.default_projects_dir
 
-    _ROI_KEYS = ("roi", "template_roi")
+    _ROI_KEYS = ("roi", "template_roi", "search_roi", "shelf_roi", "aisle_roi")
+
+    @staticmethod
+    def _rect_param_keys(node) -> List[str]:
+        from apex_vision.core import param_schema
+        keys: List[str] = []
+        for k, v in node.parameters.items():
+            if param_schema.spec_for_tool(node, k, v).get("kind") == "rect":
+                keys.append(k)
+        return keys
 
     def _roi_key(self):
         node = self._pipeline.nodes.get(self._selected)
         if node is None:
             return None, None
+        rect_keys = self._rect_param_keys(node)
+        if self._active_roi_key in rect_keys:
+            return node, self._active_roi_key
+        for key in self._ROI_KEYS:
+            if key in rect_keys:
+                return node, key
+        if rect_keys:
+            return node, rect_keys[0]
         for key in self._ROI_KEYS:
             value = node.parameters.get(key)
             if isinstance(value, (list, tuple)) and len(value) == 4:
@@ -550,6 +622,103 @@ class AppBackend(QObject):
         """[x, y, w, h] in image pixels of the selected module's ROI, or [] if it has none."""
         node, key = self._roi_key()
         return [int(v) for v in node.parameters[key]] if key else []
+
+    @pyqtProperty("QVariantMap", notify=changed)
+    def drawingParam(self):  # noqa: N802
+        """Active interactive geometry-draw target on the image viewport."""
+        if not self._active_draw:
+            return {"active": False, "nodeId": "", "key": "", "label": "", "kind": ""}
+        return dict(self._active_draw)
+
+    @pyqtSlot(str, str, result=bool)
+    def beginDrawParam(self, node_id, key):  # noqa: N802
+        """Arm interactive image-viewport drawing for any rect/line/point or indexed roi_list parameter."""
+        from apex_vision.core import param_schema
+        base_key = key
+        row_index = None
+        if isinstance(key, str) and ":" in key:
+            base_key, idx_str = key.split(":", 1)
+            try:
+                row_index = int(idx_str)
+            except ValueError:
+                return False
+        node = self._pipeline.nodes.get(node_id)
+        if node is None or base_key not in node.parameters or not self._editable():
+            return False
+        spec = param_schema.spec_for_tool(node, base_key, node.parameters[base_key])
+        kind = spec.get("kind", "")
+        if row_index is not None:
+            if kind != "roi_list":
+                return False
+            entries = node.parameters.get(base_key)
+            if not isinstance(entries, list) or not (0 <= row_index < len(entries)):
+                return False
+            label = str(entries[row_index].get("name") or f"ROI {row_index + 1}")
+            kind = "rect"
+        elif kind not in ("rect", "line", "point"):
+            return False
+        else:
+            label = spec.get("label", base_key)
+        self._selected = node_id
+        if kind == "rect" and row_index is None:
+            self._active_roi_key = base_key
+        self._active_draw = {
+            "active": True,
+            "nodeId": node_id,
+            "key": base_key,
+            "index": row_index,
+            "label": label,
+            "kind": kind,
+        }
+        self._render_view()
+        self._notify(f"Draw {label} directly on the image (Esc to cancel)")
+        self.drawModeStarted.emit(node_id, key, label, kind)
+        return True
+
+    @pyqtSlot("QVariant", result=bool)
+    def commitDrawParam(self, values):  # noqa: N802
+        """Commit drawn image coordinates ([x,y,w,h], [x1,y1,x2,y2], or [x,y]) to the active parameter."""
+        target = self._active_draw
+        self._active_draw = None
+        if not target or not target.get("active"):
+            self.changed.emit()
+            return False
+        if hasattr(values, "toVariant"):
+            values = values.toVariant()
+        node_id, key, kind = target["nodeId"], target["key"], target["kind"]
+        row_index = target.get("index")
+        expected = 2 if kind == "point" else 4
+        if not isinstance(values, (list, tuple)) or len(values) < expected:
+            self.changed.emit()
+            self.drawModeFinished.emit(node_id, False)
+            return False
+        coords = [int(round(float(v))) for v in values[:expected]]
+        if kind == "rect":
+            coords[2] = max(1, coords[2])
+            coords[3] = max(1, coords[3])
+        if row_index is not None:
+            node = self._pipeline.nodes.get(node_id)
+            if node is None or not isinstance(node.parameters.get(key), list) or not (0 <= row_index < len(node.parameters[key])):
+                self.changed.emit()
+                self.drawModeFinished.emit(node_id, False)
+                return False
+            updated = [dict(item) for item in node.parameters[key]]
+            updated[row_index]["rect"] = coords
+            ok = self.setParamValue(node_id, key, updated)
+        else:
+            ok = self.setParamValue(node_id, key, coords)
+        self.drawModeFinished.emit(node_id, bool(ok))
+        return bool(ok)
+
+    @pyqtSlot()
+    def cancelDrawParam(self):  # noqa: N802
+        target = self._active_draw
+        self._active_draw = None
+        if target:
+            self._notify("Drawing cancelled")
+            self.drawModeFinished.emit(target["nodeId"], False)
+        else:
+            self.changed.emit()
 
     @pyqtSlot(int, int, result=str)
     def pixelInfo(self, x, y):  # noqa: N802
@@ -738,9 +907,15 @@ class AppBackend(QObject):
         ``sample_images`` forces it on or off."""
         if sample_images is None:
             sample_images = self.uses_sample_images(solution)
-        self._all_flows, self._all_loop, self._loops = [], False, {}        # another solution: nothing keeps running, Loop is off
-        if self._all_active:
+        self._all_loop = False
+        self._loops = {}        # another solution: nothing keeps running, Loop is off
+        self._recent_cache = None
+        with self._all_lock:
+            self._all_flows = []
             self._all_stop = True
+            self._all_active = False
+            self._all_workers = {}
+            self._all_run_id += 1
         self._solution = solution
         self._project.path = path
         self._start_comm(solution)
@@ -982,6 +1157,7 @@ class AppBackend(QObject):
         except Exception as exc:
             self._notify(f"Save failed: {exc}")
             return
+        self._recent_cache = None
         self._runtime_saved = self._runtime_values()
         self._notify(f"Saved to {path}")
 
@@ -995,6 +1171,7 @@ class AppBackend(QObject):
             except OSError as exc:
                 self._notify(f"Could not create the project: {exc}")
                 return
+            self._recent_cache = None
             self.load_solution(sol, path)
         self._guard(do)
 
@@ -1006,16 +1183,19 @@ class AppBackend(QObject):
             except OSError as exc:        # unwritable or missing drive: tell the user instead of crashing
                 self._notify(f"Could not create the project in '{folder}': {exc}")
                 return
+            self._recent_cache = None
             self.load_solution(sol, path, sample_images=False if TEMPLATE_KEYS[max(0, min(template, 4))] == "blank" else None)
         self._guard(do)
 
     @pyqtSlot(str)
     def removeRecent(self, path):  # noqa: N802
         self._pm.remove_recent_project(path)
+        self._recent_cache = None
         self._notify()
 
     @pyqtSlot()
     def showStartPage(self):  # noqa: N802
+        self._recent_cache = None
         self.startPageRequested.emit()
 
     @pyqtSlot(str)
@@ -1039,6 +1219,9 @@ class AppBackend(QObject):
     @pyqtSlot(str)
     def selectNode(self, node_id):  # noqa: N802
         self._selected = node_id
+        node = self._pipeline.nodes.get(node_id)
+        if node is None or self._active_roi_key not in (node.parameters or {}):
+            self._active_roi_key = None
         self._render_view()
         self._refresh_results()
         self._notify()
@@ -1448,6 +1631,27 @@ class AppBackend(QObject):
             out.append({"name": port, "type": p.data_type.value, "source": label or "(not connected)"})
         return out
 
+    @pyqtSlot(str, result="QVariantList")
+    def moduleOutputs(self, node_id):  # noqa: N802
+        """Return declared output ports of ``node_id`` paired with the latest formatted value."""
+        pipe = self._pipeline
+        node = pipe.nodes.get(node_id)
+        if node is None:
+            return []
+        res = pipe.last_results.get(node_id) or self._last_results.get(node_id)
+        out = []
+        for port, p in node.outputs.items():
+            if res is None or port not in res.outputs:
+                val_str = "(not run)"
+            else:
+                val = res.outputs[port]
+                if isinstance(val, np.ndarray):
+                    val_str = f"Image ({val.shape[1]}x{val.shape[0]})" if val.ndim >= 2 else f"Array {val.shape}"
+                else:
+                    val_str = self._format_output_value(val)
+            out.append({"name": port, "type": p.data_type.value, "value": val_str})
+        return out
+
     @pyqtSlot(str, str, result=str)
     def renameNode(self, node_id, new_name):  # noqa: N802
         """Rename a module (its label only; the tool it is an instance of is unchanged).  Returns '' on success, else
@@ -1492,7 +1696,7 @@ class AppBackend(QObject):
         out = []
         off = param_schema.inactive(node.tool_name, node.parameters)
         for k, v in node.parameters.items():
-            spec = param_schema.spec_for(node.tool_name, k, v)
+            spec = param_schema.spec_for_tool(node, k, v)
             if spec["kind"] == "hidden":
                 continue
             if spec["kind"] == "flow":
@@ -1528,11 +1732,11 @@ class AppBackend(QObject):
         if hasattr(value, "toVariant"):                       # a JS array / object arrives as QJSValue
             value = value.toVariant()
         old = node.parameters[key]
-        spec = param_schema.spec_for(node.tool_name, key, old)
+        spec = param_schema.spec_for_tool(node, key, old)
         value = param_schema.clamp(spec, value)
         if isinstance(value, float) and spec["kind"] == "float":
             value = round(value, 6)
-        issue = param_schema.problem(node.tool_name, key, old, value)
+        issue = param_schema.problem_for_tool(node, key, old, value)
         if issue:
             self._notify(f"{spec['label']} {issue}")
             return False
@@ -1544,6 +1748,11 @@ class AppBackend(QObject):
             self._undo.pop()
             self._notify(f"{spec['label']}: the module did not accept that value")
             return False
+        dropped = self._pipeline.disconnect_stale_from(node_id)
+        if dropped:
+            self._notify(f"{node.name}: disconnected {dropped} stale link(s) after port update")
+        if dropped or spec.get("kind") in ("roi_list", "port_list"):
+            self.changed.emit()
         self._notify(f"{node.name}: {spec['label']} set to {value if not isinstance(value, list) else json.dumps(value)}")
         if isinstance(value, str) and value.lower().endswith(".pt"):
             self._notify(f"{node.name}: a .pt model is converted to ONNX on first use. Only use models you trust - a .pt file can contain code.")
@@ -1669,8 +1878,27 @@ class AppBackend(QObject):
         """The Run button of the open flow: 'Run all' over every image (repeating with Loop), else the selected one."""
         if self._all_live():                         # an all-flows run is going: this flow joins it
             name = self._solution.active_flow_name
-            if name not in self._all_flows:
-                self._all_flows.append(name)
+            sol = self._solution
+            with self._all_lock:
+                already = name in self._all_flows
+                if not already:
+                    self._all_flows.append(name)
+                run_id = self._all_run_id
+                in_loop = self._all_loop
+                existing_worker = self._all_workers.get(name)
+            if not already:
+                if in_loop and (existing_worker is None or not existing_worker.is_alive()):
+                    self._spawn_all_flow_worker(name, sol, run_id)
+                elif not in_loop:
+                    flow = sol.flows.get(name)
+                    if flow is not None:
+                        def _one_shot():
+                            payload = RunEngine.compute_cycle(flow, sol)
+                            try:
+                                self._all_cycle.emit(name, payload)
+                            except RuntimeError:
+                                pass
+                        threading.Thread(target=_one_shot, name=f"flow-{name}", daemon=True).start()
                 self._notify(f"{name} started")
             return
         if self.engine.is_strip_busy():
@@ -1682,12 +1910,14 @@ class AppBackend(QObject):
         """The Stop button of the open flow: only this flow (the others of an all-flows run carry on)."""
         if self._all_live():
             name = self._solution.active_flow_name
-            if name in self._all_flows:
-                self._all_flows.remove(name)
-            if not self._all_flows:
-                self._all_stop = True
+            with self._all_lock:
+                if name in self._all_flows:
+                    self._all_flows.remove(name)
+                remaining = list(self._all_flows)
+                if not remaining:
+                    self._all_stop = True
             self.engine.stop()
-            self._notify(f"{name} stopped" + ("" if self._all_flows else " - no flow is running"))
+            self._notify(f"{name} stopped" + ("" if remaining else " - no flow is running"))
             return
         self.engine.stop()
         self._notify("Stopped")
@@ -1696,55 +1926,140 @@ class AppBackend(QObject):
     def _all_live(self) -> bool:
         return self._all_active and not self._all_stop
 
+    def _spawn_all_flow_worker(self, name: str, sol: SolutionManager, run_id: int) -> threading.Thread:
+        """Spawn an independent loop worker thread for a single flow in parallel multi-flow mode."""
+        def flow_loop():
+            while True:
+                with self._all_lock:
+                    active_in_run = (
+                        not self._all_stop
+                        and self._solution is sol
+                        and self._all_run_id == run_id
+                        and name in self._all_flows
+                    )
+                if not active_in_run:
+                    break
+                flow = sol.flows.get(name)
+                if flow is None or not flow.enabled:
+                    break
+                payload = RunEngine.compute_cycle(flow, sol)
+                try:
+                    self._all_cycle.emit(name, payload)
+                except RuntimeError:             # window closed
+                    return
+                with self._all_lock:
+                    keep_looping = (
+                        self._all_loop
+                        and not self._all_stop
+                        and self._solution is sol
+                        and self._all_run_id == run_id
+                        and name in self._all_flows
+                    )
+                if not keep_looping:
+                    break
+                interval_s = max(0.02, float(getattr(flow, "run_interval_ms", 0) or 0) / 1000.0)
+                # Poll stop flag in short slices so stopAll() responds promptly even on long intervals
+                deadline = time.perf_counter() + interval_s
+                while time.perf_counter() < deadline:
+                    if self._all_stop or self._solution is not sol or self._all_run_id != run_id:
+                        break
+                    time.sleep(min(0.02, max(0.0, deadline - time.perf_counter())))
+
+        t = threading.Thread(target=flow_loop, name=f"parallel-flow-{name}", daemon=True)
+        with self._all_lock:
+            self._all_workers[name] = t
+        t.start()
+        return t
+
     @pyqtSlot()
     def runAll(self):  # noqa: N802
-        """Run every flow of the solution - repeating until Stop when the top Loop is on. Each flow reads its own Image Source."""
+        """Run every enabled flow of the solution in parallel (repeating until Stop when the top Loop is on)."""
         names = [n for n, f in self._solution.flows.items() if f.enabled]
         if not names:
             return
         if self._all_live():                         # already running: bring in any flow that was stopped on its own
-            self._all_flows.extend(n for n in names if n not in self._all_flows)
+            sol = self._solution
+            with self._all_lock:
+                added = [n for n in names if n not in self._all_flows]
+                self._all_flows.extend(added)
+                run_id = self._all_run_id
+                in_loop = self._all_loop
+            if in_loop:
+                for n in added:
+                    self._spawn_all_flow_worker(n, sol, run_id)
             self._notify(f"All {len(names)} flows running")
             return
         if self._all_active:                         # a stopped run is still finishing its last cycle
             return
         self.engine.stop()
         sol = self._solution
-        self._all_flows, self._all_stop, self._all_active = names, False, True
+        with self._all_lock:
+            self._all_run_id += 1
+            run_id = self._all_run_id
+            self._all_flows = list(names)
+            self._all_stop = False
+            self._all_active = True
+            self._all_workers = {}
         self._all_summary = {}
         self._rerun_later = False
 
-        def work():
-            while True:
-                for name in list(self._all_flows):
-                    if self._all_stop or self._solution is not sol:
-                        break
-                    flow = sol.flows.get(name)
-                    if flow is None or name not in self._all_flows:
-                        continue
-                    while self.engine.busy and not self._all_stop:       # a single-flow cycle is finishing
-                        time.sleep(0.02)
-                    payload = RunEngine.compute_cycle(flow, sol)
-                    try:
-                        self._all_cycle.emit(name, payload)
-                    except RuntimeError:             # the window closed
-                        return
-                if self._all_stop or self._solution is not sol or not self._all_loop or not self._all_flows:
-                    break
-                time.sleep(max(0.05, float(getattr(self._pipeline, "run_interval_ms", 0) or 0) / 1000.0))
-            try:
-                self._all_done.emit()
-            except RuntimeError:
-                pass
+        def coordinator():
+            while self.engine.busy and not self._all_stop:       # wait for any single-flow cycle to finish cleanly
+                time.sleep(0.01)
+            if self._all_stop or self._solution is not sol or self._all_run_id != run_id:
+                try:
+                    self._all_done.emit()
+                except RuntimeError:
+                    pass
+                return
 
-        threading.Thread(target=work, daemon=True).start()
-        self._notify(f"Running all {len(names)} flows" + (" - Loop is on, press Stop to end" if self._all_loop else ""))
+            if not self._all_loop:
+                # One-shot parallel execution across all enabled flows
+                with self._all_lock:
+                    targets = [(n, sol.flows.get(n)) for n in list(self._all_flows)]
+                targets = [(n, f) for n, f in targets if f is not None]
+                if targets:
+                    with ThreadPoolExecutor(max_workers=len(targets), thread_name_prefix="apex-parallel") as pool:
+                        futures = {
+                            pool.submit(RunEngine.compute_cycle, flow, sol): name
+                            for name, flow in targets
+                        }
+                        for fut in as_completed(futures):
+                            name = futures[fut]
+                            if self._all_stop or self._solution is not sol or self._all_run_id != run_id:
+                                continue
+                            payload = fut.result()
+                            try:
+                                self._all_cycle.emit(name, payload)
+                            except RuntimeError:
+                                return
+            else:
+                # Continuous parallel loop: one independent thread per enabled flow
+                for name in list(names):
+                    self._spawn_all_flow_worker(name, sol, run_id)
+                while True:
+                    with self._all_lock:
+                        workers = list(self._all_workers.values())
+                    alive = [w for w in workers if w.is_alive()]
+                    if not alive:
+                        break
+                    alive[0].join(timeout=0.05)
+
+            if self._all_run_id == run_id:
+                try:
+                    self._all_done.emit()
+                except RuntimeError:
+                    pass
+
+        threading.Thread(target=coordinator, name="run-all-coordinator", daemon=True).start()
+        self._notify(f"Running {len(names)} flow(s) in parallel" + (" - Loop is on, press Stop to end" if self._all_loop else ""))
 
     @pyqtSlot()
     def stopAll(self):  # noqa: N802
         """Stop every flow (the top Stop button) - the open flow too."""
-        self._all_stop = True
-        self._all_flows = []
+        with self._all_lock:
+            self._all_stop = True
+            self._all_flows = []
         self.engine.stop()
         self._notify("Stopped all flows")
 
@@ -1807,11 +2122,31 @@ class AppBackend(QObject):
             ran = f"Flow executed: {self._verdict}"
             self._notify(f"{edit}  ·  {ran}" if edit and not edit.startswith("Flow executed") else ran)
 
+    @staticmethod
+    def _format_output_value(v: Any) -> str:
+        if isinstance(v, bool):
+            txt = str(v)
+        elif isinstance(v, float):
+            txt = f"{v:.4g}"
+        elif isinstance(v, (int, str)):
+            txt = str(v)
+        elif isinstance(v, (dict, list, tuple)):
+            try:
+                txt = json.dumps(v, ensure_ascii=False)
+            except TypeError:
+                txt = str(v)
+        else:
+            txt = str(v)
+        return " ".join(txt.splitlines())
+
     def _refresh_results(self):
         res = self._pipeline.last_results.get(self._selected)
         rows = []
         if res is not None:
             for k, v in res.outputs.items():
-                if isinstance(v, (bool, int, float, str)):
-                    rows.append({"name": k, "value": f"{v:.4g}" if isinstance(v, float) else str(v)})
+                if isinstance(v, np.ndarray):
+                    continue
+                rows.append({"name": str(k), "value": self._format_output_value(v)})
+            if res.message:
+                rows.append({"name": "Message", "value": " ".join(str(res.message).splitlines())})
         self._results = rows

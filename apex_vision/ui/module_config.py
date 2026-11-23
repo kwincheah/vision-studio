@@ -162,9 +162,16 @@ class ModuleConfigDialog(QDialog):
                         continue
                     for out_name, out_port in other_tool.outputs.items():
                         if is_compatible_type(out_port.data_type, port.data_type):
+                            is_current = bool(
+                                current_conn and current_conn.from_node == nid and current_conn.from_port == out_name
+                            )
+                            if not is_current:
+                                ok_conn, _ = self.pipeline.can_connect(nid, out_name, self.tool.instance_id, name)
+                                if not ok_conn:
+                                    continue
                             label = f"{other_tool.name} [{out_name}]"
                             combo.addItem(label, (nid, out_name))
-                            if current_conn and current_conn.from_node == nid and current_conn.from_port == out_name:
+                            if is_current:
                                 sel_idx = idx
                             idx += 1
 
@@ -177,7 +184,7 @@ class ModuleConfigDialog(QDialog):
                             self.pipeline.disconnect(self.tool.instance_id, p_name)
                         else:
                             src_node, src_port = data
-                            self.pipeline.connect(src_node, src_port, self.tool.instance_id, p_name, force=True)
+                            self.pipeline.connect(src_node, src_port, self.tool.instance_id, p_name, force=False)
                         self.connection_changed.emit(self.tool.instance_id, p_name)
                     return _handler
 

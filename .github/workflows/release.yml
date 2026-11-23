@@ -28,7 +28,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
 
+    - name: Build Hybrid C++17 _apex_core extension
+      run: |
+        python build_cpp.py
+
     - name: Run verification test suite
+      env:
+        QT_QPA_PLATFORM: offscreen
       run: |
         python -m pytest tests/ -q
 
@@ -53,12 +59,65 @@ jobs:
         if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE" }
         Get-ChildItem installer_output
 
-    - name: Publish GitHub Release
+    - name: Publish Windows Assets to GitHub Release
       uses: softprops/action-gh-release@v2
       with:
         files: |
           ApexVisionStudio-*-Windows-x64.zip
           installer_output/*.exe
+        body_path: docs/RELEASE_NOTES_v1.0.0-beta.4.md
+        draft: false
+        prerelease: true
+
+  build-macos:
+    name: Build Standalone macOS Distribution
+    runs-on: macos-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v5
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+
+    - name: Build Hybrid C++17 _apex_core extension
+      run: |
+        python build_cpp.py
+
+    - name: Run verification test suite
+      env:
+        QT_QPA_PLATFORM: offscreen
+      run: |
+        python -m pytest tests/ -q
+
+    - name: Build standalone macOS .app with PyInstaller
+      run: |
+        pyinstaller ApexVisionStudio.spec --clean --noconfirm
+
+    - name: Create macOS DMG and ZIP bundles
+      run: |
+        TAG="${{ github.ref_name }}"
+        ARCH="$(uname -m)"
+        DMG_NAME="ApexVisionStudio-${TAG}-macOS-${ARCH}.dmg"
+        ZIP_NAME="ApexVisionStudio-${TAG}-macOS-${ARCH}.zip"
+        hdiutil create -volname "ApexVisionStudio" -srcfolder "dist/ApexVisionStudio.app" -ov -format UDZO "${DMG_NAME}"
+        ditto -c -k --sequesterRsrc --keepParent "dist/ApexVisionStudio.app" "${ZIP_NAME}"
+        ls -lh "${DMG_NAME}" "${ZIP_NAME}"
+
+    - name: Publish macOS Assets to GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          ApexVisionStudio-*-macOS-*.dmg
+          ApexVisionStudio-*-macOS-*.zip
         body_path: docs/RELEASE_NOTES_v1.0.0-beta.4.md
         draft: false
         prerelease: true

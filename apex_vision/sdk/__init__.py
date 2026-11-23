@@ -214,3 +214,32 @@ class IVisionPlugin:
     def on_unload(cls):
         """Lifecycle hook executed when the plugin is unloaded or disabled."""
         pass
+
+
+from apex_vision.sdk.runtime import (  # noqa: E402
+    ApexProcedure,
+    ApexRuntimeEngine,
+    ApexSolution,
+    ensure_theft_plugin_loaded,
+    get_device_capabilities,
+    normalize_device_request,
+)
+
+__all__ = [
+    "DataType",
+    "ToolStatus",
+    "ToolPort",
+    "ToolExecutionResult",
+    "VisionToolBase",
+    "ParamType",
+    "ParamDef",
+    "PluginToolBase",
+    "PluginMetadata",
+    "IVisionPlugin",
+    "ApexProcedure",
+    "ApexSolution",
+    "ApexRuntimeEngine",
+    "ensure_theft_plugin_loaded",
+    "get_device_capabilities",
+    "normalize_device_request",
+]

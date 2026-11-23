@@ -72,15 +72,15 @@ DialogFrame {
             AppButton {
                 objectName: "markRuntime"
                 text: "Mark as runtime state"; width: 168
-                enabled: table.currentRow >= 0
-                onClicked: if (root.backend && table.currentRow >= 0)
+                enabled: table.currentRow >= 0 && table.currentRow < root.variables.length
+                onClicked: if (root.backend && table.currentRow >= 0 && table.currentRow < root.variables.length)
                                root.backend.setGlobalRuntime(root.variables[table.currentRow].name, true)
             }
             AppButton {
                 objectName: "markSetting"
                 text: "Mark as saved setting"; width: 168
-                enabled: table.currentRow >= 0
-                onClicked: if (root.backend && table.currentRow >= 0)
+                enabled: table.currentRow >= 0 && table.currentRow < root.variables.length
+                onClicked: if (root.backend && table.currentRow >= 0 && table.currentRow < root.variables.length)
                                root.backend.setGlobalRuntime(root.variables[table.currentRow].name, false)
             }
             Text {
@@ -98,7 +98,7 @@ DialogFrame {
     }
     buttons: [
         AppButton { text: "Delete Selected"; kind: "danger"; width: 120
-            onClicked: if (root.backend && table.currentRow >= 0) root.backend.removeGlobal(root.variables[table.currentRow].name) },
+            onClicked: if (root.backend && table.currentRow >= 0 && table.currentRow < root.variables.length) root.backend.removeGlobal(root.variables[table.currentRow].name) },
         AppButton { text: "Close"; width: 90; onClicked: root.closed() }
     ]
 }

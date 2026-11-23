@@ -205,7 +205,7 @@ Rectangle {
         anchors.bottom: parent.bottom
 
         ListView {
-            id: list
+            id: chatList
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
@@ -219,7 +219,7 @@ Rectangle {
             onContentHeightChanged: if (stick) Qt.callLater(positionViewAtEnd)
             ScrollBar.vertical: ApexScrollBar { }
 
-            header: Item { width: list.width; height: root.msgs.length === 0 ? welcome.height : 0
+            header: Item { width: chatList.width; height: root.msgs.length === 0 ? welcome.height : 0
                 Column {
                     id: welcome
                     visible: root.msgs.length === 0
@@ -259,7 +259,7 @@ Rectangle {
                 id: msgItem
                 readonly property var m: root.msgs[index] || ({ role: "assistant", text: "", tools: [], error: "", flowIndex: -1 })
                 readonly property bool mine: m.role === "user"
-                width: list.width
+                width: chatList.width
                 height: bubble.height
 
                 Rectangle {
@@ -483,7 +483,7 @@ Rectangle {
         if (!root.svc || root.busy || input.text.trim() === "") return
         root.svc.send(input.text)
         input.text = ""
-        list.stick = true
+        chatList.stick = true
     }
     onVisibleChanged: if (visible) {
         if (svc && !svc.ready) settingsOpen = true               // first time: ask for the provider and key
@@ -501,25 +501,9 @@ Rectangle {
     }
 
     // ---- resize grip (lower-left corner; the panel is anchored to the right edge of the workspace)
-    MouseArea {
-        id: grip
-        width: 24; height: 24
-        anchors.left: parent.left; anchors.bottom: parent.bottom
-        cursorShape: Qt.SizeBDiagCursor
-        property real startX; property real startW; property real startH; property real startY
-        onPressed: function (m) { var p = mapToItem(root.parent, m.x, m.y); startX = p.x; startY = p.y; startW = root.width; startH = root.height }
-        onPositionChanged: function (m) {
-            if (!pressed) return
-            var p = mapToItem(root.parent, m.x, m.y)
-            var nw = Math.max(340, Math.min(760, startW - (p.x - startX)))
-            root.x += root.width - nw
-            root.width = nw
-            root.height = Math.max(380, Math.min(root.parent.height - root.y - 8, startH + (p.y - startY)))
-        }
-        Canvas {
-            anchors.fill: parent
-            onPaint: { var c = getContext("2d"); c.strokeStyle = "" + Theme.textMuted; c.lineWidth = 1
-                c.beginPath(); c.moveTo(6, 8); c.lineTo(16, 18); c.moveTo(6, 14); c.lineTo(10, 18); c.stroke() }
-        }
+    ResizeGrip {
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        targetItem: root
     }
 }

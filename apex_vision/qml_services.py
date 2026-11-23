@@ -258,9 +258,12 @@ class CameraService(QObject):
 
     @pyqtSlot(str)
     def addStream(self, url):  # noqa: N802
-        if url.strip():
-            self.session._mgr().add_network_stream(url.strip())
+        if url and url.strip():
+            info = self.session._mgr().add_network_stream(url.strip())
             self.refresh()
+            idx = next((i for i, d in enumerate(self._devices) if d.get("id") == info.device_id), -1)
+            if idx >= 0:
+                self.select(idx)
 
     @pyqtSlot(str)
     def importMvs(self, url):  # noqa: N802

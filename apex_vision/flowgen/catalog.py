@@ -56,7 +56,7 @@ def tool_spec(name: str) -> Dict[str, Any]:
     params = {}
     for key, default in tool.parameters.items():
         entry: Dict[str, Any] = {"default": _portable(default), "type": _type_name(default)}
-        ps = param_schema.spec_for(name, key, default)
+        ps = param_schema.spec_for_tool(tool, key, default)
         entry["editor"] = ps["kind"]
         for extra in ("choices", "min", "max", "unit"):
             if extra in ps:

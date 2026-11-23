@@ -74,6 +74,10 @@ ehthumbs.db
 # Local scratch / audit output
 audit.json
 _internal/
+_tmp_tune/
+results/
+torchinductor_*/
+docs/screenshots/qml_review/
 .claude/
 
 # Internal audit / research reports (kept locally, not published)

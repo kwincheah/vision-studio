@@ -54,7 +54,7 @@ DialogFrame {
                         AppButton { text: "Load from Folder..."; width: 140; onClicked: pluginFolder.open() }
                         AppButton { text: "Rescan"; width: 90; onClicked: if (root.service) root.service.rescan() }
                         AppButton { text: "Unload"; width: 90
-                            onClicked: if (root.service && installedTable.currentRow >= 0) root.service.unload(root.installed[installedTable.currentRow].id) }
+                            onClicked: if (root.service && installedTable.currentRow >= 0 && installedTable.currentRow < root.installed.length) root.service.unload(root.installed[installedTable.currentRow].id) }
                         AppButton { text: "Package .apexpkg"; width: 120; onClicked: packageFolder.open() } }
                 }
                 Column { width: parent.width * 0.42 - 12; height: parent.height; spacing: 8
@@ -78,8 +78,8 @@ DialogFrame {
                             for (var i = 0; i < root.market.length; i++) if (f === "" || root.market[i].name.toLowerCase().indexOf(f) >= 0) out.push(root.market[i])
                             return out } }
                 Row { spacing: 8
-                    AppButton { text: "Install Selected"; kind: "primary"; width: 140; enabledState: !root.busy && marketTable.currentRow >= 0
-                        onClicked: if (root.service) root.service.installMarketplace(marketTable.rows[marketTable.currentRow].id) }
+                    AppButton { text: "Install Selected"; kind: "primary"; width: 140; enabledState: !root.busy && marketTable.currentRow >= 0 && marketTable.currentRow < marketTable.rows.length
+                        onClicked: if (root.service && marketTable.currentRow >= 0 && marketTable.currentRow < marketTable.rows.length) root.service.installMarketplace(marketTable.rows[marketTable.currentRow].id) }
                     Text { anchors.verticalCenter: parent.verticalCenter; text: root.busy ? "Working..." : ""; font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textMuted } }
             }
             // ---- github
@@ -88,7 +88,7 @@ DialogFrame {
                 visible: root.tab === 2
                 FormRow { width: parent.width; label: "Repository URL"; TextBox { id: repoField; width: parent.width; placeholder: "https://github.com/owner/repo" } }
                 FormRow { width: 260; label: "Branch"; TextBox { id: branchField; width: 260; text: "main" } }
-                AppButton { text: root.busy ? "Working..." : "Download, Validate && Install"; kind: "primary"; width: 230; enabledState: !root.busy
+                AppButton { text: root.busy ? "Working..." : "Download, Validate & Install"; kind: "primary"; width: 230; enabledState: !root.busy
                     onClicked: if (root.service) root.service.installGithub(repoField.text, branchField.text) }
                 Rectangle { width: parent.width; height: parent.height - 190; color: "#c0c4c8"; radius: 4; clip: true
                     Text { x: 10; y: 10; width: parent.width - 20; wrapMode: Text.WordWrap; text: root.log; font.family: Theme.monoFamily; font.pixelSize: Theme.fontBody; color: Theme.textPrimary } }

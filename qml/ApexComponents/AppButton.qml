@@ -72,6 +72,9 @@ Rectangle {
         hoverEnabled: true
         enabled: root.enabledState
         cursorShape: Qt.PointingHandCursor
-        onClicked: root.clicked()
+        onClicked: {
+            if (!root.activeFocus) root.forceActiveFocus()
+            root.clicked()
+        }
     }
 }

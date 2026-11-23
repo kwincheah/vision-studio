@@ -24,10 +24,15 @@ def run(argv: Optional[List[str]] = None) -> int:
     from apex_vision.core.logging_setup import install_global_excepthook, setup_logging
     from apex_vision.qml_backend import AppBackend, FrameProvider
     from apex_vision.qml_services import install_services
+    from apex_vision.sdk.manager import PluginManager
 
     argv = list(sys.argv if argv is None else argv)
     setup_logging()
     install_global_excepthook()
+    try:
+        PluginManager.get_instance().discover_and_load_all()
+    except Exception as exc:
+        logger.warning("Failed to discover plugins during QML startup: %s", exc)
 
     app = QGuiApplication(argv)
     app.setApplicationName("Apex Industrial Vision Studio")

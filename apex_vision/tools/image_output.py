@@ -164,6 +164,19 @@ class ImageBufferTool(VisionToolBase):
         if self.buffer_queue.maxlen != cap:
             self.buffer_queue = deque(self.buffer_queue, maxlen=cap)
 
+        cond = str(self.get_param("buffer_condition", "All Images"))
+        if cond == "NG Only":
+            verdict = ImageOutputTool._resolve_verdict(context)
+            if verdict is True:
+                cnt = len(self.buffer_queue)
+                latest = self.buffer_queue[-1] if self.buffer_queue else img
+                return ToolExecutionResult(
+                    status=ToolStatus.OK,
+                    message=f"Image Buffer: {cnt}/{cap} frames cached (OK skipped)",
+                    outputs={"Buffer_Count": cnt, "Latest_Image": latest},
+                    overlays=[{"type": "text", "text": f"Buffer: {cnt}/{cap}", "pt": (15, 75), "color": (255, 179, 0)}]
+                )
+
         self.buffer_queue.append(img.copy())
         cnt = len(self.buffer_queue)
 

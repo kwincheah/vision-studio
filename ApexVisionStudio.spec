@@ -8,6 +8,7 @@ Build Command:
 Output:
     dist/ApexVisionStudio/ (Self-contained, standalone folder with ApexVisionStudio.exe)
 """
+import glob
 import sys
 import os
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files
@@ -15,6 +16,17 @@ from PyInstaller.utils.hooks import collect_submodules, collect_data_files
 block_cipher = None
 
 project_dir = os.path.abspath(os.curdir)
+
+# Platform-appropriate keyring backend & icon
+_keyring_backend = 'keyring.backends.macOS' if sys.platform == 'darwin' else 'keyring.backends.Windows'
+_app_icon = 'apex_vision/assets/app_icon.png' if sys.platform == 'darwin' else 'apex_vision/assets/app_icon.ico'
+
+# Bundle compiled C++17 _apex_core extension (.pyd / .so) if built
+native_binaries = [
+    (p, 'apex_vision')
+    for p in glob.glob(os.path.join(project_dir, 'apex_vision', '_apex_core*'))
+    if p.endswith(('.pyd', '.so'))
+]
 
 # Collect submodules dynamically for dynamic registry and tools
 hidden_imports = [
@@ -27,7 +39,7 @@ hidden_imports = [
     'PyQt6.QtQuickWidgets',
     'anthropic',
     'keyring',
-    'keyring.backends.Windows',
+    _keyring_backend,
     'mcp',
     'cv2',
     'numpy',
@@ -63,7 +75,7 @@ for _name in sorted(os.listdir(os.path.join(project_dir, 'projects'))) if os.pat
 a = Analysis(
     ['main.py'],
     pathex=[project_dir],
-    binaries=[],
+    binaries=native_binaries,
     datas=datas,
     hiddenimports=hidden_imports,
     hookspath=[],
@@ -126,7 +138,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='apex_vision/assets/app_icon.ico',
+    icon='apex_vision/assets/app_icon.ico' if sys.platform != 'darwin' else 'apex_vision/assets/app_icon.png',
 )
 
 coll = COLLECT(
@@ -139,3 +151,16 @@ coll = COLLECT(
     upx_exclude=[],
     name='ApexVisionStudio',
 )
+
+if sys.platform == 'darwin':
+    app = BUNDLE(
+        coll,
+        name='ApexVisionStudio.app',
+        icon=_app_icon,
+        bundle_identifier='com.apexvision.studio',
+        info_plist={
+            'CFBundleDisplayName': 'Apex Industrial Vision Studio',
+            'NSHighResolutionCapable': True,
+            'NSCameraUsageDescription': 'Apex Industrial Vision Studio needs camera access to acquire live frames for inspection.',
+        },
+    )

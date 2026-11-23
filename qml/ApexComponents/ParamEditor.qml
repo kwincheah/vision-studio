@@ -15,6 +15,7 @@ Item {
     id: root
     property var spec: ({ kind: "text", native: "", name: "param", label: "Param" })
     signal edited(var value)
+    signal drawRequested(string key, string kind)
 
     readonly property string kind: spec.kind
     readonly property var val: spec.native
@@ -36,6 +37,8 @@ Item {
             case "int": case "float": return numberEditor
             case "rect": case "point": case "line": case "rgb": return tupleEditor
             case "points": return pointsEditor
+            case "roi_list": return roiListEditor
+            case "port_list": return portListEditor
             case "code": return codeEditor
             case "path": case "dir": return pathEditor
             default: return textEditor
@@ -108,6 +111,14 @@ Item {
             }
             Rectangle { visible: root.kind === "rgb"; width: 26; height: 26; radius: Theme.radiusControl; border.width: 1; border.color: Theme.fieldBorder
                 color: Qt.rgba(root.val[0] / 255, root.val[1] / 255, root.val[2] / 255, 1) }
+            AppButton {
+                objectName: "paramDraw"
+                text: "Draw"
+                width: 56
+                height: 26
+                visible: root.kind === "rect" || root.kind === "line" || root.kind === "point"
+                onClicked: root.drawRequested(root.spec.name, root.kind)
+            }
         }
     }
 
@@ -150,13 +161,192 @@ Item {
 
     Component { id: pathEditor
         Row { spacing: Theme.spSnug
-            TextBox { id: pathBox; objectName: "paramText"; width: Math.max(120, root.width - 90); text: String(root.val)
-                onEditingFinished: if (text !== String(root.val)) root.edited(text) }
-            AppButton { text: "Browse..."; width: 82; onClicked: root.kind === "dir" ? folderPick.open() : filePick.open() }
+            readonly property bool noBrowse: root.spec.no_browse === true
+            TextBox { id: pathBox; objectName: "paramText"; width: noBrowse ? root.width : Math.max(120, root.width - 90)
+                text: String(root.val); enabled: !noBrowse; opacity: noBrowse ? 0.6 : 1.0
+                placeholder: noBrowse ? (root.spec.browse_hint || "Use '+' under the Image tab") : ""
+                onEditingFinished: if (!noBrowse && text !== String(root.val)) root.edited(text) }
+            AppButton { objectName: "paramBrowse"; text: "Browse..."; width: 82; visible: !noBrowse
+                onClicked: root.kind === "dir" ? folderPick.open() : filePick.open() }
             FileDialog { id: filePick; title: "Choose " + root.spec.label; nameFilters: (root.spec.filters || "All files (*)").split(";;")
-                onAccepted: { var p = selectedFile.toString().replace(/^file:\/\/\//, ""); pathBox.text = p; root.edited(p) } }
+                onAccepted: { var u = selectedFile.toString(); var p = typeof appBackend !== "undefined" ? appBackend.urlToPath(u) : decodeURIComponent(u.replace(/^file:\/\/\//, "")); pathBox.text = p; root.edited(p) } }
             FolderDialog { id: folderPick; title: "Choose " + root.spec.label
-                onAccepted: { var p = selectedFolder.toString().replace(/^file:\/\/\//, ""); pathBox.text = p; root.edited(p) } }
+                onAccepted: { var u = selectedFolder.toString(); var p = typeof appBackend !== "undefined" ? appBackend.urlToPath(u) : decodeURIComponent(u.replace(/^file:\/\/\//, "")); pathBox.text = p; root.edited(p) } }
+        }
+    }
+
+    Component { id: roiListEditor
+        Column { id: roiCol; width: root.width; spacing: Theme.spSnug
+            // QVariantList from Python has `.length` defined, whereas `Array.isArray(root.val)` can be false in Qt6 QML.
+            readonly property int rowCount: (root.val !== undefined && root.val !== null && root.val.length !== undefined)
+                                            ? root.val.length : 0
+            function cloneList() {
+                var n = roiCol.rowCount
+                var out = []
+                for (var i = 0; i < n; i++) {
+                    var item = root.val[i]
+                    var r = (item && item.rect && item.rect.length >= 4) ? item.rect : [0, 0, 0, 0]
+                    out.push({ name: String((item && item.name) || ("roi_" + (i + 1))),
+                               rect: [Number(r[0] || 0), Number(r[1] || 0), Number(r[2] || 0), Number(r[3] || 0)] })
+                }
+                return out
+            }
+            function nextName(list) {
+                var idx = list.length + 1
+                while (true) {
+                    var cand = "roi_" + idx
+                    var clash = false
+                    for (var i = 0; i < list.length; i++) if (list[i].name === cand) { clash = true; break }
+                    if (!clash) return cand
+                    idx++
+                }
+            }
+            Repeater {
+                model: roiCol.rowCount
+                delegate: Row {
+                    spacing: Theme.spSnug
+                    width: roiCol.width
+                    readonly property var entry: root.val[index] || ({ name: "", rect: [0, 0, 0, 0] })
+                    readonly property var rc: (entry && entry.rect && entry.rect.length >= 4) ? entry.rect : [0, 0, 0, 0]
+                    TextBox {
+                        id: zoneNameBox
+                        objectName: "paramRoiName" + index
+                        width: 130
+                        text: String(entry.name || "")
+                        placeholder: "ROI var name"
+                        onEditingFinished: {
+                            var nm = text.trim()
+                            if (nm === "" || nm === String(entry.name || "")) { text = String(entry.name || ""); return }
+                            var next = roiCol.cloneList()
+                            next[index].name = nm
+                            root.edited(next)
+                        }
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.max(90, roiCol.width - 270)
+                        elide: Text.ElideRight
+                        text: "[" + Math.round(rc[0] || 0) + ", " + Math.round(rc[1] || 0) + ", " + Math.round(rc[2] || 0) + ", " + Math.round(rc[3] || 0) + "]"
+                        font.family: Theme.monoFamily; font.pixelSize: Theme.fontCaption; color: Theme.textSecondary
+                    }
+                    AppButton {
+                        objectName: "paramRoiDraw" + index
+                        text: "Draw"
+                        width: 56
+                        height: 26
+                        onClicked: root.drawRequested(root.spec.name + ":" + index, "rect")
+                    }
+                    AppButton {
+                        objectName: "paramRoiDelete" + index
+                        text: "Delete"
+                        width: 60
+                        height: 26
+                        onClicked: {
+                            var next = roiCol.cloneList()
+                            next.splice(index, 1)
+                            root.edited(next)
+                        }
+                    }
+                }
+            }
+            AppButton {
+                objectName: "paramRoiAdd"
+                text: "+ Add ROI"
+                width: 96
+                height: 26
+                onClicked: {
+                    var next = roiCol.cloneList()
+                    next.push({ name: roiCol.nextName(next), rect: [60, 60, 220, 220] })
+                    root.edited(next)
+                }
+            }
+        }
+    }
+
+    Component { id: portListEditor
+        Column { id: portCol; width: root.width; spacing: Theme.spSnug; clip: true
+            readonly property var portTypes: ["ANY", "IMAGE", "STRING", "VALUE", "BOOLEAN", "REGION"]
+            readonly property int rowCount: (root.val !== undefined && root.val !== null && root.val.length !== undefined)
+                                            ? root.val.length : 0
+            readonly property bool isInput: String(root.spec.name || "").indexOf("input") >= 0
+            function clonePorts() {
+                var n = portCol.rowCount
+                var out = []
+                for (var i = 0; i < n; i++) {
+                    var item = root.val[i]
+                    out.push({
+                        name: String((item && item.name) || ((isInput ? "In_" : "Out_") + (i + 1))),
+                        type: String((item && item.type) || "ANY")
+                    })
+                }
+                return out
+            }
+            function nextPortName(list) {
+                var base = portCol.isInput ? "DataIn_" : "DataOut_"
+                var idx = list.length + 1
+                while (true) {
+                    var cand = base + idx
+                    var clash = false
+                    for (var i = 0; i < list.length; i++) if (list[i].name === cand) { clash = true; break }
+                    if (!clash) return cand
+                    idx++
+                }
+            }
+            Repeater {
+                model: portCol.rowCount
+                delegate: Row {
+                    spacing: Theme.spSnug
+                    width: portCol.width
+                    clip: true
+                    readonly property var entry: root.val[index] || ({ name: "", type: "ANY" })
+                    TextBox {
+                        objectName: (portCol.isInput ? "paramPortInName" : "paramPortOutName") + index
+                        width: Math.max(120, portCol.width - 196)
+                        text: String(entry.name || "")
+                        placeholder: "Port name"
+                        onEditingFinished: {
+                            var nm = text.trim()
+                            if (nm === "" || nm === String(entry.name || "")) { text = String(entry.name || ""); return }
+                            var next = portCol.clonePorts()
+                            next[index].name = nm
+                            root.edited(next)
+                        }
+                    }
+                    SelectBox {
+                        objectName: (portCol.isInput ? "paramPortInType" : "paramPortOutType") + index
+                        width: 112
+                        model: portCol.portTypes
+                        currentIndex: Math.max(0, portCol.portTypes.indexOf(String(entry.type || "ANY")))
+                        onActivated: function (i) {
+                            var next = portCol.clonePorts()
+                            next[index].type = portCol.portTypes[i]
+                            root.edited(next)
+                        }
+                    }
+                    AppButton {
+                        objectName: (portCol.isInput ? "paramPortInDel" : "paramPortOutDel") + index
+                        text: "Delete"
+                        width: 64
+                        height: 26
+                        onClicked: {
+                            var next = portCol.clonePorts()
+                            next.splice(index, 1)
+                            root.edited(next)
+                        }
+                    }
+                }
+            }
+            AppButton {
+                objectName: portCol.isInput ? "paramPortInAdd" : "paramPortOutAdd"
+                text: portCol.isInput ? "+ Add Input" : "+ Add Output"
+                width: 112
+                height: 26
+                onClicked: {
+                    var next = portCol.clonePorts()
+                    next.push({ name: portCol.nextPortName(next), type: "ANY" })
+                    root.edited(next)
+                }
+            }
         }
     }
 

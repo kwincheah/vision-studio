@@ -11,10 +11,12 @@ DialogFrame {
     property string moduleName: "02 IC Alignment"
     property int tab: 0
     property var inputs: SampleData.moduleInputs
+    property var outputs: []
     property var params: SampleData.moduleParams
     property string toolType: ""
     // The selected module's Display Setup; refreshed with the rest of the dialog.
     property var display: ({ roi: true, labels: true, boxes: true, colour: "#e4b030" })
+    signal drawRequested(string nodeId, string moduleName)
     title: "Module Configuration - " + moduleName + (toolType !== "" ? "  (" + toolType + ")" : "")
     dialogWidth: 680
     dialogHeight: 740
@@ -24,8 +26,10 @@ DialogFrame {
         if (!backend || nodeId === "") return
         var fresh = backend.moduleParams(nodeId), changed = fresh.length !== params.length
         for (var i = 0; !changed && i < fresh.length; i++)
-            if (fresh[i].active !== params[i].active || fresh[i].name !== params[i].name || (fresh[i].kind === "device" && fresh[i].choices.length !== params[i].choices.length)
-                || (fresh[i].active !== false && fresh[i].native !== params[i].native && fresh[i].kind === "device"))
+            if (fresh[i].active !== params[i].active || fresh[i].name !== params[i].name
+                || (fresh[i].kind === "device" && fresh[i].choices.length !== params[i].choices.length)
+                || (fresh[i].active !== false && fresh[i].native !== params[i].native && fresh[i].kind === "device")
+                || ((fresh[i].kind === "roi_list" || fresh[i].kind === "port_list") && fresh[i].value !== params[i].value))
                 changed = true
         if (changed) params = fresh
     }
@@ -35,14 +39,24 @@ DialogFrame {
     function setDisplay(key, value) {
         if (!backend || nodeId === "") return
         backend.setModuleDisplay(nodeId, key, value)
-        display = backend.selectedDisplay
+        display = backend.moduleDisplay(nodeId)
     }
 
     onVisibleChanged: if (visible && backend && nodeId !== "") {
         toolType = backend.toolOf(nodeId)
         inputs = backend.moduleInputs(nodeId)
+        outputs = backend.moduleOutputs(nodeId)
         params = backend.moduleParams(nodeId)
-        display = backend.selectedDisplay
+        display = backend.moduleDisplay(nodeId)
+    }
+
+    Connections {
+        target: root.backend
+        ignoreUnknownSignals: true
+        function onChanged() {
+            if (root.visible && root.backend && root.nodeId !== "")
+                root.outputs = root.backend.moduleOutputs(root.nodeId)
+        }
     }
 
     Column {
@@ -78,7 +92,7 @@ DialogFrame {
                     font.family: Theme.fontFamily; font.pixelSize: Theme.fontBody; color: Theme.textSecondary }
                 DataTable { width: parent.width; height: parent.height - 50
                     columns: [ { title: "Param", key: "name", width: 160 }, { title: "Type", key: "type", width: 120 }, { title: "Value", key: "value", width: 0 } ]
-                    rows: root.params }
+                    rows: root.outputs }
             }
             // ---- run params (editable): each parameter gets the editor that fits it
             Flickable {
@@ -104,7 +118,8 @@ DialogFrame {
                         delegate: Item {
                             id: paramRow
                             width: runCol.width
-                            readonly property bool wide: modelData.kind === "code"
+                            clip: true
+                            readonly property bool wide: modelData.kind === "code" || modelData.kind === "roi_list" || modelData.kind === "port_list"
                             readonly property real editorH: editor.implicitHeight > 0
                                                             ? editor.implicitHeight : 26
                             height: wide ? 30 + editorH : Math.max(26, editorH)
@@ -126,7 +141,7 @@ DialogFrame {
                                             acceptedButtons: Qt.NoButton }
                             }
                             Text {
-                                visible: paramRow.wide
+                                visible: modelData.kind === "code"
                                 x: rowLabel.implicitWidth + 10
                                 anchors.verticalCenter: rowLabel.verticalCenter
                                 text: "Python \u00b7 Ctrl+Enter applies \u00b7 Ctrl+/ comments \u00b7 Tab indents"
@@ -140,6 +155,10 @@ DialogFrame {
                                 y: paramRow.wide ? 30 : 0
                                 width: paramRow.wide ? paramRow.width : runCol.width - 184
                                 onEdited: function (v) { if (root.backend && root.nodeId !== "") root.backend.setParamValue(root.nodeId, modelData.name, v); root.refreshParams() }
+                                onDrawRequested: function (key, kind) {
+                                    if (root.backend && root.nodeId !== "" && root.backend.beginDrawParam(root.nodeId, key))
+                                        root.drawRequested(root.nodeId, root.moduleName)
+                                }
                             }
                         }
                     }
@@ -206,8 +225,27 @@ DialogFrame {
         }
     }
     buttons: [
-        AppButton { text: "Continuous"; width: 110; onClicked: if (root.backend) root.backend.run() },
-        AppButton { text: "Execute"; width: 90; onClicked: if (root.backend) root.backend.run() },
+        AppButton {
+            text: root.backend && root.backend.running ? "Stop" : "Continuous"
+            kind: root.backend && root.backend.running ? "stop" : "secondary"
+            width: 110
+            onClicked: if (root.backend) {
+                if (root.backend.running) {
+                    root.backend.loop = false
+                    root.backend.stop()
+                } else {
+                    root.backend.loop = true
+                    root.backend.run()
+                }
+            }
+        },
+        AppButton {
+            text: "Execute"; width: 90
+            onClicked: if (root.backend) {
+                root.backend.loop = false
+                root.backend.run()
+            }
+        },
         AppButton { text: "OK"; kind: "primary"; width: 90; onClicked: root.closed() }
     ]
 }

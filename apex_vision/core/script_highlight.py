@@ -11,6 +11,7 @@ string of spans - no coordinates, nothing to keep in sync but the font.
 import html
 import io
 import keyword
+import re
 import tokenize
 from typing import Any, Dict, List, Tuple
 
@@ -70,12 +71,27 @@ def _spans(source: str) -> List[Tuple[int, int, str]]:
     return out
 
 
+def _preserve_html_spaces(raw_html: str) -> str:
+    """Keep Python indentation and multi-space runs intact inside Text.RichText."""
+    def _fix_chunk(chunk: str) -> str:
+        chunk = chunk.replace("\t", "&nbsp;" * 4)
+        chunk = re.sub(r"(^|\n)( +)", lambda m: m.group(1) + "&nbsp;" * len(m.group(2)), chunk)
+        chunk = re.sub(r" {2,}", lambda m: "&nbsp;" * len(m.group(0)), chunk)
+        return chunk
+
+    # Apply only to text outside `<...>` tags so `<span class="...">` attributes stay untouched.
+    pieces = re.split(r"(<[^>]+>)", raw_html)
+    for idx in range(0, len(pieces), 2):
+        pieces[idx] = _fix_chunk(pieces[idx])
+    return "".join(pieces).replace("\n", "<br/>")
+
+
 def highlight(source: Any) -> str:
     """The script as HTML with one span per token, ready for Text.RichText."""
     text = "" if source is None else str(source)
     spans = _spans(text)
     if not spans:
-        return html.escape(text).replace("\n", "<br/>")
+        return _preserve_html_spaces(html.escape(text))
     parts: List[str] = []
     cursor = 0
     for start, end, cls in spans:
@@ -86,7 +102,7 @@ def highlight(source: Any) -> str:
         parts.append(f'<span class="{cls}">{chunk}</span>' if cls != "plain" else chunk)
         cursor = end
     parts.append(html.escape(text[cursor:]))
-    return "".join(parts).replace("\n", "<br/>")
+    return _preserve_html_spaces("".join(parts))
 
 
 def check(source: Any) -> Dict[str, Any]:

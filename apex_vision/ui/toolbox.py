@@ -20,7 +20,7 @@ from PyQt6.QtGui import (
 )
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QListWidgetItem, QLineEdit,
-    QLabel, QToolButton, QSizePolicy, QAbstractItemView
+    QLabel, QToolButton, QSizePolicy, QAbstractItemView, QScrollArea, QFrame
 )
 
 from apex_vision.core.registry import list_categories, get_tool_class
@@ -412,7 +412,23 @@ class ToolCategoryRail(QWidget):
         self._layout.addWidget(self._make_button("__brand__", "Brand", get_brand_mark(24)))
         self._layout.addSpacing(6)
 
-        self._stretch_item = self._layout.addStretch(1)
+        self._scroll = QScrollArea()
+        self._scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self._scroll.setWidgetResizable(True)
+        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._scroll.setMinimumHeight(120)
+        self._scroll.setStyleSheet("background: transparent; border: none;")
+
+        self._cat_container = QWidget()
+        self._cat_container.setStyleSheet("background: transparent;")
+        self._cat_layout = QVBoxLayout(self._cat_container)
+        self._cat_layout.setContentsMargins(0, 0, 0, 0)
+        self._cat_layout.setSpacing(0)
+        self._stretch_item = self._cat_layout.addStretch(1)
+
+        self._scroll.setWidget(self._cat_container)
+        self._layout.addWidget(self._scroll, 1)
 
         self.btn_search = self._make_button(
             "__search__", "Search all modules", get_action_icon("search", 24)
@@ -435,14 +451,14 @@ class ToolCategoryRail(QWidget):
         for cat in list(self._buttons.keys()):
             if cat not in active_cats:
                 btn = self._buttons.pop(cat)
-                self._layout.removeWidget(btn)
+                self._cat_layout.removeWidget(btn)
                 btn.setParent(None)
                 btn.deleteLater()
 
         # 2. Add newly registered category buttons before stretch item
-        stretch_idx = self._layout.indexOf(self._stretch_item)
+        stretch_idx = self._cat_layout.indexOf(self._stretch_item)
         if stretch_idx < 0:
-            stretch_idx = self._layout.count() - 1
+            stretch_idx = max(0, self._cat_layout.count() - 1)
 
         for cat in active_cats:
             if cat not in self._buttons:
@@ -450,7 +466,7 @@ class ToolCategoryRail(QWidget):
                 btn = self._make_button(cat, cat, get_rail_icon(glyph, 24), checkable=True)
                 btn.clicked.connect(lambda _=False, c=cat: self._on_category_clicked(c))
                 self._buttons[cat] = btn
-                self._layout.insertWidget(stretch_idx, btn)
+                self._cat_layout.insertWidget(stretch_idx, btn)
                 stretch_idx += 1
 
     def _make_button(self, key: str, tip: str, icon: QIcon, checkable: bool = False) -> QToolButton:

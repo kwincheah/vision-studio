@@ -120,10 +120,12 @@ Send `parts_good.png` instead and the same flow answers `"verdict": "PASS"` with
 
 ## What you can do with it
 
-- **Design flows visually.** 152 built-in modules in 14 categories: acquisition, image processing (crop, resize / rotate, brightness, edge
+- **Design flows visually.** 157 built-in modules across 14 categories (plus 7 plugin modules in bundled plugins): acquisition, image processing (crop, resize / rotate, brightness, edge
   detection, filters), location (template match, circle / line search, caliper, Hough), measurement (distances, angles,
   intersections, focus), recognition (barcode, OCR), **deep learning** (classify, segment, anomaly and YOLO detection with your own ONNX models), defect detection, colour, calibration, communication (TCP, UDP,
   serial, Modbus, CSV log) and logic. Every module is listed in [docs/MODULES.md](docs/MODULES.md). Typed ports, no loops, one source per input.
+- **Embed as a headless multi-camera SDK runtime.** The Hikrobot VisionMaster-style Python SDK (`apex_vision.sdk.ApexRuntimeEngine`, `ApexSolution`, `ApexProcedure`, `CameraStreamWorker`) and compiled C++17 native core (`cpp/` / `_apex_core`) execute multi-camera RTSP/video flows concurrently with cross-camera dynamic ONNX micro-batching, per-layer TrueType snapshot overlays (`shelf`, `aisle`, `pose`, `botsort`, `bags`, `motion`), and 10-second rolling MP4 evidence clip writers.
+- **Modular Vision Tracking & VLM Suite (`plugins/theft_recognition_plugin`).** Ships with `ROI Zone Manager`, `Motion Gate`, `YOLO Pose` (17 COCO keypoints), `Context Object Detector`, `BoT-SORT Tracker` (with appearance ReID & trails), `Behavior Gate`, and async cloud/local `VLM` inspection.
 - **Run on real or fake images.** Single shot, or loop over a folder of images; the Run button turns into Stop while it works.
   Flows run on a background worker, so the window stays responsive.
 - **See results at a glance.** Per-module PASS/FAIL, timings, overlays on the image, and a table of every module's outputs.
@@ -180,13 +182,15 @@ The whole flow canvas can be used without a mouse. Help > Keyboard Shortcuts lis
 ```text
 main.py                 entry point (Qt Quick UI by default)
 qml/                    the interface; open qml/ApexVision.qmlproject in Qt Design Studio
-apex_vision/core/          flow engine, project files, shared run controller
-apex_vision/tools/         the 152 built-in modules
-apex_vision/flowgen/       AI Gen: module catalogue, spec validator, assistant, MCP server, reference docs
-apex_vision/ui/            the older widget interface
-plugins/                sample plugin
-projects/               sample solutions
-tests/                  pytest suite (2,600 tests)
+apex_vision/core/       flow engine, project files, shared run controller, C++17 _native bridge
+apex_vision/sdk/        headless multi-stream SDK runtime (ApexRuntimeEngine, ApexSolution, CameraStreamWorker)
+apex_vision/tools/      built-in vision, deep-learning, logic, and communication modules
+apex_vision/flowgen/    AI Gen: module catalogue, spec validator, assistant, MCP server, reference docs
+apex_vision/ui/         the classic widget interface
+cpp/                    C++17 pybind11 native acceleration extension (_apex_core)
+plugins/                bundled plugins (theft_recognition_plugin, add_offset_example, sobel_filter_example)
+projects/               sample solutions (.apex XML)
+tests/                  pytest suite (2,670+ tests)
 docs/                   guides and specs
 ```
 

@@ -85,14 +85,22 @@ class PluginManager:
         if plugin_dirs:
             self.plugin_dirs = plugin_dirs
         else:
-            base_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.path.abspath(".")
             user_plugin_dir = os.path.abspath(os.path.join(os.path.expanduser("~"), ".apex_vision", "plugins"))
-            p_dirs = [
-                user_plugin_dir,
-                os.path.abspath(os.path.join(base_dir, "plugins")),
-                os.path.abspath(os.path.join(base_dir, "_internal", "plugins")),
-                os.path.abspath(os.path.join(".", "plugins")),
-            ]
+            if getattr(sys, "frozen", False):
+                base_dir = os.path.dirname(sys.executable)
+                p_dirs = [
+                    user_plugin_dir,
+                    os.path.abspath(os.path.join(base_dir, "plugins")),
+                    os.path.abspath(os.path.join(base_dir, "_internal", "plugins")),
+                    os.path.abspath(os.path.join(".", "plugins")),
+                ]
+            else:
+                repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                p_dirs = [
+                    os.path.abspath(os.path.join(repo_root, "plugins")),
+                    os.path.abspath(os.path.join(".", "plugins")),
+                    user_plugin_dir,
+                ]
             self.plugin_dirs = list(dict.fromkeys(p_dirs))
         self._plugins: Dict[str, PluginRecord] = {}  # plugin_id -> PluginRecord
         self._tool_to_plugin: Dict[str, str] = {}  # tool_name -> plugin_id

@@ -1,0 +1,15 @@
+{
+  "id": "add_offset_example",
+  "name": "Add Offset (example)",
+  "version": "1.0.0",
+  "author": "Example",
+  "description": "Smallest useful plugin: takes a number in, adds a parameter to it, outputs the sum.",
+  "category": "Calculation",
+  "min_sdk_version": "1.0.0",
+  "entrypoint": "__init__.py",
+  "tags": [
+    "example",
+    "tutorial",
+    "arithmetic"
+  ]
+}

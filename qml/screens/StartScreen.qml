@@ -141,7 +141,7 @@ Rectangle {
                     Text { anchors.right: openBtn.left; anchors.rightMargin: 16; y: 14; text: modelData.when; font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption; color: Theme.textMuted }
                     AppButton { id: openBtn; anchors.right: delBtn.left; anchors.rightMargin: 8; y: 10; width: 80; height: 24; text: "Open"; kind: "primary"
                         onClicked: if (root.backend) root.backend.openRecent(modelData.path) }
-                    AppButton { id: delBtn; anchors.right: parent.right; anchors.rightMargin: 14; y: 10; width: 74; height: 24; color: "#ff080d"; text: "Delete"; border.color: "#ff080d"; kind: "prrimary"
+                    AppButton { id: delBtn; anchors.right: parent.right; anchors.rightMargin: 14; y: 10; width: 74; height: 24; text: "Delete"; kind: "danger"
                         onClicked: if (root.backend) root.backend.removeRecent(modelData.path) }
                 }
             }

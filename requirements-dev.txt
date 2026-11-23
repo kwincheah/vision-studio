@@ -4,6 +4,9 @@
 pytest>=7.4.0
 pytest-qt>=4.2.0
 
+# Hybrid C++17 Core Build
+pybind11>=2.12.0
+
 # Desktop Packaging
 pyinstaller>=6.3.0
 

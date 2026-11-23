@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import QtQuick.Controls 2.15
 import ApexTheme 1.0
 import ApexComponents 1.0
 
@@ -14,6 +15,7 @@ Rectangle {
     color: Theme.panelAlt
     border.width: 1
     border.color: "#c0c4c8"
+    clip: true
 
     function visibleTools() {
         var out = [], f = filter.toLowerCase()
@@ -47,29 +49,42 @@ Rectangle {
         wrapMode: Text.WordWrap
         font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption; color: Theme.textMuted
     }
-    Grid {
-        anchors.top: hint.bottom; anchors.topMargin: 10
-        x: 10
-        columns: 2
-        spacing: 6
-        Repeater {
-            model: root.visibleTools()
-            delegate: Rectangle {
-                width: 100; height: 76
-                radius: Theme.radiusPanel
-                color: cellMouse.containsMouse ? Theme.accentDim : "transparent"
-                border.width: cellMouse.containsMouse ? 1 : 0
-                border.color: Theme.accent
-                Icon { anchors.horizontalCenter: parent.horizontalCenter; y: 12; name: modelData.icon; tone: "dark"; size: 28 }
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    y: 46; width: parent.width - 8
-                    horizontalAlignment: Text.AlignHCenter
-                    wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
-                    text: modelData.name
-                    font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption; color: Theme.textPrimary
+    Flickable {
+        anchors.top: hint.bottom
+        anchors.topMargin: 10
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 8
+        anchors.left: parent.left
+        anchors.right: parent.right
+        clip: true
+        contentWidth: width
+        contentHeight: toolGrid.implicitHeight + 6
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: ApexScrollBar { }
+        Grid {
+            id: toolGrid
+            x: 10
+            columns: 2
+            spacing: 6
+            Repeater {
+                model: root.visibleTools()
+                delegate: Rectangle {
+                    width: 100; height: 76
+                    radius: Theme.radiusPanel
+                    color: cellMouse.containsMouse ? Theme.accentDim : "transparent"
+                    border.width: cellMouse.containsMouse ? 1 : 0
+                    border.color: Theme.accent
+                    Icon { anchors.horizontalCenter: parent.horizontalCenter; y: 12; name: modelData.icon; tone: "dark"; size: 28 }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: 46; width: parent.width - 8
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
+                        text: modelData.name
+                        font.family: Theme.fontFamily; font.pixelSize: Theme.fontCaption; color: Theme.textPrimary
+                    }
+                    MouseArea { id: cellMouse; anchors.fill: parent; hoverEnabled: true; onDoubleClicked: root.toolChosen(modelData.name) }
                 }
-                MouseArea { id: cellMouse; anchors.fill: parent; hoverEnabled: true; onDoubleClicked: root.toolChosen(modelData.name) }
             }
         }
     }

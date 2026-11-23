@@ -49,3 +49,21 @@ def test_grayscale_none_and_malformed_overlays_are_safe():
     assert gray.ndim == 3
     junk = [{"type": "rect", "box": "bad"}, {"type": "circle", "center": None}, {"type": "mystery"}, {}]
     assert render_overlays(blank(), junk) is not None
+
+
+def test_render_overlays_accepts_rect_and_p1_p2_aliases():
+    import numpy as np
+    from apex_vision.core.overlays import render_overlays
+
+    img = np.zeros((120, 160, 3), dtype=np.uint8)
+    out = render_overlays(
+        img,
+        [
+            {"type": "rect", "rect": [20, 30, 50, 40], "color": (0, 255, 0), "label": "box_alias"},
+            {"type": "line", "p1": (10, 10), "p2": (60, 10), "color": (0, 0, 255)},
+        ],
+    )
+    assert np.all(img == 0)
+    # Bottom edge of rect [20, 30, 50, 40] is at y=70, x in [20..70] (away from top label pill)
+    assert out[70, 45, 1] > 200
+    assert out[10, 35, 2] > 200
